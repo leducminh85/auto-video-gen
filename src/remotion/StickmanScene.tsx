@@ -83,7 +83,7 @@ export const StickmanScene: React.FC<StickmanSceneProps> = ({ scene }) => {
       return `data:image/svg+xml;utf8,${encodeURIComponent(beat.svg_data)}`;
     }
     const file = beat.image_file || scene.image_file;
-    if (file.startsWith('data:') || file.startsWith('http')) {
+    if (file.startsWith('data:') || file.startsWith('http') || file.startsWith('/')) {
       return file;
     }
     return staticFile(`images/${file}`);

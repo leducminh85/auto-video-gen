@@ -274,12 +274,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       return;
     }
 
-    setCreationLogs((prev) => [
-      ...prev,
-      `✓ Đã trích xuất ${rawParsedScenes.length} cảnh`,
-      `[2/4] Tạo giọng đọc AI (${selectedVoiceObj.name}, ${speed}×) cho ${rawParsedScenes.length} cảnh...`,
+    setCreationLogs([
+      `[1/3] Tạo Audio TTS: Phân tích ${rawParsedScenes.length} cảnh & tổng hợp giọng đọc (${selectedVoiceObj.name}, ${speed}×)...`,
     ]);
-    setCreationStep(2);
+    setCreationStep(1);
 
     try {
       const response = await fetch('/api/generate-video', {
@@ -301,10 +299,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
       setCreationLogs((prev) => [
         ...prev,
-        '✓ Đã tổng hợp xong giọng đọc AI & thời lượng audio',
-        '[3/4] Tạo hình minh họa Stickman 1080p & Visual Beats...',
+        '✓ Audio đã tạo xong & đo chính xác thời lượng từng phân cảnh',
+        '[2/3] Phân tích ngữ nghĩa, ngắt câu đổi ý & tạo kho ảnh Stickman theo mốc thời gian audio...',
       ]);
-      setCreationStep(3);
+      setCreationStep(2);
 
       const data = await response.json();
       if (!data.success) {
@@ -319,10 +317,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
       setCreationLogs((prev) => [
         ...prev,
-        `✓ ${totalBeatsCount} hình ảnh Stickman Explainer`,
-        '[4/4] Biên tập video MP4 hoàn tất, nạp vào Remotion Player...',
+        `✓ Đã tạo ${totalBeatsCount} hình ảnh Stickman 1080p khớp theo từng nhịp ngắt ý`,
+        '[3/3] Ghép nối Remotion & render video MP4 hoàn tất, nạp vào Player...',
       ]);
-      setCreationStep(4);
+      setCreationStep(3);
 
       setCreationSuccess(true);
       await new Promise((r) => setTimeout(r, 600));
@@ -745,7 +743,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               >
                 <span>Tiến trình</span>
                 <span className="mono" style={{ color: 'var(--accent)' }}>
-                  {creationSuccess ? '100%' : `${Math.round((creationStep / 4) * 100)}%`}
+                  {creationSuccess ? '100%' : `${Math.round((creationStep / 3) * 100)}%`}
                 </span>
               </div>
               <div
@@ -760,7 +758,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 <div
                   style={{
                     height: '100%',
-                    width: `${creationSuccess ? 100 : (creationStep / 4) * 100}%`,
+                    width: `${creationSuccess ? 100 : (creationStep / 3) * 100}%`,
                     background: creationSuccess ? 'var(--success)' : 'var(--accent)',
                     borderRadius: 99,
                     transition: 'width 0.3s ease-out',

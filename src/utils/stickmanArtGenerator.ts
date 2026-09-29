@@ -371,6 +371,10 @@ export function generateStickmanSvg(options: GenerateImageOptions): string {
  */
 export function buildMultiBeatScenes(scenes: SceneData[]): SceneData[] {
   return scenes.map((scene) => {
+    // If scene already has rich semantic beats, preserve them
+    if (scene.beats && scene.beats.length > 0) {
+      return scene;
+    }
     const totalFrames = scene.duration_in_frames;
     const totalSec = scene.duration_in_seconds;
 
