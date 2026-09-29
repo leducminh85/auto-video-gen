@@ -1,0 +1,171 @@
+{
+  "metadata": {
+    "title": "Kinh Tế Học Phòng Gym",
+    "subtitle": "The Economics of Opening a Gym",
+    "fps": 30,
+    "width": 1920,
+    "height": 1080,
+    "total_scenes": 14,
+    "total_duration_in_frames": 3991,
+    "total_duration_in_seconds": "133.03",
+    "created_at": "2026-09-29T16:07:33.784Z",
+    "voice": "vi-VN-Studio-AI",
+    "speed": 1.25
+  },
+  "scenes": [
+    {
+      "id": 1,
+      "title": "Ảo Tưởng Giờ Cao Điểm",
+      "text": "Đến phòng gym vào giờ cao điểm, thấy máy chạy bộ kín người, phòng tạ đông đúc và quầy lễ tân xếp hàng, ai cũng nghĩ đây là cỗ máy in tiền béo bở.",
+      "prompt": "Minimalist 2D line art, stickman explaining Ảo Tưởng Giờ Cao Điểm, clean whiteboard explainer style.",
+      "audio_file": "scene_1.mp3",
+      "image_file": "scene_1.png",
+      "duration_in_seconds": 8.84,
+      "duration_in_frames": 278,
+      "start_frame": 0
+    },
+    {
+      "id": 2,
+      "title": "Bản Chất Mô Hình Thuê Bao",
+      "text": "Sự thật bóc trần: Phòng gym không phải kinh doanh thể thao, mà là mô hình thuê bao subscription có chứa tạ và máy móc.",
+      "prompt": "Minimalist 2D line art, stickman explaining Bản Chất Mô Hình Thuê Bao, clean whiteboard explainer style.",
+      "audio_file": "scene_2.mp3",
+      "image_file": "scene_2.png",
+      "duration_in_seconds": 7.02,
+      "duration_in_frames": 223,
+      "start_frame": 278
+    },
+    {
+      "id": 3,
+      "title": "Chi Phí Ban Đầu Khổng Lồ",
+      "text": "Chi phí mở cửa ban đầu cực kỳ tốn kém, từ 300.000 đến hơn 1 triệu USD chỉ cho tiền cọc, sàn cao su chịu lực, và hệ thống thông gió HVAC khổng lồ.",
+      "prompt": "Minimalist 2D line art, stickman explaining Chi Phí Ban Đầu Khổng Lồ, clean whiteboard explainer style.",
+      "audio_file": "scene_3.mp3",
+      "image_file": "scene_3.png",
+      "duration_in_seconds": 10.3,
+      "duration_in_frames": 321,
+      "start_frame": 501
+    },
+    {
+      "id": 4,
+      "title": "Mua Đứt Hay Thuê Tài Chính?",
+      "text": "Mua đứt thiết bị sẽ ngốn sạch dòng tiền dự phòng, còn thuê tài chính thì phải gánh lãi suất 8% và khoản nợ cố định dù phòng gym vắng khách.",
+      "prompt": "Minimalist 2D line art, stickman explaining Mua Đứt Hay Thuê Tài Chính?, clean whiteboard explainer style.",
+      "audio_file": "scene_4.mp3",
+      "image_file": "scene_4.png",
+      "duration_in_seconds": 8.05,
+      "duration_in_frames": 254,
+      "start_frame": 822
+    },
+    {
+      "id": 5,
+      "title": "Quy Tắc 10 Đến 15 Phút",
+      "text": "Quy tắc vị trí 10 đến 15 phút: 80% hội viên chỉ đến từ bán kính di chuyển ngắn, nếu chọn sai vị trí hoặc giá thuê quá cao, bạn cầm chắc thất bại.",
+      "prompt": "Minimalist 2D line art, stickman explaining Quy Tắc 10 Đến 15 Phút, clean whiteboard explainer style.",
+      "audio_file": "scene_5.mp3",
+      "image_file": "scene_5.png",
+      "duration_in_seconds": 9.91,
+      "duration_in_frames": 310,
+      "start_frame": 1076
+    },
+    {
+      "id": 6,
+      "title": "Bí Mật Hội Viên Vô Hình",
+      "text": "Bí mật lợi nhuận nằm ở Hội Viên Vô Hình: Người đi tập chăm chỉ làm mòn máy móc và tăng chi phí, còn người đóng tiền rồi lặn mất tăm mới mang lại 100% lợi nhuận ròng.",
+      "prompt": "Minimalist 2D line art, stickman explaining Bí Mật Hội Viên Vô Hình, clean whiteboard explainer style.",
+      "audio_file": "scene_6.mp3",
+      "image_file": "scene_6.png",
+      "duration_in_seconds": 9.91,
+      "duration_in_frames": 310,
+      "start_frame": 1386
+    },
+    {
+      "id": 7,
+      "title": "Nghịch Lý Sức Chứa",
+      "text": "Nghịch lý sức chứa: Phòng 7.000 hội viên chỉ chứa nổi 200 người; nếu chỉ 10% cùng đến tập một lúc, phòng gym sẽ ngay lập tức vỡ trận và vi phạm phòng cháy chữa cháy.",
+      "prompt": "Minimalist 2D line art, stickman explaining Nghịch Lý Sức Chứa, clean whiteboard explainer style.",
+      "audio_file": "scene_7.mp3",
+      "image_file": "scene_7.png",
+      "duration_in_seconds": 10.26,
+      "duration_in_frames": 320,
+      "start_frame": 1696
+    },
+    {
+      "id": 8,
+      "title": "Cú Lừa Tháng Một",
+      "text": "Cú lừa tháng Một: 12% hội viên đăng ký ồ ạt đầu năm, nhưng 80% sẽ bỏ cuộc trước mùa hè; chủ phòng gym tiêu hết tiền sớm sẽ đối mặt thảm họa cạn vốn.",
+      "prompt": "Minimalist 2D line art, stickman explaining Cú Lừa Tháng Một, clean whiteboard explainer style.",
+      "audio_file": "scene_8.mp3",
+      "image_file": "scene_8.png",
+      "duration_in_seconds": 10.41,
+      "duration_in_frames": 325,
+      "start_frame": 2016
+    },
+    {
+      "id": 9,
+      "title": "Nhượng Quyền Hay Tự Mở?",
+      "text": "Nhượng quyền mang lại thương hiệu nhưng bạn phải nộp 5 đến 10% doanh thu mỗi tháng vĩnh viễn, còn tự mở độc lập thì phải tự bơi từ con số không.",
+      "prompt": "Minimalist 2D line art, stickman explaining Nhượng Quyền Hay Tự Mở?, clean whiteboard explainer style.",
+      "audio_file": "scene_9.mp3",
+      "image_file": "scene_9.png",
+      "duration_in_seconds": 8.35,
+      "duration_in_frames": 263,
+      "start_frame": 2341
+    },
+    {
+      "id": 10,
+      "title": "Rào Cản Hủy Gói Tinh Quái",
+      "text": "Rào cản hủy hợp đồng tinh quái: Bắt làm đơn trực tiếp, gửi thư bảo đảm và lợi dụng tâm lý trì hoãn để tiếp tục trừ tiền đều đặn.",
+      "prompt": "Minimalist 2D line art, stickman explaining Rào Cản Hủy Gói Tinh Quái, clean whiteboard explainer style.",
+      "audio_file": "scene_10.mp3",
+      "image_file": "scene_10.png",
+      "duration_in_seconds": 7.89,
+      "duration_in_frames": 249,
+      "start_frame": 2604
+    },
+    {
+      "id": 11,
+      "title": "Các Chi Phí Ẩn Bào Mòn",
+      "text": "Các chi phí ẩn bào mòn túi tiền: Bản quyền âm nhạc công cộng lên tới hàng ngàn USD, tiền điện chạy máy lạnh 24/7 và chi phí bảo trì thay cáp liên tục.",
+      "prompt": "Minimalist 2D line art, stickman explaining Các Chi Phí Ẩn Bào Mòn, clean whiteboard explainer style.",
+      "audio_file": "scene_11.mp3",
+      "image_file": "scene_11.png",
+      "duration_in_seconds": 9.81,
+      "duration_in_frames": 307,
+      "start_frame": 2853
+    },
+    {
+      "id": 12,
+      "title": "Bài Học Từ Các Vụ Phá Sản",
+      "text": "Bài học từ những vụ phá sản lớn: Sụp đổ không phải vì thiếu khách, mà do nợ xấu phình to và bán hàng chèo kéo ép khách vay nợ dài hạn.",
+      "prompt": "Minimalist 2D line art, stickman explaining Bài Học Từ Các Vụ Phá Sản, clean whiteboard explainer style.",
+      "audio_file": "scene_12.mp3",
+      "image_file": "scene_12.png",
+      "duration_in_seconds": 8.24,
+      "duration_in_frames": 260,
+      "start_frame": 3160
+    },
+    {
+      "id": 13,
+      "title": "Đòn Bẩy PT Nhóm Nhỏ",
+      "text": "Đòn bẩy PT: Dạy 1-kèm-1 nhanh chóng chạm trần doanh thu, huấn luyện nhóm nhỏ 4 người mới là vũ khí tối ưu mặt bằng và nhân đôi lợi nhuận.",
+      "prompt": "Minimalist 2D line art, stickman explaining Đòn Bẩy PT Nhóm Nhỏ, clean whiteboard explainer style.",
+      "audio_file": "scene_13.mp3",
+      "image_file": "scene_13.png",
+      "duration_in_seconds": 8.86,
+      "duration_in_frames": 278,
+      "start_frame": 3420
+    },
+    {
+      "id": 14,
+      "title": "Kết Luận Toàn Bộ Video",
+      "text": "Thành công trong kinh doanh phòng gym không nằm ở việc hút bao nhiêu người đăng ký ban đầu, mà phụ thuộc vào việc bạn sống sót tốt đến đâu dựa trên những người trả tiền nhưng không bao giờ đến tập.",
+      "prompt": "Minimalist 2D line art, stickman explaining Kết Luận Toàn Bộ Video, clean whiteboard explainer style.",
+      "audio_file": "scene_14.mp3",
+      "image_file": "scene_14.png",
+      "duration_in_seconds": 9.34,
+      "duration_in_frames": 293,
+      "start_frame": 3698
+    }
+  ]
+}

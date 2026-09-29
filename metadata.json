@@ -1,0 +1,8 @@
+{
+  "name": "Remix Stickman Video Studio",
+  "description": "Hệ thống sản xuất video 2D Stickman Explainer tự động với Remotion và AI",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
