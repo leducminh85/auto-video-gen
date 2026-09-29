@@ -18,7 +18,9 @@ function videoApiPlugin(): Plugin {
           req.on('end', async () => {
             try {
               const data = JSON.parse(body);
-              const { generateVideo } = require('./scripts/videoGenerator.cjs');
+              const scriptPath = require.resolve('./scripts/videoGenerator.cjs');
+              delete require.cache[scriptPath];
+              const { generateVideo } = require(scriptPath);
               const result = await generateVideo(data);
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));

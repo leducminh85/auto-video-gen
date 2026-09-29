@@ -16,132 +16,192 @@ const SRC_DATA_DIR = path.join(ROOT_DIR, 'src/data');
   }
 });
 
-// Rich Stickman Character Poses
+// Rich Stickman Character Poses & Visual Props
 const POSES = {
-  explaining: (x, y, stroke = '#232323') => `
+  explaining: (x, y, stroke = '#1E293B') => `
     <g transform="translate(${x}, ${y})">
-      <circle cx="100" cy="100" r="50" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <circle cx="88" cy="90" r="6" fill="${stroke}" />
-      <circle cx="118" cy="90" r="6" fill="${stroke}" />
-      <path d="M 88 120 Q 103 135 118 120" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <line x1="100" y1="150" x2="100" y2="300" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 100 180 L 160 210 L 220 180" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 180 L 50 230" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="60" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="140" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-    </g>
-  `,
-  shocked: (x, y, stroke = '#232323') => `
-    <g transform="translate(${x}, ${y})">
+      <!-- Glasses -->
       <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <ellipse cx="85" cy="90" rx="7" ry="11" fill="${stroke}" />
-      <ellipse cx="115" cy="90" rx="7" ry="11" fill="${stroke}" />
-      <ellipse cx="100" cy="126" rx="14" ry="18" fill="${stroke}" />
-      <path d="M 155 75 Q 170 85 160 95 Q 150 90 155 75 Z" fill="#38BDF8" stroke="${stroke}" stroke-width="3" />
-      <path d="M 100 155 L 50 115 L 60 65" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 155 L 150 115 L 140 65" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="155" x2="100" y2="310" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 100 310 L 65 410 L 50 490" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 100 310 L 135 410 L 150 490" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
+      <rect x="72" y="80" width="28" height="22" rx="5" fill="none" stroke="${stroke}" stroke-width="4" />
+      <rect x="110" y="80" width="28" height="22" rx="5" fill="none" stroke="${stroke}" stroke-width="4" />
+      <line x1="100" y1="90" x2="110" y2="90" stroke="${stroke}" stroke-width="4" />
+      <circle cx="86" cy="91" r="5" fill="${stroke}" />
+      <circle cx="124" cy="91" r="5" fill="${stroke}" />
+      <path d="M 88 122 Q 105 136 122 122" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
+      <!-- Body & Pointer Stick -->
+      <line x1="100" y1="152" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <path d="M 100 190 L 190 150 L 340 100" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <circle cx="345" cy="98" r="8" fill="#EF4444" />
+      <path d="M 100 190 L 45 250 L 60 310" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <line x1="100" y1="330" x2="60" y2="500" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <line x1="100" y1="330" x2="140" y2="500" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
     </g>
   `,
-  thinking: (x, y, stroke = '#232323') => `
+
+  buying_dopamine: (x, y, stroke = '#1E293B') => `
     <g transform="translate(${x}, ${y})">
-      <circle cx="100" cy="100" r="50" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <circle cx="85" cy="90" r="5" fill="${stroke}" />
-      <circle cx="115" cy="90" r="5" fill="${stroke}" />
-      <line x1="90" y1="125" x2="115" y2="125" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <line x1="100" y1="150" x2="100" y2="300" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 100 180 L 140 230 L 125 140" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 180 L 55 240" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="70" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="130" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
+      <!-- Brain Dopamine Aura -->
+      <circle cx="100" cy="95" r="75" fill="none" stroke="#F59E0B" stroke-width="4" stroke-dasharray="6 6" />
+      <text x="100" y="15" font-family="sans-serif" font-weight="900" font-size="22" fill="#D97706" text-anchor="middle">🧠 DOPAMINE HIT!</text>
+      <!-- Sparkles around head -->
+      <path d="M 30 70 L 45 75 L 30 80 L 35 65 Z" fill="#F59E0B" />
+      <path d="M 165 60 L 180 65 L 165 70 L 170 55 Z" fill="#F59E0B" />
+      <!-- Head with Star Eyes -->
+      <circle cx="100" cy="95" r="52" fill="#FEF08A" stroke="${stroke}" stroke-width="8" />
+      <text x="82" y="98" font-size="24" text-anchor="middle">⭐</text>
+      <text x="118" y="98" font-size="24" text-anchor="middle">⭐</text>
+      <!-- Excited open mouth smile -->
+      <path d="M 85 115 Q 100 145 115 115 Z" fill="#EF4444" stroke="${stroke}" stroke-width="4" />
+      <!-- Body leaning forward -->
+      <line x1="100" y1="147" x2="130" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <!-- Left arm holding phone -->
+      <path d="M 110 190 L 50 220 L 70 270" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <rect x="50" y="240" width="45" height="75" rx="8" fill="#1E293B" stroke="${stroke}" stroke-width="3" />
+      <rect x="56" y="248" width="33" height="55" rx="4" fill="#38BDF8" />
+      <!-- Right arm pressing the big BUY NOW button -->
+      <path d="M 110 190 L 220 180 L 320 220" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
+      <!-- Hand clicking -->
+      <circle cx="325" cy="225" r="14" fill="#EF4444" stroke="${stroke}" stroke-width="4" />
+      <!-- Legs dynamic pose -->
+      <path d="M 130 330 L 70 410 L 40 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <path d="M 130 330 L 190 410 L 210 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
     </g>
   `,
-  celebrating: (x, y, stroke = '#232323') => `
+
+  shocked_wallet: (x, y, stroke = '#1E293B') => `
     <g transform="translate(${x}, ${y})">
-      <circle cx="100" cy="100" r="50" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <circle cx="85" cy="88" r="6" fill="${stroke}" />
-      <circle cx="115" cy="88" r="6" fill="${stroke}" />
-      <path d="M 85 115 Q 100 135 115 115" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <line x1="100" y1="150" x2="100" y2="300" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 100 170 L 40 100 L 20 60" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 170 L 160 100 L 180 60" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="60" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="140" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
+      <!-- Head with shocked expression -->
+      <circle cx="100" cy="100" r="54" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
+      <ellipse cx="85" cy="90" rx="8" ry="12" fill="${stroke}" />
+      <ellipse cx="115" cy="90" rx="8" ry="12" fill="${stroke}" />
+      <ellipse cx="100" cy="128" rx="16" ry="20" fill="#1E293B" stroke="${stroke}" stroke-width="4" />
+      <!-- Sweat drops -->
+      <path d="M 160 70 Q 175 80 165 95 Q 155 88 160 70 Z" fill="#38BDF8" stroke="${stroke}" stroke-width="3" />
+      <path d="M 40 70 Q 25 80 35 95 Q 45 88 40 70 Z" fill="#38BDF8" stroke="${stroke}" stroke-width="3" />
+      <!-- Hands on cheeks in disbelief -->
+      <path d="M 100 160 L 50 130 L 55 100" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <path d="M 100 160 L 150 130 L 145 100" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <circle cx="55" cy="100" r="12" fill="#FFFFFF" stroke="${stroke}" stroke-width="5" />
+      <circle cx="145" cy="100" r="12" fill="#FFFFFF" stroke="${stroke}" stroke-width="5" />
+      <!-- Body & shaking legs -->
+      <line x1="100" y1="160" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <path d="M 100 330 L 60 410 L 45 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <path d="M 100 330 L 140 410 L 155 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <!-- Floating empty wallet with wings -->
+      <g transform="translate(190, 160)">
+        <rect x="0" y="10" width="80" height="50" rx="8" fill="#78350F" stroke="${stroke}" stroke-width="5" />
+        <path d="M 0 10 Q 40 30 80 10" fill="none" stroke="${stroke}" stroke-width="4" />
+        <!-- Cobweb inside wallet -->
+        <text x="40" y="44" font-size="20" text-anchor="middle">🕸️ 0₫</text>
+      </g>
     </g>
   `,
-  money_rain: (x, y, stroke = '#232323') => `
+
+  compound_growth: (x, y, stroke = '#1E293B') => `
     <g transform="translate(${x}, ${y})">
-      <circle cx="100" cy="100" r="50" fill="#FEF08A" stroke="${stroke}" stroke-width="8" />
-      <text x="82" y="92" font-size="20" font-weight="900" fill="#166534">$</text>
-      <text x="108" y="92" font-size="20" font-weight="900" fill="#166534">$</text>
-      <path d="M 85 118 Q 100 138 115 118" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <line x1="100" y1="150" x2="100" y2="300" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 100 180 L 170 140 L 220 110" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 180 L 30 140 L -20 110" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="60" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="140" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <!-- Dollar symbols floating -->
-      <text x="210" y="80" font-size="34" font-weight="900" fill="#16A34A">$$$</text>
-      <text x="-60" y="80" font-size="34" font-weight="900" fill="#16A34A">$$$</text>
+      <!-- Head with confident investor smile -->
+      <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
+      <circle cx="86" cy="90" r="6" fill="${stroke}" />
+      <circle cx="118" cy="90" r="6" fill="${stroke}" />
+      <path d="M 88 120 Q 102 135 120 120" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
+      <!-- Body standing tall -->
+      <line x1="100" y1="152" x2="100" y2="320" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <!-- Left arm planting gold coin into soil pot -->
+      <path d="M 100 190 L 30 220 L -30 260" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <circle cx="-35" cy="270" r="18" fill="#FBBF24" stroke="${stroke}" stroke-width="4" />
+      <text x="-35" y="277" font-weight="900" font-size="20" text-anchor="middle" fill="#78350F">₫</text>
+      <!-- Right arm gesturing to rocket graph -->
+      <path d="M 100 190 L 170 140 L 250 80" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
+      <polygon points="245,70 270,75 255,95" fill="#10B981" />
+      <!-- Legs firm stance -->
+      <line x1="100" y1="320" x2="60" y2="490" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <line x1="100" y1="320" x2="140" y2="490" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
     </g>
   `,
-  contract: (x, y, stroke = '#232323') => `
+
+  three_jars: (x, y, stroke = '#1E293B') => `
     <g transform="translate(${x}, ${y})">
-      <circle cx="100" cy="100" r="50" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <circle cx="88" cy="92" r="5" fill="${stroke}" />
-      <circle cx="116" cy="92" r="5" fill="${stroke}" />
-      <path d="M 90 122 Q 102 130 114 122" fill="none" stroke="${stroke}" stroke-width="4" stroke-linecap="round" />
-      <line x1="100" y1="150" x2="100" y2="300" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <!-- Holding contract paper -->
-      <path d="M 100 180 L 160 210" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <rect x="150" y="150" width="70" height="95" rx="6" fill="#F8FAFC" stroke="${stroke}" stroke-width="5" />
-      <line x1="160" y1="170" x2="205" y2="170" stroke="#94A3B8" stroke-width="3" />
-      <line x1="160" y1="185" x2="205" y2="185" stroke="#94A3B8" stroke-width="3" />
-      <line x1="160" y1="200" x2="195" y2="200" stroke="#EF4444" stroke-width="4" />
-      <path d="M 100 180 L 40 230" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="65" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <line x1="100" y1="300" x2="135" y2="440" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
+      <!-- Head with thoughtful budgeting expression -->
+      <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
+      <circle cx="88" cy="92" r="6" fill="${stroke}" />
+      <circle cx="118" cy="92" r="6" fill="${stroke}" />
+      <path d="M 90 122 Q 104 132 118 122" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
+      <!-- Body -->
+      <line x1="100" y1="152" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <!-- Both arms pouring coins into jars -->
+      <path d="M 100 190 L 40 220 L 10 270" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <path d="M 100 190 L 160 210 L 220 250" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <!-- Coins dropping from hands -->
+      <circle cx="10" cy="290" r="10" fill="#FBBF24" stroke="${stroke}" stroke-width="3" />
+      <circle cx="225" cy="275" r="10" fill="#FBBF24" stroke="${stroke}" stroke-width="3" />
+      <!-- Legs -->
+      <line x1="100" y1="330" x2="70" y2="500" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <line x1="100" y1="330" x2="130" y2="500" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
     </g>
   `,
-  running: (x, y, stroke = '#232323') => `
+
+  peaceful_freedom: (x, y, stroke = '#1E293B') => `
     <g transform="translate(${x}, ${y})">
-      <circle cx="120" cy="90" r="50" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <circle cx="140" cy="85" r="6" fill="${stroke}" />
-      <path d="M 130 115 Q 145 125 155 110" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <path d="M 75 75 Q 120 60 165 75" fill="none" stroke="#E74C3C" stroke-width="10" />
-      <line x1="110" y1="140" x2="80" y2="310" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 100 170 L 160 210 L 210 180" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 170 L 40 210 L 10 260" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 80 310 L 150 380 L 220 370" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 80 310 L 20 370 L 0 470" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
+      <!-- Head wearing cool sunglasses -->
+      <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
+      <!-- Cool Sunglasses -->
+      <polygon points="68,85 98,85 94,106 72,106" fill="#1E293B" />
+      <polygon points="106,85 136,85 132,106 110,106" fill="#1E293B" />
+      <line x1="98" y1="92" x2="106" y2="92" stroke="#1E293B" stroke-width="5" />
+      <!-- Smug satisfied smile -->
+      <path d="M 88 124 Q 104 140 124 120" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
+      <!-- Body leaning back comfortably -->
+      <line x1="100" y1="152" x2="80" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <!-- Left arm holding steaming coffee cup -->
+      <path d="M 95 190 L 30 210 L 20 260" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <rect x="0" y="260" width="38" height="42" rx="6" fill="#FFFFFF" stroke="${stroke}" stroke-width="4" />
+      <path d="M 38 270 Q 50 280 38 290" fill="none" stroke="${stroke}" stroke-width="4" />
+      <path d="M 12 250 Q 18 240 12 230" fill="none" stroke="#94A3B8" stroke-width="3" />
+      <path d="M 22 250 Q 28 240 22 230" fill="none" stroke="#94A3B8" stroke-width="3" />
+      <!-- Right hand waving "NO" peacefully -->
+      <path d="M 95 190 L 170 170 L 200 130" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <circle cx="205" cy="125" r="14" fill="#FFFFFF" stroke="${stroke}" stroke-width="4" />
+      <!-- Relaxed legs crossed -->
+      <path d="M 80 330 L 40 420 L 10 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <path d="M 80 330 L 120 400 L 90 480" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
     </g>
   `,
-  lifting: (x, y, stroke = '#232323') => `
+
+  tech_robot: (x, y, stroke = '#1E293B') => `
     <g transform="translate(${x}, ${y})">
-      <circle cx="100" cy="110" r="50" fill="#FDEDEC" stroke="${stroke}" stroke-width="8" />
-      <ellipse cx="100" cy="130" rx="14" ry="7" fill="#E74C3C" stroke="${stroke}" stroke-width="3" />
-      <line x1="-100" y1="30" x2="300" y2="30" stroke="${stroke}" stroke-width="12" stroke-linecap="round" />
-      <rect x="-140" y="-10" width="35" height="80" rx="6" fill="#1E293B" stroke="${stroke}" stroke-width="5" />
-      <rect x="300" y="-10" width="35" height="80" rx="6" fill="#1E293B" stroke="${stroke}" stroke-width="5" />
-      <path d="M 100 180 L 20 100 L 0 35" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 180 L 180 100 L 200 35" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="160" x2="100" y2="320" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 100 320 L 35 410 L 20 480" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <path d="M 100 320 L 165 410 L 180 480" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
+      <!-- Head with VR / Tech Visor -->
+      <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
+      <rect x="70" y="80" width="60" height="24" rx="6" fill="#06B6D4" stroke="${stroke}" stroke-width="4" />
+      <circle cx="85" cy="92" r="4" fill="#FFFFFF" />
+      <circle cx="115" cy="92" r="4" fill="#FFFFFF" />
+      <path d="M 88 122 Q 104 134 118 122" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
+      <!-- Body with tech circuit lines -->
+      <line x1="100" y1="152" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <!-- Hologram touch arms -->
+      <path d="M 100 190 L 160 170 L 220 150" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <circle cx="225" cy="148" r="12" fill="#38BDF8" stroke="${stroke}" stroke-width="3" />
+      <path d="M 100 190 L 40 210 L -10 230" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <line x1="100" y1="330" x2="65" y2="490" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <line x1="100" y1="330" x2="135" y2="490" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
     </g>
   `,
-  balance: (x, y, stroke = '#232323') => `
+
+  fitness_lifting: (x, y, stroke = '#1E293B') => `
     <g transform="translate(${x}, ${y})">
-      <circle cx="100" cy="100" r="50" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <circle cx="90" cy="95" r="6" fill="${stroke}" />
-      <circle cx="120" cy="95" r="6" fill="${stroke}" />
-      <line x1="100" y1="150" x2="100" y2="320" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="-30" y1="180" x2="230" y2="170" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="320" x2="100" y2="460" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <polygon points="100,460 60,540 140,540" fill="#F59E0B" stroke="${stroke}" stroke-width="6" />
-      <line x1="-80" y1="460" x2="280" y2="475" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <circle cx="100" cy="110" r="50" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
+      <circle cx="85" cy="100" r="5" fill="${stroke}" />
+      <circle cx="115" cy="100" r="5" fill="${stroke}" />
+      <path d="M 85 130 Q 100 145 115 130" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
+      <!-- Heavy Barbell -->
+      <line x1="-70" y1="40" x2="270" y2="40" stroke="${stroke}" stroke-width="12" stroke-linecap="round" />
+      <rect x="-110" y="5" width="35" height="70" rx="6" fill="#1E293B" stroke="${stroke}" stroke-width="5" />
+      <rect x="270" y="5" width="35" height="70" rx="6" fill="#1E293B" stroke="${stroke}" stroke-width="5" />
+      <!-- Arms holding bar up -->
+      <path d="M 100 180 L 20 100 L 0 45" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <path d="M 100 180 L 180 100 L 200 45" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+      <line x1="100" y1="160" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <path d="M 100 330 L 45 420 L 30 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
+      <path d="M 100 330 L 155 420 L 170 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
     </g>
   `,
 };
@@ -237,89 +297,103 @@ function escapeXml(str) {
 }
 
 /**
- * Semantic Keyword & Theme detection for Visual Beats
+ * Intelligent Semantic Keyword & Thematic Scene Analyzer for Visual Beats
  */
 function analyzeClauseTheme(clauseText) {
   const t = clauseText.toLowerCase();
 
-  if (/tiền|usd|\$|chi phí|đắt|thuê bao|doanh thu|lợi nhuận|triệu|ngân quỹ|in tiền|nợ|lãi/i.test(t)) {
+  // 1. Dopamine, Shopping, Impulse buy
+  if (/dopamine|bộ não|mua hàng|mua sắm|bấm nút|sung sướng|tức thời|tức thì|cảm xúc|shopping|khoái cảm|hưng phấn/i.test(t)) {
     return {
-      theme: 'money',
-      pose: 'money_rain',
-      icon: '💰',
-      badgeColor: '#10B981',
-      accentColor: '#059669',
-      cardTitle: 'DÒNG TIỀN &amp; TÀI CHÍNH',
-    };
-  }
-  if (/cú lừa|sụp đổ|phá sản|vỡ trận|cảnh báo|rủi ro|thất bại|bẫy|sai lầm|cạn vốn/i.test(t)) {
-    return {
-      theme: 'warning',
-      pose: 'shocked',
-      icon: '⚠️',
-      badgeColor: '#EF4444',
-      accentColor: '#DC2626',
-      cardTitle: 'CẢNH BÁO &amp; NGUY CƠ',
-    };
-  }
-  if (/hợp đồng|rào cản|chính sách|luật|quy tắc|cam kết|tháng|thời hạn/i.test(t)) {
-    return {
-      theme: 'contract',
-      pose: 'contract',
-      icon: '📜',
-      badgeColor: '#8B5CF6',
-      accentColor: '#7C3AED',
-      cardTitle: 'QUY TẮC &amp; ĐIỀU KHOẢN',
-    };
-  }
-  if (/gym|chạy bộ|máy móc|tạ|tập|phòng|sức chứa|pt|huấn luyện/i.test(t)) {
-    return {
-      theme: 'gym',
-      pose: 'lifting',
-      icon: '🏋️',
-      badgeColor: '#F59E0B',
-      accentColor: '#D97706',
-      cardTitle: 'MÔ HÌNH VẬN HÀNH',
-    };
-  }
-  if (/ai|công nghệ|máy tính|tự động|trí tuệ|thuật toán|số hóa/i.test(t)) {
-    return {
-      theme: 'tech',
-      pose: 'thinking',
-      icon: '🤖',
-      badgeColor: '#06B6D4',
-      accentColor: '#0891B2',
-      cardTitle: 'CÔNG NGHỆ &amp; ĐỘT PHÁ',
-    };
-  }
-  if (/thành công|đòn bẩy|tối ưu|nhân đôi|kết luận|bí mật|giải pháp/i.test(t)) {
-    return {
-      theme: 'success',
-      pose: 'celebrating',
-      icon: '🎯',
-      badgeColor: '#6366F1',
-      accentColor: '#4F46E5',
-      cardTitle: 'ĐÒN BẨY &amp; GIẢI PHÁP',
-    };
-  }
-  if (/so với|hay|đối đầu|nghịch lý|cân bằng/i.test(t)) {
-    return {
-      theme: 'balance',
-      pose: 'balance',
-      icon: '⚖️',
+      theme: 'shopping_dopamine',
+      pose: 'buying_dopamine',
+      icon: '🧠🛒',
       badgeColor: '#EC4899',
       accentColor: '#DB2777',
-      cardTitle: 'NGHỊCH LÝ ĐỐI NGHỊCH',
+      title: 'BẪY DOPAMINE &amp; MUA SẮM CẢM XÚC',
     };
   }
 
+  // 2. Lifestyle Inflation, Income vs Expense, Motorbike to Car
+  if (/15|30 triệu|lương|thu nhập|chi tiêu|ô tô|xe máy|dậm chân|tiết kiệm|lối sống|lạm phát|chạy đua|sĩ diện/i.test(t)) {
+    return {
+      theme: 'lifestyle_inflation',
+      pose: 'shocked_wallet',
+      icon: '🛵🚗',
+      badgeColor: '#EF4444',
+      accentColor: '#DC2626',
+      title: 'HIỆU ỨNG LẠM PHÁT LỐI SỐNG',
+    };
+  }
+
+  // 3. Compound Interest, 10%, 2 Million, 7 Billion, Retirement
+  if (/lãi kép|đầu tư|2 triệu|10%|tuổi 20|7 tỷ|thời gian|đòn bẩy|hưu|tích lũy|sinh lời|kỳ diệu|cấp số nhân/i.test(t)) {
+    return {
+      theme: 'compound_growth',
+      pose: 'compound_growth',
+      icon: '📈💰',
+      badgeColor: '#10B981',
+      accentColor: '#059669',
+      title: 'SỨC MẠNH KỲ DIỆU CỦA LÃI KÉP',
+    };
+  }
+
+  // 4. 50-30-20 Rule, 50%, 30%, 20%, Essentials, Desires, Freedom Fund
+  if (/50%|30%|20%|50-30-20|thiết yếu|mong muốn|quỹ tự do|quy tắc|hũ|ngân sách|phân bổ|tự do tài chính/i.test(t)) {
+    return {
+      theme: 'rule_50_30_20',
+      pose: 'three_jars',
+      icon: '🏺📊',
+      badgeColor: '#3B82F6',
+      accentColor: '#2563EB',
+      title: 'QUY TẮC QUẢN LÝ TIỀN 50 - 30 - 20',
+    };
+  }
+
+  // 5. True Financial Freedom, Saying NO, Luxury vs Real Peace
+  if (/tự do tài chính|xa xỉ|từ chối|thức dậy|sáng|hạnh phúc thực|bình yên|đích thực|an nhiên|không muốn làm/i.test(t)) {
+    return {
+      theme: 'financial_freedom',
+      pose: 'peaceful_freedom',
+      icon: '☀️☕',
+      badgeColor: '#F59E0B',
+      accentColor: '#D97706',
+      title: 'TỰ DO TÀI CHÍNH ĐÍCH THỰC',
+    };
+  }
+
+  // 6. Technology, AI, Automation
+  if (/ai|công nghệ|máy móc|robot|tự động|thuật toán|số hóa|máy tính|dữ liệu/i.test(t)) {
+    return {
+      theme: 'tech',
+      pose: 'tech_robot',
+      icon: '🤖⚡',
+      badgeColor: '#06B6D4',
+      accentColor: '#0891B2',
+      title: 'CÔNG NGHỆ &amp; ĐỘT PHÁ TỰ ĐỘNG',
+    };
+  }
+
+  // 7. Gym, Fitness, Discipline, Health
+  if (/gym|tập luyện|sức khỏe|thể thao|cơ bắp|chạy bộ|tạ|huấn luyện|kỷ luật/i.test(t)) {
+    return {
+      theme: 'fitness',
+      pose: 'fitness_lifting',
+      icon: '🏋️💪',
+      badgeColor: '#EA580C',
+      accentColor: '#C2410C',
+      title: 'KỶ LUẬT THỂ CHẤT &amp; SỨC KHỎE',
+    };
+  }
+
+  // Fallback: Explaining & Strategy
   return {
     theme: 'explaining',
     pose: 'explaining',
-    icon: '💡',
-    badgeColor: '#4F46E5',
-    accentColor: '#4338CA',
-    cardTitle: 'TRỌNG TÂM PHÂN TÍCH',
+    icon: '💡🎯',
+    badgeColor: '#6366F1',
+    accentColor: '#4F46E5',
+    title: 'NGUYÊN LÝ &amp; PHÂN TÍCH CHUYÊN SÂU',
   };
 }
 
@@ -448,7 +522,7 @@ function segmentSceneIntoBeats(scene, durationInSeconds, totalFrames, sceneIndex
 }
 
 /**
- * Generate 1080p SVG for a specific visual beat
+ * Generate 1080p SVG with rich Whiteboard Stickman illustrations
  */
 function createBeatSvg({
   sceneId,
@@ -463,87 +537,399 @@ function createBeatSvg({
 }) {
   const bg = BG_PALETTES[(sceneIndex + subIndex) % BG_PALETTES.length];
   const poseFn = POSES[analysis.pose] || POSES.explaining;
-  const charSvg = poseFn(220, 480);
+  const charSvg = poseFn(140, 360, '#1E293B');
 
   const cleanTitle = escapeXml(sceneTitle || `Cảnh ${sceneId}`);
-  const cleanClause = escapeXml(clauseText);
-  const shortClause = cleanClause.length > 95 ? cleanClause.substring(0, 92) + '...' : cleanClause;
-  const cardClause = cleanClause.length > 58 ? cleanClause.substring(0, 55) + '...' : cleanClause;
+  const rawShort = clauseText.length > 95 ? clauseText.substring(0, 92) + '...' : clauseText;
+  const shortClause = escapeXml(rawShort);
+
+  // Render Theme-Specific Centerpiece Vector Illustration
+  let stageGraphic = '';
+
+  if (analysis.theme === 'shopping_dopamine') {
+    stageGraphic = `
+      <!-- Shopping & Dopamine Stage -->
+      <g transform="translate(680, 160)">
+        <!-- Giant Smartphone Mockup -->
+        <rect x="0" y="20" width="340" height="580" rx="36" fill="#0F172A" stroke="#334155" stroke-width="6" />
+        <rect x="18" y="45" width="304" height="530" rx="24" fill="#FFFFFF" />
+        <rect x="110" y="28" width="120" height="12" rx="6" fill="#334155" />
+        <!-- App Header -->
+        <rect x="18" y="45" width="304" height="60" rx="20" fill="#EC4899" />
+        <text x="170" y="84" font-weight="900" font-size="20" fill="#FFFFFF" text-anchor="middle">FLASH SALE 90%</text>
+        <!-- Product Card inside Phone -->
+        <rect x="38" y="125" width="264" height="180" rx="16" fill="#FDF2F8" stroke="#F472B6" stroke-width="3" />
+        <text x="170" y="210" font-size="64" text-anchor="middle">👟</text>
+        <text x="170" y="260" font-weight="900" font-size="20" fill="#BE185D" text-anchor="middle">GIÀY TRENDY 2026</text>
+        <text x="170" y="285" font-weight="700" font-size="16" fill="#9D174D" text-anchor="middle">1.990.000₫</text>
+        <!-- Giant BUY NOW Button with Pulse -->
+        <rect x="38" y="340" width="264" height="74" rx="20" fill="#EF4444" stroke="#DC2626" stroke-width="5" />
+        <text x="170" y="386" font-weight="900" font-size="24" fill="#FFFFFF" text-anchor="middle">⚡ MUA NGAY ⚡</text>
+        <text x="170" y="450" font-weight="700" font-size="16" fill="#64748B" text-anchor="middle">1-Click Fast Delivery</text>
+
+        <!-- Right Side: Brain & Dopamine Explosion -->
+        <g transform="translate(400, 30)">
+          <!-- Brain Card Container -->
+          <rect x="0" y="0" width="620" height="570" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+          <rect x="0" y="0" width="620" height="76" rx="24" fill="#DB2777" stroke="#1E293B" stroke-width="5" />
+          <text x="310" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">BẪY KHOÁI CẢM TỨC THÌ</text>
+
+          <!-- Floating Brain Vector -->
+          <circle cx="310" cy="210" r="90" fill="#FCE7F3" stroke="#DB2777" stroke-width="6" />
+          <text x="310" y="235" font-size="80" text-anchor="middle">🧠</text>
+          
+          <!-- Energy Sparks -->
+          <path d="M 200 150 L 160 120 M 420 150 L 460 120 M 310 100 L 310 70" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" />
+          <text x="310" y="340" font-weight="900" font-size="30" fill="#BE185D" text-anchor="middle">DOPAMINE PHÓNG THÍCH</text>
+          
+          <!-- Comparison tags -->
+          <rect x="40" y="380" width="250" height="130" rx="16" fill="#FEE2E2" stroke="#EF4444" stroke-width="3" />
+          <text x="165" y="420" font-weight="900" font-size="20" fill="#991B1B" text-anchor="middle">❌ TỨC THỜI</text>
+          <text x="165" y="455" font-weight="700" font-size="16" fill="#7F1D1D" text-anchor="middle">Sung sướng 1 vài phút</text>
+          <text x="165" y="485" font-weight="600" font-size="15" fill="#991B1B" text-anchor="middle">Ví tiền rỗng tuếch</text>
+
+          <rect x="330" y="380" width="250" height="130" rx="16" fill="#DCFCE7" stroke="#10B981" stroke-width="3" />
+          <text x="455" y="420" font-weight="900" font-size="20" fill="#065F46" text-anchor="middle">✓ BỀN VỮNG</text>
+          <text x="455" y="455" font-weight="700" font-size="16" fill="#064E3B" text-anchor="middle">Hạnh phúc thực sự</text>
+          <text x="455" y="485" font-weight="600" font-size="15" fill="#047857" text-anchor="middle">Tài chính an tâm</text>
+        </g>
+      </g>
+    `;
+  } else if (analysis.theme === 'lifestyle_inflation') {
+    stageGraphic = `
+      <!-- Lifestyle Inflation Stage: Scooter vs Car -->
+      <g transform="translate(680, 160)">
+        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+        <rect x="0" y="0" width="1040" height="76" rx="24" fill="#DC2626" stroke="#1E293B" stroke-width="5" />
+        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">NGHỊCH LÝ: LƯƠNG TĂNG GẤP ĐÔI NHƯNG KHÔNG CÒN ĐỒNG NÀO</text>
+
+        <!-- Left Column: Motorbike 15M -->
+        <g transform="translate(50, 120)">
+          <rect x="0" y="0" width="430" height="440" rx="20" fill="#F8FAFC" stroke="#94A3B8" stroke-width="4" />
+          <rect x="20" y="20" width="390" height="50" rx="12" fill="#E2E8F0" />
+          <text x="215" y="52" font-weight="900" font-size="22" fill="#334155" text-anchor="middle">LƯƠNG 15 TRIỆU / THÁNG</text>
+          
+          <text x="215" y="160" font-size="70" text-anchor="middle">🛵</text>
+          <text x="215" y="205" font-weight="800" font-size="20" fill="#475569" text-anchor="middle">Đi xe máy - Chi tiêu 12Tr</text>
+          
+          <rect x="30" y="240" width="370" height="80" rx="14" fill="#DCFCE7" stroke="#10B981" stroke-width="3" />
+          <text x="215" y="275" font-weight="900" font-size="22" fill="#047857" text-anchor="middle">TIẾT KIỆM: 3.000.000₫</text>
+          <text x="215" y="305" font-weight="700" font-size="16" fill="#065F46" text-anchor="middle">Tích lũy đều đặn mỗi tháng</text>
+          
+          <rect x="30" y="340" width="370" height="70" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2" />
+          <text x="215" y="382" font-weight="700" font-size="18" fill="#64748B" text-anchor="middle">Áp lực tài chính: THẤP</text>
+        </g>
+
+        <!-- Crisp Vector Arrow -->
+        <g transform="translate(500, 320)">
+          <line x1="-20" y1="0" x2="30" y2="0" stroke="#DC2626" stroke-width="8" stroke-linecap="round" />
+          <polyline points="15,-15 30,0 15,15" fill="none" stroke="#DC2626" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+
+        <!-- Right Column: Car 30M -->
+        <g transform="translate(560, 120)">
+          <rect x="0" y="0" width="430" height="440" rx="20" fill="#FEF2F2" stroke="#EF4444" stroke-width="4" />
+          <rect x="20" y="20" width="390" height="50" rx="12" fill="#FEE2E2" stroke="#EF4444" stroke-width="2" />
+          <text x="215" y="52" font-weight="900" font-size="22" fill="#B91C1C" text-anchor="middle">LƯƠNG TĂNG 30 TRIỆU</text>
+          
+          <text x="215" y="160" font-size="70" text-anchor="middle">🚗</text>
+          <text x="215" y="205" font-weight="800" font-size="20" fill="#B91C1C" text-anchor="middle">Mua Ô Tô - Nợ vay &amp; Bảo dưỡng</text>
+          
+          <rect x="30" y="240" width="370" height="80" rx="14" fill="#FEE2E2" stroke="#EF4444" stroke-width="3" />
+          <text x="215" y="275" font-weight="900" font-size="24" fill="#DC2626" text-anchor="middle">TIẾT KIỆM: 0 ĐỒNG ⚠️</text>
+          <text x="215" y="305" font-weight="700" font-size="16" fill="#991B1B" text-anchor="middle">Chi phí tự động phình to theo lương</text>
+
+          <rect x="30" y="340" width="370" height="70" rx="14" fill="#FEF2F2" stroke="#EF4444" stroke-width="2" />
+          <text x="215" y="382" font-weight="800" font-size="18" fill="#DC2626" text-anchor="middle">Áp lực tài chính: BÁO ĐỘNG</text>
+        </g>
+      </g>
+    `;
+  } else if (analysis.theme === 'compound_growth') {
+    stageGraphic = `
+      <!-- Compound Interest & Exponential Growth Graph -->
+      <g transform="translate(680, 160)">
+        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+        <rect x="0" y="0" width="1040" height="76" rx="24" fill="#059669" stroke="#1E293B" stroke-width="5" />
+        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">ĐÒN BẨY THỜI GIAN: ĐẦU TƯ 2 TRIỆU / THÁNG (LÃI 10%/NĂM)</text>
+
+        <!-- Coordinate System -->
+        <g transform="translate(100, 130)">
+          <!-- Y Axis -->
+          <line x1="50" y1="380" x2="50" y2="40" stroke="#64748B" stroke-width="5" />
+          <polygon points="45,40 50,20 55,40" fill="#64748B" />
+          <text x="40" y="20" font-weight="800" font-size="18" fill="#64748B" text-anchor="end">TÀI SẢN</text>
+
+          <!-- X Axis -->
+          <line x1="50" y1="380" x2="820" y2="380" stroke="#64748B" stroke-width="5" />
+          <polygon points="820,375 840,380 820,385" fill="#64748B" />
+          <text x="840" y="415" font-weight="800" font-size="18" fill="#64748B" text-anchor="middle">THỜI GIAN</text>
+
+          <!-- Grid Lines -->
+          <line x1="50" y1="280" x2="820" y2="280" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="6 6" />
+          <line x1="50" y1="180" x2="820" y2="180" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="6 6" />
+          <line x1="50" y1="80" x2="820" y2="80" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="6 6" />
+
+          <!-- Exponential Curve Gradient Area -->
+          <path d="M 50 380 Q 420 370 600 240 T 800 50 L 800 380 Z" fill="rgba(16, 185, 129, 0.12)" />
+          <!-- Exponential Curve Line -->
+          <path d="M 50 380 Q 420 370 600 240 T 800 50" fill="none" stroke="#10B981" stroke-width="8" stroke-linecap="round" />
+
+          <!-- Age 20 Milestone -->
+          <circle cx="120" cy="375" r="12" fill="#3B82F6" stroke="#1E293B" stroke-width="4" />
+          <text x="120" y="420" font-weight="800" font-size="18" fill="#1E293B" text-anchor="middle">Tuổi 20</text>
+          <text x="120" y="445" font-weight="700" font-size="15" fill="#64748B" text-anchor="middle">Bắt đầu 2Tr/tháng</text>
+
+          <!-- Age 40 Milestone -->
+          <circle cx="480" cy="330" r="12" fill="#F59E0B" stroke="#1E293B" stroke-width="4" />
+          <text x="480" y="370" font-weight="800" font-size="18" fill="#1E293B" text-anchor="middle">Tuổi 40</text>
+          <text x="480" y="420" font-weight="700" font-size="16" fill="#D97706" text-anchor="middle">1.2 Tỷ Đồng</text>
+
+          <!-- Age 60 Peak Milestone -->
+          <circle cx="800" cy="50" r="18" fill="#10B981" stroke="#1E293B" stroke-width="5" />
+          <!-- Giant Highlight Tag -->
+          <g transform="translate(560, 40)">
+            <rect x="0" y="0" width="220" height="90" rx="16" fill="#DCFCE7" stroke="#10B981" stroke-width="4" />
+            <text x="110" y="40" font-weight="900" font-size="28" fill="#047857" text-anchor="middle">7.000.000.000₫</text>
+            <text x="110" y="70" font-weight="800" font-size="16" fill="#065F46" text-anchor="middle">HƠN 7 TỶ KHI NGHỈ HƯU</text>
+          </g>
+        </g>
+      </g>
+    `;
+  } else if (analysis.theme === 'rule_50_30_20') {
+    stageGraphic = `
+      <!-- 50-30-20 Rule Stage: 3 Distinct Visual Jars -->
+      <g transform="translate(680, 160)">
+        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+        <rect x="0" y="0" width="1040" height="76" rx="24" fill="#2563EB" stroke="#1E293B" stroke-width="5" />
+        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">QUY TẮC PHÂN BỔ THU NHẬP 50 - 30 - 20</text>
+
+        <g transform="translate(50, 120)">
+          <!-- Jar 1: 50% Essentials -->
+          <g transform="translate(0, 0)">
+            <rect x="0" y="0" width="290" height="440" rx="22" fill="#EFF6FF" stroke="#3B82F6" stroke-width="4" />
+            <!-- Jar Lid -->
+            <rect x="70" y="-14" width="150" height="24" rx="8" fill="#1D4ED8" />
+            <circle cx="145" cy="65" r="45" fill="#DBEAFE" stroke="#3B82F6" stroke-width="4" />
+            <text x="145" y="75" font-weight="900" font-size="34" fill="#1D4ED8" text-anchor="middle">50%</text>
+            
+            <text x="145" y="145" font-weight="900" font-size="22" fill="#1E40AF" text-anchor="middle">NHU CẦU THIẾT YẾU</text>
+            <line x1="30" y1="165" x2="260" y2="165" stroke="#93C5FD" stroke-width="3" />
+            
+            <text x="50" y="215" font-size="30">🏠</text>
+            <text x="95" y="215" font-weight="700" font-size="18" fill="#1E3A8A">Tiền thuê nhà / Ở</text>
+
+            <text x="50" y="275" font-size="30">🍲</text>
+            <text x="95" y="275" font-weight="700" font-size="18" fill="#1E3A8A">Ăn uống sinh hoạt</text>
+
+            <text x="50" y="335" font-size="30">💡</text>
+            <text x="95" y="335" font-weight="700" font-size="18" fill="#1E3A8A">Điện nước hóa đơn</text>
+
+            <rect x="25" y="375" width="240" height="42" rx="10" fill="#DBEAFE" />
+            <text x="145" y="402" font-weight="800" font-size="16" fill="#1D4ED8" text-anchor="middle">Không vượt quá 50%</text>
+          </g>
+
+          <!-- Jar 2: 30% Desires -->
+          <g transform="translate(325, 0)">
+            <rect x="0" y="0" width="290" height="440" rx="22" fill="#FFFBEB" stroke="#F59E0B" stroke-width="4" />
+            <rect x="70" y="-14" width="150" height="24" rx="8" fill="#D97706" />
+            <circle cx="145" cy="65" r="45" fill="#FEF3C7" stroke="#F59E0B" stroke-width="4" />
+            <text x="145" y="75" font-weight="900" font-size="34" fill="#B45309" text-anchor="middle">30%</text>
+
+            <text x="145" y="145" font-weight="900" font-size="22" fill="#92400E" text-anchor="middle">MONG MUỐN CÁ NHÂN</text>
+            <line x1="30" y1="165" x2="260" y2="165" stroke="#FCD34D" stroke-width="3" />
+
+            <text x="50" y="215" font-size="30">☕</text>
+            <text x="95" y="215" font-weight="700" font-size="18" fill="#78350F">Cà phê, hẹn hò</text>
+
+            <text x="50" y="275" font-size="30">✈️</text>
+            <text x="95" y="275" font-weight="700" font-size="18" fill="#78350F">Du lịch trải nghiệm</text>
+
+            <text x="50" y="335" font-size="30">🎬</text>
+            <text x="95" y="335" font-weight="700" font-size="18" fill="#78350F">Giải trí, sở thích</text>
+
+            <rect x="25" y="375" width="240" height="42" rx="10" fill="#FEF3C7" />
+            <text x="145" y="402" font-weight="800" font-size="16" fill="#B45309" text-anchor="middle">Tận hưởng có kiểm soát</text>
+          </g>
+
+          <!-- Jar 3: 20% Freedom Fund -->
+          <g transform="translate(650, 0)">
+            <rect x="0" y="0" width="290" height="440" rx="22" fill="#F0FDF4" stroke="#10B981" stroke-width="5" />
+            <rect x="70" y="-14" width="150" height="24" rx="8" fill="#059669" />
+            <circle cx="145" cy="65" r="45" fill="#DCFCE7" stroke="#10B981" stroke-width="4" />
+            <text x="145" y="75" font-weight="900" font-size="34" fill="#047857" text-anchor="middle">20%</text>
+
+            <text x="145" y="145" font-weight="900" font-size="22" fill="#065F46" text-anchor="middle">TỰ DO TÀI CHÍNH</text>
+            <line x1="30" y1="165" x2="260" y2="165" stroke="#6EE7B7" stroke-width="3" />
+
+            <text x="50" y="215" font-size="30">🔒</text>
+            <text x="95" y="215" font-weight="700" font-size="18" fill="#064E3B">Quỹ dự phòng khẩn cấp</text>
+
+            <text x="50" y="275" font-size="30">📈</text>
+            <text x="95" y="275" font-weight="700" font-size="18" fill="#064E3B">Đầu tư sinh lời dài hạn</text>
+
+            <text x="50" y="335" font-size="30">🛡️</text>
+            <text x="95" y="335" font-weight="700" font-size="18" fill="#064E3B">Bảo vệ tương lai</text>
+
+            <rect x="25" y="375" width="240" height="42" rx="10" fill="#DCFCE7" stroke="#10B981" stroke-width="2" />
+            <text x="145" y="402" font-weight="900" font-size="16" fill="#047857" text-anchor="middle">CHUYỂN NGAY KHI CÓ TIỀN</text>
+          </g>
+        </g>
+      </g>
+    `;
+  } else if (analysis.theme === 'financial_freedom') {
+    stageGraphic = `
+      <!-- Financial Freedom: Freedom to Say NO -->
+      <g transform="translate(680, 160)">
+        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+        <rect x="0" y="0" width="1040" height="76" rx="24" fill="#D97706" stroke="#1E293B" stroke-width="5" />
+        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">ĐỊNH NGHĨA GIÀU CÓ: KHÔNG PHẢI KHOE KHOANG MÀ LÀ TỰ DO</text>
+
+        <!-- Left: Crossed Out Luxury -->
+        <g transform="translate(50, 120)">
+          <rect x="0" y="0" width="430" height="440" rx="20" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="4" />
+          <text x="215" y="50" font-weight="900" font-size="22" fill="#64748B" text-anchor="middle">❌ KHÔNG PHẢI LÀ</text>
+          
+          <g transform="translate(40, 90)">
+            <rect x="0" y="0" width="350" height="80" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3" />
+            <text x="45" y="52" font-size="36">⌚</text>
+            <text x="125" y="48" font-weight="800" font-size="20" fill="#475569">Đồng hồ xa xỉ đắt tiền</text>
+            <line x1="25" y1="44" x2="330" y2="44" stroke="#EF4444" stroke-width="5" />
+          </g>
+
+          <g transform="translate(40, 190)">
+            <rect x="0" y="0" width="350" height="80" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3" />
+            <text x="45" y="52" font-size="36">🏎️</text>
+            <text x="125" y="48" font-weight="800" font-size="20" fill="#475569">Siêu xe mua trả góp</text>
+            <line x1="25" y1="44" x2="330" y2="44" stroke="#EF4444" stroke-width="5" />
+          </g>
+
+          <g transform="translate(40, 290)">
+            <rect x="0" y="0" width="350" height="80" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3" />
+            <text x="45" y="52" font-size="36">💎</text>
+            <text x="125" y="48" font-weight="800" font-size="20" fill="#475569">Đồ hiệu để gây ấn tượng</text>
+            <line x1="25" y1="44" x2="330" y2="44" stroke="#EF4444" stroke-width="5" />
+          </g>
+
+          <text x="215" y="410" font-weight="700" font-size="16" fill="#94A3B8" text-anchor="middle">Sống để người khác đánh giá</text>
+        </g>
+
+        <!-- Right: Real Peace of Mind -->
+        <g transform="translate(560, 120)">
+          <rect x="0" y="0" width="430" height="440" rx="20" fill="#FEF3C7" stroke="#F59E0B" stroke-width="4" />
+          <text x="215" y="50" font-weight="900" font-size="22" fill="#B45309" text-anchor="middle">✓ MÀ LÀ QUYỀN NĂNG</text>
+
+          <g transform="translate(30, 90)">
+            <circle cx="60" cy="50" r="38" fill="#FDE68A" />
+            <text x="60" y="60" font-size="42" text-anchor="middle">🔕</text>
+            <text x="120" y="40" font-weight="800" font-size="20" fill="#78350F">Tắt báo thức mỗi sáng</text>
+            <text x="120" y="68" font-weight="600" font-size="16" fill="#92400E">Thức dậy trong thảnh thơi</text>
+          </g>
+
+          <g transform="translate(30, 190)">
+            <circle cx="60" cy="50" r="38" fill="#FDE68A" />
+            <text x="60" y="60" font-size="42" text-anchor="middle">☕</text>
+            <text x="120" y="40" font-weight="800" font-size="20" fill="#78350F">Làm chủ quỹ thời gian</text>
+            <text x="120" y="68" font-weight="600" font-size="16" fill="#92400E">Không bị cuốn vào vòng xoáy</text>
+          </g>
+
+          <!-- Speech bubble "SAY NO" -->
+          <g transform="translate(30, 290)">
+            <rect x="0" y="0" width="370" height="110" rx="18" fill="#FFFFFF" stroke="#D97706" stroke-width="4" />
+            <text x="185" y="45" font-weight="900" font-size="24" fill="#B45309" text-anchor="middle">QUYỀN TỪ CHỐI ✋</text>
+            <text x="185" y="80" font-weight="700" font-size="17" fill="#78350F" text-anchor="middle">Những gì bạn không muốn làm!</text>
+          </g>
+        </g>
+      </g>
+    `;
+  } else {
+    // General explainer strategy stage
+    stageGraphic = `
+      <!-- General Whiteboard Analytical Stage -->
+      <g transform="translate(680, 160)">
+        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+        <rect x="0" y="0" width="1040" height="76" rx="24" fill="${analysis.accentColor}" stroke="#1E293B" stroke-width="5" />
+        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">${analysis.icon} ${analysis.title}</text>
+
+        <!-- Big Analytical Roadmap / Steps -->
+        <g transform="translate(60, 130)">
+          <!-- Step 1 -->
+          <rect x="0" y="0" width="280" height="400" rx="18" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="4" />
+          <circle cx="140" cy="70" r="38" fill="${analysis.badgeColor}" />
+          <text x="140" y="82" font-weight="900" font-size="30" fill="#FFFFFF" text-anchor="middle">01</text>
+          <text x="140" y="150" font-weight="800" font-size="22" fill="#1E293B" text-anchor="middle">NHẬN DIỆN VẤN ĐỀ</text>
+          <line x1="40" y1="175" x2="240" y2="175" stroke="#CBD5E1" stroke-width="3" />
+          <text x="140" y="220" font-weight="600" font-size="17" fill="#64748B" text-anchor="middle">Quan sát quy luật cốt lõi</text>
+          <text x="140" y="260" font-weight="600" font-size="17" fill="#64748B" text-anchor="middle">Tránh bẫy tâm lý thường gặp</text>
+          <circle cx="140" cy="330" r="28" fill="#DCFCE7" />
+          <text x="140" y="340" font-size="28" text-anchor="middle">🔍</text>
+
+          <!-- Step 2 -->
+          <rect x="320" y="0" width="280" height="400" rx="18" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="4" />
+          <circle cx="460" cy="70" r="38" fill="${analysis.badgeColor}" />
+          <text x="460" y="82" font-weight="900" font-size="30" fill="#FFFFFF" text-anchor="middle">02</text>
+          <text x="460" y="150" font-weight="800" font-size="22" fill="#1E293B" text-anchor="middle">THIẾT LẬP KỶ LUẬT</text>
+          <line x1="360" y1="175" x2="560" y2="175" stroke="#CBD5E1" stroke-width="3" />
+          <text x="460" y="220" font-weight="600" font-size="17" fill="#64748B" text-anchor="middle">Tối ưu hóa hành vi</text>
+          <text x="460" y="260" font-weight="600" font-size="17" fill="#64748B" text-anchor="middle">Tự động hóa hệ thống</text>
+          <circle cx="460" cy="330" r="28" fill="#FEF3C7" />
+          <text x="460" y="340" font-size="28" text-anchor="middle">⚙️</text>
+
+          <!-- Step 3 -->
+          <rect x="640" y="0" width="280" height="400" rx="18" fill="#F0FDF4" stroke="#10B981" stroke-width="4" />
+          <circle cx="780" cy="70" r="38" fill="#10B981" />
+          <text x="780" y="82" font-weight="900" font-size="30" fill="#FFFFFF" text-anchor="middle">03</text>
+          <text x="780" y="150" font-weight="800" font-size="22" fill="#065F46" text-anchor="middle">KẾT QUẢ BỀN VỮNG</text>
+          <line x1="680" y1="175" x2="880" y2="175" stroke="#6EE7B7" stroke-width="3" />
+          <text x="780" y="220" font-weight="700" font-size="17" fill="#047857" text-anchor="middle">Tự do &amp; An tâm tuyệt đối</text>
+          <text x="780" y="260" font-weight="700" font-size="17" fill="#047857" text-anchor="middle">Đạt mục tiêu dài hạn</text>
+          <circle cx="780" cy="330" r="28" fill="#DCFCE7" />
+          <text x="780" y="340" font-size="28" text-anchor="middle">🏆</text>
+        </g>
+      </g>
+    `;
+  }
 
   return `
     <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
-      <!-- Background flat pastel -->
+      <!-- Whiteboard Canvas Background -->
       <rect width="1920" height="1080" fill="${bg}" />
       
-      <!-- Top header bar with scene & beat indicator -->
-      <rect x="0" y="0" width="1920" height="70" fill="rgba(15, 23, 42, 0.06)" />
+      <!-- Top Header Navigation Bar -->
+      <rect x="0" y="0" width="1920" height="74" fill="rgba(15, 23, 42, 0.05)" />
       
-      <g transform="translate(60, 20)">
-        <rect x="0" y="0" width="160" height="34" rx="8" fill="#1E293B" />
-        <text x="80" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="16" fill="#F8FAFC" text-anchor="middle">
+      <!-- Scene Badge -->
+      <g transform="translate(60, 18)">
+        <rect x="0" y="0" width="170" height="38" rx="10" fill="#1E293B" />
+        <text x="85" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="16" fill="#F8FAFC" text-anchor="middle">
           CẢNH ${sceneId}/${totalScenes}
         </text>
       </g>
 
-      <text x="240" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="22" fill="#334155">
+      <text x="250" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="22" fill="#1E293B">
         ${cleanTitle.toUpperCase()}
       </text>
 
       <!-- Beat Timing Chip -->
-      <g transform="translate(1560, 18)">
-        <rect x="0" y="0" width="300" height="36" rx="10" fill="${analysis.badgeColor}" />
-        <text x="150" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="16" fill="#FFFFFF" text-anchor="middle">
+      <g transform="translate(1540, 16)">
+        <rect x="0" y="0" width="320" height="42" rx="12" fill="${analysis.badgeColor}" />
+        <text x="160" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="16" fill="#FFFFFF" text-anchor="middle">
           Ý ${subIndex}/${totalBeats} • ${durSec.toFixed(1)}s (Đổi hình theo nhịp)
         </text>
       </g>
 
-      <!-- Stickman Character matching the semantic pause -->
+      <!-- Ground / Horizon Line for Characters -->
+      <line x1="60" y1="870" x2="1860" y2="870" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round" />
+
+      <!-- Expressive Stickman Character -->
       ${charSvg}
 
-      <!-- Centerpiece Visual Explainer Card -->
-      <g transform="translate(740, 220)">
-        <rect x="0" y="0" width="1020" height="630" rx="30" fill="#FFFFFF" stroke="#232323" stroke-width="7" />
-        
-        <!-- Header Banner on Card -->
-        <rect x="0" y="0" width="1020" height="96" rx="26" fill="${analysis.accentColor}" stroke="#232323" stroke-width="6" />
-        <text x="510" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="34" text-anchor="middle" fill="#FFFFFF" letter-spacing="1">
-          ${analysis.icon} ${analysis.cardTitle}
-        </text>
-
-        <!-- Illustration Graphics inside Card -->
-        <g transform="translate(60, 150)">
-          <!-- Dynamic Thematic Icon Badge -->
-          <circle cx="110" cy="110" r="75" fill="#F1F5F9" stroke="#232323" stroke-width="6" />
-          <text x="110" y="135" font-size="70" text-anchor="middle">${analysis.icon}</text>
-
-          <!-- Text block representing this specific sentence clause -->
-          <g transform="translate(230, 20)">
-            <rect x="0" y="0" width="670" height="70" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="3" />
-            <text x="24" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="24" fill="#0F172A">
-              ✨ Phân đoạn: ${cleanTitle} (Nhịp ${subIndex})
-            </text>
-
-            <rect x="0" y="95" width="670" height="130" rx="14" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="3" />
-            <text x="24" y="145" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="23" fill="#1E293B">
-              &quot;${cardClause}&quot;
-            </text>
-            <text x="24" y="185" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="18" fill="#64748B">
-              ⏱ Thời lượng hiển thị khớp lời đọc: ${durSec.toFixed(1)} giây
-            </text>
-          </g>
-        </g>
-
-        <!-- Bottom Feature Tag inside Card -->
-        <rect x="60" y="500" width="900" height="85" rx="18" fill="#F8FAFC" stroke="#232323" stroke-width="4" />
-        <text x="510" y="552" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="22" text-anchor="middle" fill="#0F172A">
-          🎯 Tự động chuyển đổi hình ảnh theo mốc thời gian ngắt ý của Voice TTS
-        </text>
-      </g>
+      <!-- Centerpiece Thematic Stage Graphic -->
+      ${stageGraphic}
 
       <!-- Bottom Subtitle Bar (Exact spoken clause) -->
-      <g transform="translate(140, 930)">
-        <rect x="0" y="0" width="1640" height="100" rx="22" fill="rgba(15, 23, 42, 0.94)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="3" />
-        <text x="820" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="26" text-anchor="middle" fill="#FFFFFF">
+      <g transform="translate(120, 930)">
+        <rect x="0" y="0" width="1680" height="100" rx="24" fill="rgba(15, 23, 42, 0.94)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="3" />
+        <text x="840" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="26" text-anchor="middle" fill="#FFFFFF">
           ${shortClause}
         </text>
       </g>
