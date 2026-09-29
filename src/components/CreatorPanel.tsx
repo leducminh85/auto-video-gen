@@ -179,6 +179,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [creationStep, setCreationStep] = useState<number>(0);
   const [creationLogs, setCreationLogs] = useState<string[]>([]);
   const [creationSuccess, setCreationSuccess] = useState<boolean>(false);
+  const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
+    return localStorage.getItem('gemini_api_key') || '';
+  });
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -289,6 +293,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           voice: selectedVoice,
           speed,
           scenes: rawParsedScenes,
+          geminiApiKey: geminiApiKey.trim() || undefined,
         }),
       });
 
@@ -623,7 +628,56 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             <span>
               {wordCount} từ · ≈{estimatedSeconds.toFixed(0)}s
             </span>
+            <button
+              type="button"
+              onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--accent)',
+                cursor: 'pointer',
+                fontSize: 11,
+                fontWeight: 600,
+                padding: '2px 6px',
+                borderRadius: 4,
+              }}
+            >
+              {showAdvancedSettings ? 'Ẩn cài đặt AI ▲' : '🤖 Tùy chọn Gemini AI ▼'}
+            </button>
           </div>
+
+          {/* Advanced Gemini API Key Setting */}
+          {showAdvancedSettings && (
+            <div
+              style={{
+                marginTop: 10,
+                padding: 12,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-base)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Gemini API Key (Tùy chọn)
+                </label>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                  Hệ thống tự động tạo ảnh từ nội dung; nhập key nếu muốn AI làm giàu ngữ nghĩa
+                </span>
+              </div>
+              <input
+                type="password"
+                value={geminiApiKey}
+                onChange={(e) => {
+                  setGeminiApiKey(e.target.value);
+                  localStorage.setItem('gemini_api_key', e.target.value);
+                }}
+                className="input"
+                placeholder="AIzaSy..."
+                style={{ width: '100%', fontSize: 12, fontFamily: 'monospace' }}
+              />
+            </div>
+          )}
         </div>
       </div>
 

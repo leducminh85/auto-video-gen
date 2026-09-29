@@ -204,51 +204,13 @@ export const StickmanScene: React.FC<StickmanSceneProps> = ({ scene }) => {
                 fontWeight: 700,
               }}
             >
-              Hình {activeBeatIndex + 1}/{beats.length} • Max 5s/hình
+              Hình {activeBeatIndex + 1}/{beats.length}
             </span>
           </div>
         )}
       </div>
 
-      {/* Bottom Subtitle Bar (Crisp, zero font errors with Be Vietnam Pro) */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 32,
-          left: 60,
-          right: 60,
-          display: 'flex',
-          justifyContent: 'center',
-          pointerEvents: 'none',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1500,
-            backgroundColor: 'rgba(15, 23, 42, 0.92)',
-            backdropFilter: 'blur(12px)',
-            border: '2px solid rgba(255, 255, 255, 0.15)',
-            boxShadow: '0 16px 36px rgba(0, 0, 0, 0.5)',
-            borderRadius: 20,
-            padding: '16px 32px',
-            textAlign: 'center',
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              color: '#FFFFFF',
-              fontSize: 26,
-              fontWeight: 700,
-              lineHeight: 1.45,
-              letterSpacing: -0.2,
-              textShadow: '0 2px 8px rgba(0,0,0,0.6)',
-            }}
-          >
-            {activeBeat.caption || scene.text}
-          </p>
-        </div>
-      </div>
+      {/* Audio Playback synchronized */}
 
       {/* Audio Playback synchronized */}
       {scene.audio_file && (

@@ -1,7 +1,7 @@
 /**
- * 2D Stickman Vector Art Generator & Scene Beat Data
- * Supplies vector-drawn Stickman explainer illustrations and multi-beat scene breakdowns.
- * Guarantees that each visual beat lasts AT MOST 5.0 seconds (<= 150 frames @ 30 FPS).
+ * 2D Cartoon Stickman Explainer Vector Art Generator
+ * Inspired by YouTube explainer channels (Polymatter, Casually Explained).
+ * Focuses on hand-drawn comic style, creative storytelling metaphors, minimal text, and natural timing.
  */
 
 import { VisualBeat, SceneData } from '../types/scenes';
@@ -10,17 +10,19 @@ export type StickmanStyle = 'whiteboard' | 'blueprint' | 'pastel' | 'dark_neon' 
 
 export type CharacterPose =
   | 'explaining'
+  | 'eureka'
   | 'shocked'
-  | 'running'
-  | 'lifting'
   | 'thinking'
-  | 'contract'
+  | 'cooking'
+  | 'tech_laptop'
+  | 'lifting'
+  | 'peaceful'
+  | 'investing'
+  | 'action'
+  | 'running'
   | 'balance'
   | 'ghost'
-  | 'fire_panic'
-  | 'trainer'
-  | 'money_rain'
-  | 'broken_machine';
+  | 'trainer';
 
 export interface GenerateImageOptions {
   title: string;
@@ -31,409 +33,381 @@ export interface GenerateImageOptions {
   pose?: CharacterPose;
   primaryColor?: string;
   customNote?: string;
+  content?: string;
 }
 
-/**
- * Generates an SVG stickman character based on pose
- */
-function getCharacterSvg(pose: CharacterPose, x: number = 300, y: number = 480, strokeColor: string = '#232323'): string {
-  switch (pose) {
-    case 'shocked':
-      return `
-        <g transform="translate(${x}, ${y})">
-          <!-- Head with shocked expression -->
-          <circle cx="100" cy="100" r="54" fill="#FFFFFF" stroke="${strokeColor}" stroke-width="8" />
-          <ellipse cx="85" cy="90" rx="6" ry="10" fill="${strokeColor}" />
-          <ellipse cx="115" cy="90" rx="6" ry="10" fill="${strokeColor}" />
-          <ellipse cx="100" cy="126" rx="14" ry="18" fill="${strokeColor}" />
-          <!-- Sweat drops -->
-          <path d="M 155 75 Q 170 85 160 95 Q 150 90 155 75 Z" fill="#3498DB" stroke="${strokeColor}" stroke-width="3" />
-          <path d="M 45 75 Q 30 85 40 95 Q 50 90 45 75 Z" fill="#3498DB" stroke="${strokeColor}" stroke-width="3" />
-          <!-- Hands on head -->
-          <path d="M 100 160 L 50 120 L 60 70" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <path d="M 100 160 L 150 120 L 140 70" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <!-- Body -->
-          <line x1="100" y1="160" x2="100" y2="330" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <!-- Legs shaking -->
-          <path d="M 100 330 L 65 420 L 50 510" fill="none" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <path d="M 100 330 L 135 420 L 150 510" fill="none" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-        </g>
-      `;
-
-    case 'running':
-      return `
-        <g transform="translate(${x}, ${y})">
-          <!-- Head leaning forward -->
-          <circle cx="120" cy="90" r="50" fill="#FFFFFF" stroke="${strokeColor}" stroke-width="8" />
-          <circle cx="140" cy="85" r="6" fill="${strokeColor}" />
-          <path d="M 130 115 Q 145 125 155 110" fill="none" stroke="${strokeColor}" stroke-width="5" stroke-linecap="round" />
-          <!-- Headband -->
-          <path d="M 75 75 Q 120 60 165 75" fill="none" stroke="#E74C3C" stroke-width="12" />
-          <!-- Body forward tilt -->
-          <line x1="110" y1="140" x2="80" y2="310" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <!-- Arms pumping -->
-          <path d="M 100 170 L 160 210 L 210 180" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <path d="M 100 170 L 40 210 L 10 260" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <!-- Legs sprinting -->
-          <path d="M 80 310 L 150 380 L 220 370" fill="none" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <path d="M 80 310 L 20 370 L 0 470" fill="none" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <!-- Speed wind lines -->
-          <line x1="-60" y1="120" x2="20" y2="120" stroke="${strokeColor}" stroke-width="4" stroke-dasharray="16 10" />
-          <line x1="-80" y1="180" x2="-10" y2="180" stroke="${strokeColor}" stroke-width="4" stroke-dasharray="20 12" />
-        </g>
-      `;
-
-    case 'lifting':
-      return `
-        <g transform="translate(${x}, ${y})">
-          <!-- Head strained -->
-          <circle cx="100" cy="110" r="50" fill="#FDEDEC" stroke="${strokeColor}" stroke-width="8" />
-          <line x1="80" y1="100" x2="95" y2="105" stroke="${strokeColor}" stroke-width="5" />
-          <line x1="120" y1="100" x2="105" y2="105" stroke="${strokeColor}" stroke-width="5" />
-          <ellipse cx="100" cy="130" rx="16" ry="8" fill="#E74C3C" stroke="${strokeColor}" stroke-width="4" />
-          <!-- Heavy Barbell overhead -->
-          <line x1="-120" y1="20" x2="320" y2="20" stroke="${strokeColor}" stroke-width="14" stroke-linecap="round" />
-          <rect x="-160" y="-30" width="40" height="100" rx="8" fill="#2C3E50" stroke="${strokeColor}" stroke-width="6" />
-          <rect x="-200" y="-45" width="40" height="130" rx="10" fill="#E74C3C" stroke="${strokeColor}" stroke-width="6" />
-          <rect x="320" y="-30" width="40" height="100" rx="8" fill="#2C3E50" stroke="${strokeColor}" stroke-width="6" />
-          <rect x="360" y="-45" width="40" height="130" rx="10" fill="#E74C3C" stroke="${strokeColor}" stroke-width="6" />
-          <!-- Arms holding barbell -->
-          <path d="M 100 180 L 10 90 L 0 25" fill="none" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <path d="M 100 180 L 190 90 L 200 25" fill="none" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <!-- Torso -->
-          <line x1="100" y1="160" x2="100" y2="330" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <!-- Legs wide squat -->
-          <path d="M 100 330 L 30 400 L 10 490" fill="none" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <path d="M 100 330 L 170 400 L 190 490" fill="none" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-        </g>
-      `;
-
-    case 'balance':
-      return `
-        <g transform="translate(${x}, ${y})">
-          <!-- Head wobbling -->
-          <circle cx="100" cy="100" r="50" fill="#FFFFFF" stroke="${strokeColor}" stroke-width="8" />
-          <circle cx="90" cy="95" r="6" fill="${strokeColor}" />
-          <circle cx="120" cy="95" r="6" fill="${strokeColor}" />
-          <path d="M 85 130 Q 100 115 125 135" fill="none" stroke="${strokeColor}" stroke-width="5" stroke-linecap="round" />
-          <!-- Body -->
-          <line x1="100" y1="150" x2="100" y2="320" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <!-- Arms stretched out for balance -->
-          <line x1="-50" y1="180" x2="250" y2="170" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <!-- One leg balancing -->
-          <line x1="100" y1="320" x2="100" y2="460" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <path d="M 100 320 L 160 360 L 190 340" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <!-- Fulcrum triangle -->
-          <polygon points="100,470 50,560 150,560" fill="#E67E22" stroke="${strokeColor}" stroke-width="7" />
-          <!-- Seesaw beam -->
-          <line x1="-120" y1="460" x2="320" y2="475" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round" />
-        </g>
-      `;
-
-    case 'ghost':
-      return `
-        <g transform="translate(${x}, ${y})">
-          <!-- Lazy Sofa -->
-          <rect x="-60" y="240" width="380" height="180" rx="20" fill="#E8EEF5" stroke="${strokeColor}" stroke-width="7" />
-          <rect x="-80" y="160" width="100" height="260" rx="16" fill="#BDC3C7" stroke="${strokeColor}" stroke-width="6" />
-          <!-- Ghost Stickman on sofa with phone -->
-          <circle cx="100" cy="150" r="48" fill="#F4F6F7" stroke="${strokeColor}" stroke-width="7" stroke-dasharray="10 5" />
-          <circle cx="115" cy="145" r="5" fill="${strokeColor}" />
-          <!-- Sleeping Zzz -->
-          <text x="170" y="110" font-family="'Comic Sans MS', cursive, sans-serif" font-weight="900" font-size="28" fill="#7F8C8D">Z</text>
-          <text x="195" y="80" font-family="'Comic Sans MS', cursive, sans-serif" font-weight="900" font-size="36" fill="#7F8C8D">z</text>
-          <!-- Body slouching -->
-          <path d="M 100 200 Q 80 270 140 290" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="8 4" />
-          <!-- Holding smartphone sending auto-pay -->
-          <path d="M 100 220 L 160 250" fill="none" stroke="${strokeColor}" stroke-width="7" stroke-linecap="round" />
-          <rect x="155" y="230" width="35" height="55" rx="6" fill="#2ECC71" stroke="${strokeColor}" stroke-width="4" />
-          <text x="172" y="265" font-family="sans-serif" font-weight="900" font-size="24" text-anchor="middle" fill="#FFFFFF">$</text>
-          <!-- Dollar bills floating out of phone to gym -->
-          <path d="M 190 230 Q 240 180 300 210" fill="none" stroke="#27AE60" stroke-width="4" stroke-dasharray="6 4" />
-          <text x="320" y="210" font-family="sans-serif" font-weight="900" font-size="34" fill="#27AE60">$$$ 100% LÃI RÒNG</text>
-          <!-- Legs lying on sofa -->
-          <line x1="140" y1="290" x2="260" y2="290" stroke="${strokeColor}" stroke-width="8" stroke-dasharray="8 4" />
-        </g>
-      `;
-
-    case 'trainer':
-      return `
-        <g transform="translate(${x}, ${y})">
-          <!-- Head with coach cap -->
-          <circle cx="100" cy="100" r="50" fill="#FFFFFF" stroke="${strokeColor}" stroke-width="8" />
-          <path d="M 60 75 Q 100 50 140 75 L 170 70" fill="none" stroke="#E74C3C" stroke-width="10" stroke-linecap="round" />
-          <circle cx="115" cy="95" r="6" fill="${strokeColor}" />
-          <!-- Whistle in mouth -->
-          <rect x="130" y="105" width="25" height="15" rx="4" fill="#F1C40F" stroke="${strokeColor}" stroke-width="4" />
-          <!-- Whistle cord around neck -->
-          <path d="M 85 130 Q 100 160 115 130" fill="none" stroke="${strokeColor}" stroke-width="4" />
-          <!-- Body standing upright -->
-          <line x1="100" y1="150" x2="100" y2="320" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <!-- Clipboard in left hand, pointing with right -->
-          <path d="M 100 180 L 170 170 L 240 150" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <path d="M 100 180 L 40 210 L 20 180" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <rect x="0" y="150" width="45" height="60" rx="5" fill="#BDC3C7" stroke="${strokeColor}" stroke-width="4" />
-          <!-- Legs firm stance -->
-          <line x1="100" y1="320" x2="60" y2="480" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <line x1="100" y1="320" x2="140" y2="480" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-        </g>
-      `;
-
-    case 'explaining':
-    default:
-      return `
-        <g transform="translate(${x}, ${y})">
-          <!-- Head -->
-          <circle cx="100" cy="100" r="54" fill="#FFFFFF" stroke="${strokeColor}" stroke-width="8" />
-          <circle cx="90" cy="90" r="6" fill="${strokeColor}" />
-          <circle cx="120" cy="90" r="6" fill="${strokeColor}" />
-          <path d="M 90 125 Q 105 140 120 125" fill="none" stroke="${strokeColor}" stroke-width="5" stroke-linecap="round" />
-          <!-- Teacher / Presenter Glasses -->
-          <rect x="72" y="76" width="32" height="26" rx="6" fill="none" stroke="${strokeColor}" stroke-width="4" />
-          <rect x="114" y="76" width="32" height="26" rx="6" fill="none" stroke="${strokeColor}" stroke-width="4" />
-          <line x1="104" y1="88" x2="114" y2="88" stroke="${strokeColor}" stroke-width="4" />
-          <!-- Body -->
-          <line x1="100" y1="154" x2="100" y2="330" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <!-- Pointing Arm with Pointer stick -->
-          <path d="M 100 190 L 190 160 L 320 130" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-          <polygon points="320,120 350,130 320,140" fill="${strokeColor}" />
-          <!-- Other Arm relaxed or on hip -->
-          <path d="M 100 190 L 50 240 L 65 300" fill="none" stroke="${strokeColor}" stroke-width="7" stroke-linecap="round" />
-          <!-- Legs -->
-          <line x1="100" y1="330" x2="60" y2="490" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-          <line x1="100" y1="330" x2="140" y2="490" stroke="${strokeColor}" stroke-width="9" stroke-linecap="round" />
-        </g>
-      `;
-  }
+function escapeXml(str: string): string {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
-/**
- * Generates background and props for the Stickman Vector illustration
- */
-export function generateStickmanSvg(options: GenerateImageOptions): string {
-  const {
-    title,
-    prompt,
-    sceneId = 1,
-    beatIndex = 1,
-    style = 'whiteboard',
-    pose = 'explaining',
-    customNote,
-  } = options;
+export function extractComicFeatures(clauseText: string, sceneTitle = '') {
+  const clean = (clauseText || '').trim();
+  const lower = clean.toLowerCase();
 
-  let bgColor = '#FAF7EE';
-  let strokeColor = '#232323';
-  let accentColor = '#E67E22';
-  let cardBg = '#FFFFFF';
-  let gridSvg = '';
+  const percentMatch = clean.match(/(\d+(?:[.,]\d+)?\s*%\s*(?:-\s*\d+(?:[.,]\d+)?\s*%)?)/i);
+  const metricMatch = clean.match(/(\d+(?:[.,]\d+)?\s*(?:triệu|tỷ|usd|đ|k|tiếng|ngày|tháng|năm|phút|giây|hội viên|đô|kg|bước))/i);
 
-  if (style === 'blueprint') {
-    bgColor = '#0C2033';
-    strokeColor = '#FFFFFF';
-    accentColor = '#38BDF8';
-    cardBg = '#16354D';
-    gridSvg = `
-      <defs>
-        <pattern id="bpGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
-        </pattern>
-      </defs>
-      <rect width="1920" height="1080" fill="url(#bpGrid)" />
-    `;
-  } else if (style === 'dark_neon') {
-    bgColor = '#090D16';
-    strokeColor = '#E2E8F0';
-    accentColor = '#10B981';
-    cardBg = '#1E293B';
-    gridSvg = `
-      <defs>
-        <radialGradient id="neonGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="rgba(16,185,129,0.15)"/>
-          <stop offset="100%" stop-color="rgba(9,13,22,0)"/>
-        </radialGradient>
-      </defs>
-      <circle cx="960" cy="540" r="600" fill="url(#neonGlow)" />
-    `;
-  } else if (style === 'pastel') {
-    bgColor = '#F0F9FF';
-    strokeColor = '#1E293B';
-    accentColor = '#3B82F6';
-    cardBg = '#FFFFFF';
-  } else if (style === 'comic_memo') {
-    bgColor = '#FFFBEB';
-    strokeColor = '#18181B';
-    accentColor = '#F59E0B';
-    cardBg = '#FEF3C7';
+  const percentage = percentMatch ? percentMatch[0].replace(/\s+/g, '') : null;
+  const metric = metricMatch ? metricMatch[0] : null;
+
+  let sceneType = 'universal';
+  let comicTitle = 'CONCEPT';
+
+  // 1. Crowd / Rush / Influx / Early Year / Queue / Gym join (Reference Image 1: WAVE)
+  if (/đăng ký|ồ ạt|đông đúc|hội viên|làn sóng|tháng một|tháng 1|đầu năm|mùa hè|giờ cao điểm|xếp hàng|ùn ùn|nườm nượp|wave|cỗ máy doanh thu/i.test(lower)) {
+    sceneType = 'crowd_wave';
+    comicTitle = 'WAVE';
+  }
+  // 2. Obstacle / Not Easy / Padlocked door / Cancellation barrier (Reference Image 3: NOT EASY)
+  else if (/khó khăn|hủy|rào cản|không dễ|not easy|hợp đồng|thủ tục|rắc rối|phức tạp|bắt buộc|khóa|cản trở|bẫy|giữ chân|nản lòng/i.test(lower)) {
+    sceneType = 'locked_door';
+    comicTitle = 'NOT EASY';
+  }
+  // 3. Percentage / Royalty / Franchise / Fee cut (Reference Image 2: ROYALTY)
+  else if (/nhượng quyền|royalty|hoa hồng|chiết khấu|phí doanh thu|cắt giảm|chia chác|thuế/i.test(lower) || (percentage && /doanh thu|lợi nhuận|nộp|chia|phí|thương hiệu/i.test(lower))) {
+    sceneType = 'pie_chart';
+    comicTitle = percentage ? `ROYALTY ${percentage}` : 'ROYALTY';
+  }
+  // 4. Freedom / Walking away / Violation / Say NO / Clean exit (Reference Image 4: VIOLATION)
+  else if (/vi phạm|violation|khiếu nại|cơ quan quản lý|pháp luật|luật|bảo vệ|phạt|pháp lý|tự do|từ chối|hủy thành công|phá sản|thoát|bước đi|rời bỏ|quyền/i.test(lower)) {
+    sceneType = 'street_walk';
+    comicTitle = 'VIOLATION';
+  }
+  // 5. Cooking / Broth / Kitchen / Recipe
+  else if (/\b(nấu|phở|xương|nước dùng|gia vị|bếp|ẩm thực|nướng|luộc|thảo quả|hoa hồi|thịt bò)\b/i.test(lower)) {
+    sceneType = 'cooking';
+    comicTitle = metric ? `${metric.toUpperCase()}` : 'CHUẨN VỊ';
+  }
+  // 6. Tech / Code / Algorithm / Python / JS
+  else if (/code|lập trình|thuật toán|developer|python|javascript|react|ai|dữ liệu|api|bug|bot|mã nguồn/i.test(lower)) {
+    sceneType = 'tech_code';
+    comicTitle = metric ? `${metric.toUpperCase()}` : 'ALGORITHM';
+  }
+  // 7. Compound Growth / Investment / Exponential wealth
+  else if (/lãi kép|đầu tư|sinh lời|tích lũy|7 tỷ|2 triệu|tăng trưởng|về hưu|cấp số nhân/i.test(lower)) {
+    sceneType = 'growth';
+    comicTitle = 'LÃI KÉP';
+  }
+  // 8. Percentage fallback
+  else if (percentage) {
+    sceneType = 'pie_chart';
+    comicTitle = `TỶ LỆ ${percentage}`;
+  }
+  // 9. Peaceful Morning / Freedom from alarm
+  else if (/thức dậy|buổi sáng|bình yên|báo thức|thảnh thơi|an nhiên|ngủ|xa xỉ/i.test(lower)) {
+    sceneType = 'peaceful_morning';
+    comicTitle = 'TỰ DO';
+  } else {
+    sceneType = 'universal';
+    comicTitle = sceneTitle ? sceneTitle.replace(/^(CẢNH|SCENE)\s*\d+[:.-]\s*/i, '').trim().split(/\s+/).slice(0, 2).join(' ').toUpperCase() : 'CHIẾN LƯỢC';
   }
 
-  const charSvg = getCharacterSvg(pose, 260, 360, strokeColor);
+  return {
+    sceneType,
+    comicTitle,
+    percentage: percentage || '5-10%',
+    metric: metric || '100%',
+  };
+}
 
+export function createCartoonSceneSvg({
+  clauseText,
+  sceneTitle = '',
+  features,
+}: {
+  clauseText: string;
+  sceneTitle?: string;
+  features: ReturnType<typeof extractComicFeatures>;
+}): string {
+  const { sceneType, comicTitle, percentage, metric } = features;
+  const safeTitle = escapeXml(comicTitle);
+
+  // 1. PIE CHART SCENE (Reference Image 2: ROYALTY 5-10%)
+  if (sceneType === 'pie_chart') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#FBF8EE" />
+        <text x="960" y="160" font-family="'Comic Sans MS', 'Chalkboard SE', 'Fredoka', 'Be Vietnam Pro', system-ui, sans-serif" font-weight="900" font-size="96" fill="#EF4444" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" text-anchor="middle" paint-order="stroke fill">
+          ${safeTitle}
+        </text>
+        <g transform="translate(850, 560)">
+          <circle cx="0" cy="0" r="300" fill="#60A5FA" stroke="#1E293B" stroke-width="12" />
+          <path d="M 0 0 L 0 -300 A 300 300 0 0 1 190 -230 Z" fill="#EF4444" stroke="#1E293B" stroke-width="10" />
+          <text x="90" y="-120" font-family="sans-serif" font-weight="900" font-size="52" fill="#FFFFFF" stroke="#1E293B" stroke-width="4" paint-order="stroke fill" text-anchor="middle">
+            ${escapeXml(percentage)}
+          </text>
+          <g transform="translate(100, -50)">
+            <rect x="0" y="0" width="160" height="90" rx="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+            <line x1="0" y1="28" x2="160" y2="28" stroke="#1E293B" stroke-width="4" />
+            <text x="80" y="55" font-family="sans-serif" font-weight="900" font-size="20" fill="#1E293B" text-anchor="middle">EVERY</text>
+            <text x="80" y="78" font-family="sans-serif" font-weight="900" font-size="20" fill="#1E293B" text-anchor="middle">MONTH</text>
+          </g>
+        </g>
+        <g transform="translate(1380, 480)">
+          <circle cx="100" cy="100" r="70" fill="#FFFFFF" stroke="#1E293B" stroke-width="10" />
+          <path d="M 65 75 Q 80 65 95 80" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+          <path d="M 135 75 Q 120 65 105 80" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+          <circle cx="80" cy="95" r="8" fill="#1E293B" />
+          <circle cx="120" cy="95" r="8" fill="#1E293B" />
+          <path d="M 80 135 Q 100 120 120 135" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+          <path d="M 145 90 Q 155 100 150 110 Q 140 105 145 90 Z" fill="#38BDF8" stroke="#1E293B" stroke-width="3" />
+          <path d="M 60 170 L 140 170 L 145 320 L 55 320 Z" fill="#BFDBFE" stroke="#1E293B" stroke-width="10" stroke-linejoin="round" />
+          <path d="M 60 200 L -120 120" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <circle cx="-125" cy="118" r="14" fill="#FFFFFF" stroke="#1E293B" stroke-width="5" />
+          <path d="M -125 118 L -155 105" stroke="#1E293B" stroke-width="7" stroke-linecap="round" />
+          <path d="M 140 200 L 170 270 L 165 310" fill="none" stroke="#1E293B" stroke-width="8" stroke-linecap="round" />
+          <line x1="85" y1="320" x2="85" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <line x1="115" y1="320" x2="115" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <ellipse cx="75" cy="485" rx="20" ry="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+          <ellipse cx="125" cy="485" rx="20" ry="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+        </g>
+      </svg>
+    `;
+  }
+
+  // 2. LOCKED DOOR SCENE (Reference Image 3: NOT EASY)
+  if (sceneType === 'locked_door') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#EAECEF" />
+        <g transform="translate(180, 160)">
+          <text x="0" y="0" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="88" fill="#EF4444" stroke="#1E293B" stroke-width="4" paint-order="stroke fill">EASY</text>
+          <line x1="-30" y1="20" x2="250" y2="-70" stroke="#DC2626" stroke-width="12" stroke-linecap="round" />
+        </g>
+        <g transform="translate(800, 120)">
+          <rect x="0" y="0" width="560" height="120" fill="#FFFFFF" stroke="#1E293B" stroke-width="8" />
+          <text x="280" y="82" font-family="sans-serif" font-weight="900" font-size="80" fill="#1E293B" text-anchor="middle">${safeTitle}</text>
+        </g>
+        <g transform="translate(1000, 270)">
+          <rect x="-10" y="-10" width="340" height="660" fill="#CBD5E1" stroke="#1E293B" stroke-width="8" />
+          <rect x="10" y="10" width="300" height="620" fill="#E2E8F0" stroke="#1E293B" stroke-width="6" />
+          <rect x="110" y="80" width="80" height="160" fill="#F8FAFC" stroke="#1E293B" stroke-width="6" />
+          <rect x="0" y="150" width="320" height="24" rx="4" fill="#94A3B8" stroke="#1E293B" stroke-width="5" />
+          <rect x="0" y="320" width="320" height="24" rx="4" fill="#94A3B8" stroke="#1E293B" stroke-width="5" />
+          <rect x="0" y="480" width="320" height="24" rx="4" fill="#94A3B8" stroke="#1E293B" stroke-width="5" />
+          <g transform="translate(50, 190)">
+            <circle cx="20" cy="10" r="16" fill="none" stroke="#1E293B" stroke-width="6" />
+            <rect x="5" y="10" width="30" height="30" rx="4" fill="#F59E0B" stroke="#1E293B" stroke-width="5" />
+          </g>
+          <g transform="translate(240, 360)">
+            <circle cx="20" cy="10" r="16" fill="none" stroke="#1E293B" stroke-width="6" />
+            <rect x="5" y="10" width="30" height="30" rx="4" fill="#F59E0B" stroke="#1E293B" stroke-width="5" />
+          </g>
+          <rect x="220" y="80" width="70" height="90" fill="#FFFFFF" stroke="#64748B" stroke-width="2" />
+          <text x="255" y="110" font-size="12" font-weight="900" text-anchor="middle">FORMS</text>
+        </g>
+        <g transform="translate(850, 320)">
+          <circle cx="100" cy="100" r="75" fill="#FFFFFF" stroke="#1E293B" stroke-width="10" />
+          <circle cx="75" cy="95" r="16" fill="none" stroke="#1E293B" stroke-width="6" />
+          <circle cx="75" cy="95" r="6" fill="#1E293B" />
+          <circle cx="125" cy="95" r="16" fill="none" stroke="#1E293B" stroke-width="6" />
+          <circle cx="125" cy="95" r="6" fill="#1E293B" />
+          <line x1="85" y1="135" x2="115" y2="135" stroke="#1E293B" stroke-width="7" stroke-linecap="round" />
+          <path d="M 25 60 Q 10 70 20 80" fill="none" stroke="#38BDF8" stroke-width="5" stroke-linecap="round" />
+          <path d="M 175 60 Q 190 70 180 80" fill="none" stroke="#38BDF8" stroke-width="5" stroke-linecap="round" />
+          <path d="M 60 175 L 140 175 L 145 320 L 55 320 Z" fill="#3B82F6" stroke="#1E293B" stroke-width="10" stroke-linejoin="round" />
+          <path d="M 60 205 L 10 160 L 25 100" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <path d="M 140 205 L 190 160 L 175 100" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <line x1="80" y1="320" x2="80" y2="480" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+          <line x1="120" y1="320" x2="120" y2="480" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+          <ellipse cx="70" cy="485" rx="20" ry="10" fill="#1E293B" stroke="#1E293B" stroke-width="4" />
+          <ellipse cx="130" cy="485" rx="20" ry="10" fill="#1E293B" stroke="#1E293B" stroke-width="4" />
+        </g>
+      </svg>
+    `;
+  }
+
+  // 3. STREET SUCCESS / ESCAPE / VIOLATION (Reference Image 4: VIOLATION)
+  if (sceneType === 'street_walk') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="760" fill="#93C5FD" />
+        <rect y="720" width="1920" height="70" fill="#86EFAC" stroke="#1E293B" stroke-width="4" />
+        <polygon points="0,790 1920,790 1920,930 0,930" fill="#E2E8F0" stroke="#1E293B" stroke-width="5" />
+        <line x1="200" y1="790" x2="160" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="450" y1="790" x2="410" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="750" y1="790" x2="710" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="1050" y1="790" x2="1010" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="1350" y1="790" x2="1310" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="1650" y1="790" x2="1610" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <rect y="930" width="1920" height="150" fill="#334155" stroke="#1E293B" stroke-width="5" />
+        <g transform="translate(100, 280)">
+          <path d="M 80 500 L 100 240 Q 70 200 100 160 L 120 240 L 140 500 Z" fill="#78350F" stroke="#1E293B" stroke-width="6" />
+          <circle cx="110" cy="180" r="110" fill="#4ADE80" stroke="#1E293B" stroke-width="8" />
+          <circle cx="40" cy="220" r="70" fill="#22C55E" stroke="#1E293B" stroke-width="7" />
+          <circle cx="170" cy="200" r="75" fill="#4ADE80" stroke="#1E293B" stroke-width="7" />
+        </g>
+        <g transform="translate(820, 200)">
+          <rect x="-20" y="0" width="960" height="46" rx="8" fill="#64748B" stroke="#1E293B" stroke-width="6" />
+          <rect x="0" y="46" width="920" height="540" fill="#FDBA74" stroke="#1E293B" stroke-width="8" />
+          <text x="580" y="150" font-family="sans-serif" font-weight="900" font-size="90" fill="#1E293B">GYM</text>
+          <g transform="translate(500, 220)">
+            <rect x="0" y="0" width="180" height="366" fill="#FED7AA" stroke="#1E293B" stroke-width="6" />
+            <rect x="25" y="25" width="130" height="140" fill="#E0F2FE" stroke="#1E293B" stroke-width="5" />
+            <circle cx="150" cy="200" r="10" fill="#1E293B" />
+          </g>
+          <rect x="730" y="240" width="170" height="180" fill="#E0F2FE" stroke="#1E293B" stroke-width="6" />
+          <g transform="translate(60, 160)">
+            <rect x="0" y="0" width="380" height="300" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+            <text x="190" y="80" font-family="sans-serif" font-weight="900" font-size="44" fill="#DC2626" text-anchor="middle">MAKE</text>
+            <text x="190" y="150" font-family="sans-serif" font-weight="900" font-size="44" fill="#DC2626" text-anchor="middle">CANCELING</text>
+            <text x="190" y="220" font-family="sans-serif" font-weight="900" font-size="44" fill="#DC2626" text-anchor="middle">DIFFICULT</text>
+            <circle cx="190" cy="145" r="140" fill="none" stroke="#DC2626" stroke-width="18" opacity="0.85" />
+            <line x1="90" y1="45" x2="290" y2="245" stroke="#DC2626" stroke-width="18" opacity="0.85" />
+          </g>
+        </g>
+        <g transform="translate(1820, 310)">
+          <line x1="20" y1="120" x2="20" y2="480" stroke="#1E293B" stroke-width="10" />
+          <path d="M 0 120 L 40 120 L 30 50 L 10 50 Z" fill="#FEF08A" stroke="#1E293B" stroke-width="6" />
+          <path d="M -10 50 Q 20 20 50 50 Z" fill="#1E293B" stroke="#1E293B" stroke-width="5" />
+        </g>
+        <g transform="translate(480, 480)">
+          <path d="M 80 -10 L 105 15 L 155 -35" fill="none" stroke="#22C55E" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+          <g transform="translate(160, 50)">
+            <rect x="0" y="0" width="170" height="42" rx="6" fill="#FFFFFF" stroke="#1E293B" stroke-width="4" />
+            <text x="85" y="28" font-family="sans-serif" font-weight="900" font-size="20" fill="#1E293B" text-anchor="middle">${safeTitle}</text>
+          </g>
+          <circle cx="100" cy="100" r="54" fill="#FFFFFF" stroke="#1E293B" stroke-width="8" />
+          <circle cx="88" cy="92" r="5" fill="#1E293B" />
+          <circle cx="116" cy="92" r="5" fill="#1E293B" />
+          <path d="M 88 116 Q 102 130 116 116" fill="none" stroke="#1E293B" stroke-width="5" stroke-linecap="round" />
+          <path d="M 70 156 L 130 156 L 135 270 L 65 270 Z" fill="#94A3B8" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" />
+          <path d="M 65 270 L 135 270 L 140 330 L 105 330 L 100 290 L 95 330 L 60 330 Z" fill="#2563EB" stroke="#1E293B" stroke-width="7" />
+          <line x1="80" y1="330" x2="45" y2="440" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+          <line x1="120" y1="330" x2="155" y2="440" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+          <ellipse cx="38" cy="445" rx="16" ry="8" fill="#FFFFFF" stroke="#1E293B" stroke-width="5" />
+          <ellipse cx="162" cy="445" rx="16" ry="8" fill="#FFFFFF" stroke="#1E293B" stroke-width="5" />
+          <path d="M 125 180 L 160 250 L 175 280" fill="none" stroke="#1E293B" stroke-width="8" stroke-linecap="round" />
+          <rect x="150" y="280" width="80" height="60" rx="8" fill="#065F46" stroke="#1E293B" stroke-width="5" />
+          <path d="M 175 280 L 175 268 Q 190 262 205 268 L 205 280" fill="none" stroke="#1E293B" stroke-width="4" />
+          <path d="M 75 180 L 40 230 L 25 250" fill="none" stroke="#1E293B" stroke-width="8" stroke-linecap="round" />
+        </g>
+      </svg>
+    `;
+  }
+
+  // 4. CROWD WAVE / REGISTRATION INFLUX (Reference Image 1: WAVE)
+  if (sceneType === 'crowd_wave') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="660" fill="#93C5FD" />
+        <rect y="640" width="1920" height="440" fill="#86EFAC" />
+        <text x="180" y="140" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="110" fill="#1E293B">${safeTitle}</text>
+        <g transform="translate(180, 320)">
+          <text x="120" y="-30" font-family="sans-serif" font-weight="900" font-size="28" fill="#1E293B" text-anchor="middle">MONTHLY BILLING</text>
+          <rect x="0" y="0" width="240" height="230" rx="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+          <rect x="0" y="0" width="240" height="50" rx="10" fill="#EF4444" stroke="#1E293B" stroke-width="6" />
+          <text x="120" y="36" font-family="sans-serif" font-weight="900" font-size="24" fill="#FFFFFF" text-anchor="middle">JANUARY</text>
+          <circle cx="55" cy="140" r="18" fill="none" stroke="#EF4444" stroke-width="4" />
+          <text x="55" y="146" font-size="18" font-family="sans-serif" font-weight="800" text-anchor="middle">15</text>
+          <circle cx="55" cy="190" r="18" fill="none" stroke="#EF4444" stroke-width="4" />
+          <text x="55" y="196" font-size="18" font-family="sans-serif" font-weight="800" text-anchor="middle">29</text>
+        </g>
+        <g transform="translate(850, 160)">
+          <text x="0" y="210" font-family="sans-serif" font-weight="900" font-size="190" fill="#FCD34D" stroke="#1E293B" stroke-width="8" paint-order="stroke fill" text-anchor="middle">$</text>
+          <text x="0" y="270" font-family="sans-serif" font-weight="900" font-size="34" fill="#1E293B" text-anchor="middle">NEW BILLING</text>
+        </g>
+        <g transform="translate(1320, 220)">
+          <rect x="-20" y="0" width="620" height="46" rx="8" fill="#64748B" stroke="#1E293B" stroke-width="6" />
+          <rect x="0" y="46" width="600" height="600" fill="#FDBA74" stroke="#1E293B" stroke-width="8" />
+          <text x="260" y="160" font-family="sans-serif" font-weight="900" font-size="80" fill="#1E293B" letter-spacing="10">G-Y-M</text>
+          <rect x="180" y="260" width="140" height="386" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+          <text x="250" y="365" font-family="sans-serif" font-weight="900" font-size="20" fill="#1E293B" text-anchor="middle">JOIN NOW</text>
+        </g>
+        <path d="M 0 780 Q 400 780 700 680 Q 1000 580 1420 780 L 1520 780 L 1520 860 Q 1000 660 700 760 Q 400 860 0 860 Z" fill="#E2E8F0" stroke="#1E293B" stroke-width="6" />
+        <g transform="translate(0, 0)">
+          <g transform="translate(1380, 600)"><circle cx="50" cy="50" r="26" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="170" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="170" x2="25" y2="230" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="170" x2="70" y2="230" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(1260, 620)"><circle cx="50" cy="50" r="26" fill="#1E293B" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="170" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="170" x2="25" y2="230" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="170" x2="70" y2="230" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(1080, 600)"><circle cx="50" cy="50" r="26" fill="#F8FAFC" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="20" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="65" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(860, 560)"><circle cx="50" cy="50" r="26" fill="#F59E0B" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="25" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="70" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(680, 590)"><circle cx="50" cy="50" r="26" fill="#3B82F6" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="25" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="70" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(420, 680)"><circle cx="50" cy="50" r="26" fill="#10B981" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="25" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="70" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(180, 710)"><circle cx="50" cy="50" r="26" fill="#F8FAFC" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="25" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="70" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+        </g>
+      </svg>
+    `;
+  }
+
+  // Fallback to Universal Cartoon Studio
   return `
     <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&amp;display=swap');
-          text {
-            font-family: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
-          }
-        </style>
-      </defs>
-
-      <!-- Background -->
-      <rect width="1920" height="1080" fill="${bgColor}" />
-      ${gridSvg}
-
-      <!-- Ground / Floor line -->
-      <line x1="60" y1="870" x2="1860" y2="870" stroke="${strokeColor}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 120 890 L 160 870 M 340 900 L 380 870 M 600 890 L 640 870 M 1100 890 L 1140 870 M 1500 890 L 1540 870" stroke="${strokeColor}" stroke-width="4" stroke-linecap="round" />
-
-      <!-- Top Technical Badge / Watermark -->
-      <rect x="60" y="40" width="340" height="54" rx="14" fill="${cardBg}" stroke="${strokeColor}" stroke-width="4" />
-      <circle cx="90" cy="67" r="10" fill="${accentColor}" />
-      <text x="120" y="74" font-weight="900" font-size="20" fill="${strokeColor}">CẢNH #${sceneId} • NHỊP ${beatIndex}</text>
-
-      <rect x="1560" y="40" width="300" height="54" rx="14" fill="${cardBg}" stroke="${strokeColor}" stroke-width="4" />
-      <text x="1710" y="74" font-weight="800" font-size="18" text-anchor="middle" fill="${strokeColor}">MAX 5 GIÂY / HÌNH</text>
-
-      <!-- Main Visual Stage: Center Graphic & Infographic Cards -->
-      <g transform="translate(680, 160)">
-        <!-- Main Board / Diagram Container -->
-        <rect x="0" y="0" width="1120" height="650" rx="28" fill="${cardBg}" stroke="${strokeColor}" stroke-width="8" />
-        <rect x="30" y="30" width="1060" height="70" rx="16" fill="${accentColor}" stroke="${strokeColor}" stroke-width="5" />
-        <text x="560" y="76" font-weight="900" font-size="34" text-anchor="middle" fill="#FFFFFF">${title.toUpperCase()}</text>
-
-        <!-- Sub Graphic Inside Board -->
-        <g transform="translate(60, 140)">
-          <!-- Dynamic Charts / Diagrams / Visual Metaphors -->
-          <rect x="0" y="0" width="460" height="420" rx="18" fill="rgba(0,0,0,0.03)" stroke="${strokeColor}" stroke-width="4" stroke-dasharray="10 8" />
-          
-          <!-- Bar Graph or Pie Chart -->
-          <line x1="40" y1="360" x2="420" y2="360" stroke="${strokeColor}" stroke-width="5" />
-          <line x1="40" y1="60" x2="40" y2="360" stroke="${strokeColor}" stroke-width="5" />
-          
-          <rect x="70" y="240" width="55" height="120" rx="6" fill="#3498DB" stroke="${strokeColor}" stroke-width="4" />
-          <rect x="155" y="180" width="55" height="180" rx="6" fill="#2ECC71" stroke="${strokeColor}" stroke-width="4" />
-          <rect x="240" y="110" width="55" height="250" rx="6" fill="#E67E22" stroke="${strokeColor}" stroke-width="4" />
-          <rect x="325" y="70" width="55" height="290" rx="6" fill="#E74C3C" stroke="${strokeColor}" stroke-width="4" />
-
-          <!-- Growth Arrow -->
-          <path d="M 80 220 Q 220 120 370 50" fill="none" stroke="${accentColor}" stroke-width="8" stroke-linecap="round" />
-          <polygon points="360,40 390,45 375,70" fill="${accentColor}" />
-
-          <text x="230" y="395" font-weight="800" font-size="20" text-anchor="middle" fill="${strokeColor}">BIỂU ĐỒ PHÂN TÍCH</text>
-        </g>
-
-        <!-- Right Side: Key Bullet Explanations & Dollar Metaphors -->
-        <g transform="translate(560, 150)">
-          <!-- Callout 1 -->
-          <rect x="0" y="0" width="480" height="110" rx="16" fill="${cardBg}" stroke="${strokeColor}" stroke-width="5" />
-          <circle cx="45" cy="55" r="24" fill="#2ECC71" stroke="${strokeColor}" stroke-width="4" />
-          <text x="45" y="64" font-weight="900" font-size="26" text-anchor="middle" fill="#FFFFFF">$</text>
-          <text x="90" y="50" font-weight="800" font-size="22" fill="${strokeColor}">TỐI ƯU HÓA DÒNG TIỀN</text>
-          <text x="90" y="80" font-weight="600" font-size="16" fill="#64748B">Quy luật chu kỳ tài chính &amp; chi phí</text>
-
-          <!-- Callout 2 -->
-          <rect x="0" y="140" width="480" height="110" rx="16" fill="${cardBg}" stroke="${strokeColor}" stroke-width="5" />
-          <circle cx="45" cy="195" r="24" fill="#E74C3C" stroke="${strokeColor}" stroke-width="4" />
-          <text x="45" y="204" font-weight="900" font-size="24" text-anchor="middle" fill="#FFFFFF">!</text>
-          <text x="90" y="190" font-weight="800" font-size="22" fill="${strokeColor}">RỦI RO THIẾT BỊ &amp; MẶT BẰNG</text>
-          <text x="90" y="220" font-weight="600" font-size="16" fill="#64748B">Hợp đồng dài hạn &amp; đòn bẩy rủi ro</text>
-
-          <!-- Callout 3: Prompt highlight -->
-          <rect x="0" y="280" width="480" height="120" rx="16" fill="rgba(245,158,11,0.12)" stroke="${accentColor}" stroke-width="4" stroke-dasharray="8 6" />
-          <text x="240" y="325" font-weight="800" font-size="18" text-anchor="middle" fill="${accentColor}">Ý TƯỞNG HÌNH ẢNH 2D</text>
-          <text x="240" y="360" font-weight="600" font-size="15" text-anchor="middle" fill="${strokeColor}">
-            ${prompt.length > 55 ? prompt.substring(0, 52) + '...' : prompt}
-          </text>
-        </g>
+      <rect width="1920" height="1080" fill="#FBF8EE" />
+      <text x="960" y="160" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="96" fill="#3B82F6" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" text-anchor="middle" paint-order="stroke fill">
+        ${safeTitle}
+      </text>
+      <g transform="translate(860, 480)">
+        <circle cx="0" cy="0" r="180" fill="#FDE047" stroke="#1E293B" stroke-width="12" />
+        <rect x="-60" y="150" width="120" height="70" rx="10" fill="#94A3B8" stroke="#1E293B" stroke-width="8" />
+        <line x1="-50" y1="185" x2="50" y2="185" stroke="#1E293B" stroke-width="6" />
+        <path d="M -50 40 Q 0 -60 50 40" fill="none" stroke="#CA8A04" stroke-width="10" stroke-linecap="round" />
+        <line x1="0" y1="-220" x2="0" y2="-280" stroke="#EAB308" stroke-width="12" stroke-linecap="round" />
+        <line x1="180" y1="-140" x2="230" y2="-190" stroke="#EAB308" stroke-width="12" stroke-linecap="round" />
+        <line x1="-180" y1="-140" x2="-230" y2="-190" stroke="#EAB308" stroke-width="12" stroke-linecap="round" />
+        <text x="0" y="270" font-family="sans-serif" font-weight="900" font-size="44" fill="#1E293B" text-anchor="middle">
+          ${escapeXml(metric)}
+        </text>
       </g>
-
-      <!-- Stickman Main Character -->
-      ${charSvg}
-
-      <!-- Speech Bubble or Thought Cloud -->
-      <g transform="translate(200, 220)">
-        <path d="M 0 0 L 280 0 Q 310 0 310 30 L 310 90 Q 310 120 280 120 L 160 120 L 120 160 L 130 120 L 30 120 Q 0 120 0 90 Z" fill="${cardBg}" stroke="${strokeColor}" stroke-width="6" />
-        <text x="155" y="55" font-weight="900" font-size="22" text-anchor="middle" fill="${accentColor}">
-          ${customNote || 'CHI TIẾT # ' + beatIndex}
-        </text>
-        <text x="155" y="88" font-weight="700" font-size="17" text-anchor="middle" fill="${strokeColor}">
-          Thời lượng: &lt;= 5.0s
-        </text>
+      <g transform="translate(360, 460)">
+        <circle cx="100" cy="100" r="68" fill="#FFFFFF" stroke="#1E293B" stroke-width="9" />
+        <circle cx="86" cy="90" r="7" fill="#1E293B" />
+        <circle cx="118" cy="90" r="7" fill="#1E293B" />
+        <path d="M 88 122 Q 102 138 120 122" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+        <path d="M 60 170 L 140 170 L 145 320 L 55 320 Z" fill="#3B82F6" stroke="#1E293B" stroke-width="9" />
+        <path d="M 60 200 L -20 130 L -10 60" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+        <path d="M 140 200 L 220 130 L 280 80" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+        <line x1="85" y1="320" x2="65" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+        <line x1="115" y1="320" x2="135" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
       </g>
     </svg>
   `;
 }
 
-/**
- * Generates an expanded set of visual beats for all 14 scenes.
- * Every visual beat has a duration of AT MOST 5.0 seconds (150 frames @ 30 FPS).
- */
+export function generateStickmanSvg(options: GenerateImageOptions): string {
+  const targetText = options.content || options.prompt || options.title;
+  const features = extractComicFeatures(targetText, options.title);
+  return createCartoonSceneSvg({
+    clauseText: targetText,
+    sceneTitle: options.title,
+    features,
+  });
+}
+
 export function buildMultiBeatScenes(scenes: SceneData[]): SceneData[] {
   return scenes.map((scene) => {
-    // If scene already has rich semantic beats, preserve them
     if (scene.beats && scene.beats.length > 0) {
       return scene;
     }
+
+    const durationSec = scene.duration_in_seconds;
     const totalFrames = scene.duration_in_frames;
-    const totalSec = scene.duration_in_seconds;
 
-    // Determine how many visual beats are needed so that EVERY beat is <= 5.0 seconds
-    const maxDurationSec = 4.8;
-    const neededBeats = Math.max(2, Math.ceil(totalSec / maxDurationSec));
+    // Natural beat generation (no 5s limit)
+    const features = extractComicFeatures(scene.text, scene.title);
+    const svgArt = createCartoonSceneSvg({
+      clauseText: scene.text,
+      sceneTitle: scene.title,
+      features,
+    });
 
-    const beatFrames = Math.floor(totalFrames / neededBeats);
-    const beats: VisualBeat[] = [];
-
-    // Distinct character poses and prompts for sub-beats
-    const poses: CharacterPose[] = [
-      'explaining',
-      scene.id % 2 === 0 ? 'shocked' : 'running',
-      scene.id % 3 === 0 ? 'balance' : 'lifting',
-      'trainer',
-    ];
-
-    const subTitles = [
-      `${scene.title} - Bối cảnh`,
-      `${scene.title} - Trọng tâm`,
-      `${scene.title} - Đúc kết`,
-      `${scene.title} - Mở rộng`,
-    ];
-
-    for (let i = 0; i < neededBeats; i++) {
-      const isLast = i === neededBeats - 1;
-      const currentBeatFrames = isLast
-        ? totalFrames - (neededBeats - 1) * beatFrames
-        : beatFrames;
-      const durationSec = currentBeatFrames / 30;
-      const startOffset = i * beatFrames;
-
-      const beatPose = poses[i % poses.length];
-      const beatTitle = subTitles[i] || `Nhịp ${i + 1}`;
-
-      const svgArt = generateStickmanSvg({
-        title: beatTitle,
-        prompt: scene.prompt,
-        sceneId: scene.id,
-        beatIndex: i + 1,
-        pose: beatPose,
-        style: i === 0 ? 'whiteboard' : i === 1 ? 'pastel' : 'comic_memo',
-        customNote: `Nhịp ${i + 1}/${neededBeats} • ${(durationSec).toFixed(1)}s`,
-      });
-
-      beats.push({
-        id: `scene_${scene.id}_beat_${i + 1}`,
-        sub_index: i + 1,
-        title: beatTitle,
-        prompt: `${scene.prompt} (Góc nhìn nhịp ${i + 1}: nhân vật ${beatPose}, chuyển động tối đa 5s)`,
-        image_file: i === 0 ? scene.image_file : `scene_${scene.id}.png`,
+    const beats: VisualBeat[] = [
+      {
+        id: `scene_${scene.id}_beat_1`,
+        sub_index: 1,
+        title: scene.title,
+        prompt: `2D cartoon stickman explainer, ${features.comicTitle}`,
+        image_file: scene.image_file,
         svg_data: svgArt,
-        duration_in_seconds: Number(durationSec.toFixed(2)),
-        duration_in_frames: currentBeatFrames,
-        start_frame_offset: startOffset,
+        duration_in_seconds: durationSec,
+        duration_in_frames: totalFrames,
+        start_frame_offset: 0,
         caption: scene.text,
-      });
-    }
+      },
+    ];
 
     return {
       ...scene,

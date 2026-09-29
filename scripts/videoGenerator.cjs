@@ -4,6 +4,25 @@ const { execSync } = require('child_process');
 const googleTTS = require('google-tts-api');
 const sharp = require('sharp');
 
+// Load environment variables from .env if present
+const envPath = path.resolve(__dirname, '../.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const idx = trimmed.indexOf('=');
+      if (idx !== -1) {
+        const key = trimmed.substring(0, idx).trim();
+        const val = trimmed.substring(idx + 1).trim();
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  });
+}
+
 const ROOT_DIR = path.resolve(__dirname, '..');
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 const AUDIO_DIR = path.join(PUBLIC_DIR, 'audio');
@@ -16,266 +35,1308 @@ const SRC_DATA_DIR = path.join(ROOT_DIR, 'src/data');
   }
 });
 
-// Rich Stickman Character Poses & Visual Props
-const POSES = {
-  explaining: (x, y, stroke = '#1E293B') => `
-    <g transform="translate(${x}, ${y})">
-      <!-- Glasses -->
-      <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <rect x="72" y="80" width="28" height="22" rx="5" fill="none" stroke="${stroke}" stroke-width="4" />
-      <rect x="110" y="80" width="28" height="22" rx="5" fill="none" stroke="${stroke}" stroke-width="4" />
-      <line x1="100" y1="90" x2="110" y2="90" stroke="${stroke}" stroke-width="4" />
-      <circle cx="86" cy="91" r="5" fill="${stroke}" />
-      <circle cx="124" cy="91" r="5" fill="${stroke}" />
-      <path d="M 88 122 Q 105 136 122 122" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <!-- Body & Pointer Stick -->
-      <line x1="100" y1="152" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <path d="M 100 190 L 190 150 L 340 100" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <circle cx="345" cy="98" r="8" fill="#EF4444" />
-      <path d="M 100 190 L 45 250 L 60 310" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="330" x2="60" y2="500" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <line x1="100" y1="330" x2="140" y2="500" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-    </g>
-  `,
-
-  buying_dopamine: (x, y, stroke = '#1E293B') => `
-    <g transform="translate(${x}, ${y})">
-      <!-- Brain Dopamine Aura -->
-      <circle cx="100" cy="95" r="75" fill="none" stroke="#F59E0B" stroke-width="4" stroke-dasharray="6 6" />
-      <text x="100" y="15" font-family="sans-serif" font-weight="900" font-size="22" fill="#D97706" text-anchor="middle">🧠 DOPAMINE HIT!</text>
-      <!-- Sparkles around head -->
-      <path d="M 30 70 L 45 75 L 30 80 L 35 65 Z" fill="#F59E0B" />
-      <path d="M 165 60 L 180 65 L 165 70 L 170 55 Z" fill="#F59E0B" />
-      <!-- Head with Star Eyes -->
-      <circle cx="100" cy="95" r="52" fill="#FEF08A" stroke="${stroke}" stroke-width="8" />
-      <text x="82" y="98" font-size="24" text-anchor="middle">⭐</text>
-      <text x="118" y="98" font-size="24" text-anchor="middle">⭐</text>
-      <!-- Excited open mouth smile -->
-      <path d="M 85 115 Q 100 145 115 115 Z" fill="#EF4444" stroke="${stroke}" stroke-width="4" />
-      <!-- Body leaning forward -->
-      <line x1="100" y1="147" x2="130" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <!-- Left arm holding phone -->
-      <path d="M 110 190 L 50 220 L 70 270" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <rect x="50" y="240" width="45" height="75" rx="8" fill="#1E293B" stroke="${stroke}" stroke-width="3" />
-      <rect x="56" y="248" width="33" height="55" rx="4" fill="#38BDF8" />
-      <!-- Right arm pressing the big BUY NOW button -->
-      <path d="M 110 190 L 220 180 L 320 220" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <!-- Hand clicking -->
-      <circle cx="325" cy="225" r="14" fill="#EF4444" stroke="${stroke}" stroke-width="4" />
-      <!-- Legs dynamic pose -->
-      <path d="M 130 330 L 70 410 L 40 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <path d="M 130 330 L 190 410 L 210 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-    </g>
-  `,
-
-  shocked_wallet: (x, y, stroke = '#1E293B') => `
-    <g transform="translate(${x}, ${y})">
-      <!-- Head with shocked expression -->
-      <circle cx="100" cy="100" r="54" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <ellipse cx="85" cy="90" rx="8" ry="12" fill="${stroke}" />
-      <ellipse cx="115" cy="90" rx="8" ry="12" fill="${stroke}" />
-      <ellipse cx="100" cy="128" rx="16" ry="20" fill="#1E293B" stroke="${stroke}" stroke-width="4" />
-      <!-- Sweat drops -->
-      <path d="M 160 70 Q 175 80 165 95 Q 155 88 160 70 Z" fill="#38BDF8" stroke="${stroke}" stroke-width="3" />
-      <path d="M 40 70 Q 25 80 35 95 Q 45 88 40 70 Z" fill="#38BDF8" stroke="${stroke}" stroke-width="3" />
-      <!-- Hands on cheeks in disbelief -->
-      <path d="M 100 160 L 50 130 L 55 100" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 160 L 150 130 L 145 100" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <circle cx="55" cy="100" r="12" fill="#FFFFFF" stroke="${stroke}" stroke-width="5" />
-      <circle cx="145" cy="100" r="12" fill="#FFFFFF" stroke="${stroke}" stroke-width="5" />
-      <!-- Body & shaking legs -->
-      <line x1="100" y1="160" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <path d="M 100 330 L 60 410 L 45 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <path d="M 100 330 L 140 410 L 155 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <!-- Floating empty wallet with wings -->
-      <g transform="translate(190, 160)">
-        <rect x="0" y="10" width="80" height="50" rx="8" fill="#78350F" stroke="${stroke}" stroke-width="5" />
-        <path d="M 0 10 Q 40 30 80 10" fill="none" stroke="${stroke}" stroke-width="4" />
-        <!-- Cobweb inside wallet -->
-        <text x="40" y="44" font-size="20" text-anchor="middle">🕸️ 0₫</text>
-      </g>
-    </g>
-  `,
-
-  compound_growth: (x, y, stroke = '#1E293B') => `
-    <g transform="translate(${x}, ${y})">
-      <!-- Head with confident investor smile -->
-      <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <circle cx="86" cy="90" r="6" fill="${stroke}" />
-      <circle cx="118" cy="90" r="6" fill="${stroke}" />
-      <path d="M 88 120 Q 102 135 120 120" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <!-- Body standing tall -->
-      <line x1="100" y1="152" x2="100" y2="320" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <!-- Left arm planting gold coin into soil pot -->
-      <path d="M 100 190 L 30 220 L -30 260" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <circle cx="-35" cy="270" r="18" fill="#FBBF24" stroke="${stroke}" stroke-width="4" />
-      <text x="-35" y="277" font-weight="900" font-size="20" text-anchor="middle" fill="#78350F">₫</text>
-      <!-- Right arm gesturing to rocket graph -->
-      <path d="M 100 190 L 170 140 L 250 80" fill="none" stroke="${stroke}" stroke-width="9" stroke-linecap="round" />
-      <polygon points="245,70 270,75 255,95" fill="#10B981" />
-      <!-- Legs firm stance -->
-      <line x1="100" y1="320" x2="60" y2="490" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <line x1="100" y1="320" x2="140" y2="490" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-    </g>
-  `,
-
-  three_jars: (x, y, stroke = '#1E293B') => `
-    <g transform="translate(${x}, ${y})">
-      <!-- Head with thoughtful budgeting expression -->
-      <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <circle cx="88" cy="92" r="6" fill="${stroke}" />
-      <circle cx="118" cy="92" r="6" fill="${stroke}" />
-      <path d="M 90 122 Q 104 132 118 122" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <!-- Body -->
-      <line x1="100" y1="152" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <!-- Both arms pouring coins into jars -->
-      <path d="M 100 190 L 40 220 L 10 270" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 190 L 160 210 L 220 250" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <!-- Coins dropping from hands -->
-      <circle cx="10" cy="290" r="10" fill="#FBBF24" stroke="${stroke}" stroke-width="3" />
-      <circle cx="225" cy="275" r="10" fill="#FBBF24" stroke="${stroke}" stroke-width="3" />
-      <!-- Legs -->
-      <line x1="100" y1="330" x2="70" y2="500" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <line x1="100" y1="330" x2="130" y2="500" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-    </g>
-  `,
-
-  peaceful_freedom: (x, y, stroke = '#1E293B') => `
-    <g transform="translate(${x}, ${y})">
-      <!-- Head wearing cool sunglasses -->
-      <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <!-- Cool Sunglasses -->
-      <polygon points="68,85 98,85 94,106 72,106" fill="#1E293B" />
-      <polygon points="106,85 136,85 132,106 110,106" fill="#1E293B" />
-      <line x1="98" y1="92" x2="106" y2="92" stroke="#1E293B" stroke-width="5" />
-      <!-- Smug satisfied smile -->
-      <path d="M 88 124 Q 104 140 124 120" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <!-- Body leaning back comfortably -->
-      <line x1="100" y1="152" x2="80" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <!-- Left arm holding steaming coffee cup -->
-      <path d="M 95 190 L 30 210 L 20 260" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <rect x="0" y="260" width="38" height="42" rx="6" fill="#FFFFFF" stroke="${stroke}" stroke-width="4" />
-      <path d="M 38 270 Q 50 280 38 290" fill="none" stroke="${stroke}" stroke-width="4" />
-      <path d="M 12 250 Q 18 240 12 230" fill="none" stroke="#94A3B8" stroke-width="3" />
-      <path d="M 22 250 Q 28 240 22 230" fill="none" stroke="#94A3B8" stroke-width="3" />
-      <!-- Right hand waving "NO" peacefully -->
-      <path d="M 95 190 L 170 170 L 200 130" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <circle cx="205" cy="125" r="14" fill="#FFFFFF" stroke="${stroke}" stroke-width="4" />
-      <!-- Relaxed legs crossed -->
-      <path d="M 80 330 L 40 420 L 10 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <path d="M 80 330 L 120 400 L 90 480" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-    </g>
-  `,
-
-  tech_robot: (x, y, stroke = '#1E293B') => `
-    <g transform="translate(${x}, ${y})">
-      <!-- Head with VR / Tech Visor -->
-      <circle cx="100" cy="100" r="52" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <rect x="70" y="80" width="60" height="24" rx="6" fill="#06B6D4" stroke="${stroke}" stroke-width="4" />
-      <circle cx="85" cy="92" r="4" fill="#FFFFFF" />
-      <circle cx="115" cy="92" r="4" fill="#FFFFFF" />
-      <path d="M 88 122 Q 104 134 118 122" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <!-- Body with tech circuit lines -->
-      <line x1="100" y1="152" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <!-- Hologram touch arms -->
-      <path d="M 100 190 L 160 170 L 220 150" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <circle cx="225" cy="148" r="12" fill="#38BDF8" stroke="${stroke}" stroke-width="3" />
-      <path d="M 100 190 L 40 210 L -10 230" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="330" x2="65" y2="490" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <line x1="100" y1="330" x2="135" y2="490" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-    </g>
-  `,
-
-  fitness_lifting: (x, y, stroke = '#1E293B') => `
-    <g transform="translate(${x}, ${y})">
-      <circle cx="100" cy="110" r="50" fill="#FFFFFF" stroke="${stroke}" stroke-width="8" />
-      <circle cx="85" cy="100" r="5" fill="${stroke}" />
-      <circle cx="115" cy="100" r="5" fill="${stroke}" />
-      <path d="M 85 130 Q 100 145 115 130" fill="none" stroke="${stroke}" stroke-width="5" stroke-linecap="round" />
-      <!-- Heavy Barbell -->
-      <line x1="-70" y1="40" x2="270" y2="40" stroke="${stroke}" stroke-width="12" stroke-linecap="round" />
-      <rect x="-110" y="5" width="35" height="70" rx="6" fill="#1E293B" stroke="${stroke}" stroke-width="5" />
-      <rect x="270" y="5" width="35" height="70" rx="6" fill="#1E293B" stroke="${stroke}" stroke-width="5" />
-      <!-- Arms holding bar up -->
-      <path d="M 100 180 L 20 100 L 0 45" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <path d="M 100 180 L 180 100 L 200 45" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
-      <line x1="100" y1="160" x2="100" y2="330" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <path d="M 100 330 L 45 420 L 30 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-      <path d="M 100 330 L 155 420 L 170 500" fill="none" stroke="${stroke}" stroke-width="10" stroke-linecap="round" />
-    </g>
-  `,
-};
-
-const BG_PALETTES = [
-  '#FBF7ED',
-  '#F0FDF4',
-  '#EFF6FF',
-  '#FFF7ED',
-  '#FAF5FF',
-  '#F8FAFC',
-];
+function escapeXml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
 
 /**
- * High-quality Vietnamese TTS audio generator
+ * Natural Content-Driven Scene Beat Segmenter
+ * Does NOT impose an arbitrary <= 5s limit!
+ * Allocates 1 or 2 high-impact illustrations based on natural thought shifts.
  */
-async function generateTTSAudio(text, voiceId, speed, outputPath) {
-  const tempRaw = path.join('/tmp', `tts_raw_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`);
-  let generated = false;
+function segmentSceneNaturally(scene, durationInSeconds, totalFrames) {
+  const text = (scene.text || '').trim();
 
-  if (voiceId === 'vi-VN-Standard-A') {
-    try {
-      execSync(`python3 -m edge_tts --voice "vi-VN-HoaiMyNeural" --text "${text.replace(/"/g, '\\"')}" --write-media "${tempRaw}"`, { stdio: 'pipe' });
-      generated = true;
-    } catch (e) {}
-  } else if (voiceId === 'vi-VN-Standard-B') {
-    try {
-      execSync(`python3 -m edge_tts --voice "vi-VN-NamMinhNeural" --text "${text.replace(/"/g, '\\"')}" --write-media "${tempRaw}"`, { stdio: 'pipe' });
-      generated = true;
-    } catch (e) {}
-  } else if (voiceId === 'vi-VN-Standard-C') {
-    try {
-      execSync(`say -v Linh "${text.replace(/"/g, '\\"')}" -o /tmp/say_tmp.aiff && /opt/homebrew/bin/ffmpeg -y -i /tmp/say_tmp.aiff "${tempRaw}" 2>/dev/null`, { stdio: 'pipe' });
-      generated = true;
-    } catch (e) {
-      try {
-        execSync(`python3 -m edge_tts --voice "vi-VN-HoaiMyNeural" --text "${text.replace(/"/g, '\\"')}" --write-media "${tempRaw}"`, { stdio: 'pipe' });
-        generated = true;
-      } catch (e2) {}
-    }
-  } else if (voiceId === 'vi-VN-Standard-D') {
-    try {
-      execSync(`python3 -m edge_tts --voice "vi-VN-NamMinhNeural" --text "${text.replace(/"/g, '\\"')}" --write-media "${tempRaw}"`, { stdio: 'pipe' });
-      generated = true;
-    } catch (e) {}
+  // If short (<= 11s), 1 single strong visual illustration
+  if (durationInSeconds <= 11.0) {
+    return [
+      {
+        id: `scene_${scene.id}_beat_1`,
+        sub_index: 1,
+        title: scene.title,
+        text,
+        caption: text,
+        duration_in_seconds: Number(durationInSeconds.toFixed(2)),
+        duration_in_frames: totalFrames,
+        start_frame_offset: 0,
+      },
+    ];
   }
 
-  // Fallback to Google TTS
-  if (!generated) {
+  // Preserve numbers with dots (e.g. 2.600%, 500.000)
+  const masked = text.replace(/(\d)\.(\d)/g, '$1___DOT___$2');
+  const sentences = masked
+    .split(/(?<=[.!?;\n])\s+/)
+    .map((s) => s.replace(/___DOT___/g, '.').trim())
+    .filter(Boolean);
+
+  if (sentences.length <= 1) {
+    return [
+      {
+        id: `scene_${scene.id}_beat_1`,
+        sub_index: 1,
+        title: scene.title,
+        text,
+        caption: text,
+        duration_in_seconds: Number(durationInSeconds.toFixed(2)),
+        duration_in_frames: totalFrames,
+        start_frame_offset: 0,
+      },
+    ];
+  }
+
+  // Target word count per beat ~ 28 to 35 words (approx 8-11s of speech)
+  const targetWords = 28;
+  const parts = [];
+  let current = [];
+  let curCount = 0;
+
+  for (let i = 0; i < sentences.length; i++) {
+    const s = sentences[i];
+    const cnt = s.split(/\s+/).length;
+    current.push(s);
+    curCount += cnt;
+
+    // If reached target words and still have sentences left
+    if (curCount >= targetWords && i < sentences.length - 1) {
+      parts.push(current.join(' '));
+      current = [];
+      curCount = 0;
+    }
+  }
+
+  if (current.length > 0) {
+    // If the trailing part is too short (< 14 words) and we already have parts, merge it
+    if (curCount < 14 && parts.length > 0) {
+      parts[parts.length - 1] += ' ' + current.join(' ');
+    } else {
+      parts.push(current.join(' '));
+    }
+  }
+
+  const totalWords = parts.reduce((acc, p) => acc + p.split(/\s+/).length, 0) || 1;
+  let allocated = 0;
+
+  return parts.map((part, idx) => {
+    const isLast = idx === parts.length - 1;
+    const wordsCount = part.split(/\s+/).length;
+    let frames = Math.round(totalFrames * (wordsCount / totalWords));
+    if (isLast) frames = totalFrames - allocated;
+    const startOffset = allocated;
+    allocated += frames;
+    const durSec = Number((frames / 30).toFixed(2));
+
+    return {
+      id: `scene_${scene.id}_beat_${idx + 1}`,
+      sub_index: idx + 1,
+      title: `${scene.title} - Phần ${idx + 1}`,
+      text: part,
+      caption: part,
+      duration_in_seconds: durSec,
+      duration_in_frames: frames,
+      start_frame_offset: startOffset,
+    };
+  });
+}
+
+/**
+ * Extract 1-2 Punchy Comic Title Words & Primary Metric from text
+ */
+function extractComicFeatures(clauseText, sceneTitle = '') {
+  const clean = (clauseText || '').trim();
+  const lower = clean.toLowerCase();
+
+  // Extract percentage or prominent metric
+  const percentMatch = clean.match(/(\d+(?:[.,]\d+)?\s*%\s*(?:-\s*\d+(?:[.,]\d+)?\s*%)?)/i);
+  const metricMatch = clean.match(/(\d+(?:[.,]\d+)?\s*(?:triệu|tỷ|usd|đ|k|tiếng|ngày|tháng|năm|phút|giây|hội viên|đô|kg|bước))/i);
+
+  const percentage = percentMatch ? percentMatch[0].replace(/\s+/g, '') : null;
+  const metric = metricMatch ? metricMatch[0] : null;
+
+  // Determine Visual Scene Metaphor Template
+  let sceneType = 'universal';
+  let comicTitle = 'CONCEPT';
+
+  // 1. Beer Crate / Price Tag / Cans (Reference Image 4: BEER $43)
+  if (/đóng thùng|thùng bia|lon bia|két bia|giá bán|43|đổ xô đi mở/i.test(lower)) {
+    sceneType = 'beer_crate_price';
+    comicTitle = metric || '$43';
+  }
+  // 2. Draft Beer Tap / Bar Counter / Handshake (Reference Image 5: FRESH ALE)
+  else if (/taproom|rót bia|vòi bia|quầy bar|quá trình sản xuất|rời khỏi nhà xưởng|phân phối|tươi|lager|ale/i.test(lower)) {
+    sceneType = 'beer_tap_hand';
+    comicTitle = 'FRESH ALE';
+  }
+  // 3. Fermentation Tank / Brewing Machine / Printing Money
+  else if (/bồn chứa|máy in tiền|cỗ máy in tiền|15 đô|xưởng nấu bia|mẻ bia/i.test(lower)) {
+    sceneType = 'brewery_tank_machine';
+    comicTitle = 'MÁY IN TIỀN';
+  }
+  // 4. 4 Core Ingredients: Water, Malt, Hops, Yeast
+  else if (/nước, mạch nha|hoa bia|bốn thành phần|nguyên liệu cơ bản|nguyên liệu thô|15 đến 30 cent|cent/i.test(lower)) {
+    sceneType = 'ingredients_four';
+    comicTitle = '4 NGUYÊN LIỆU';
+  }
+  // 5. Giant Markup: +2,600% / Beer Mug
+  else if (/2\.?600%|biên lợi nhuận khủng|8 đô|chênh lệch/i.test(lower)) {
+    sceneType = 'profit_glass_jump';
+    comicTitle = '+2,600%';
+  }
+  // 6. Closed Shutter / Bankruptcy / 5 Years
+  else if (/đóng cửa|dậm chân tại chỗ|vật lộn|5 năm|lặng lẽ đóng cửa|phá sản/i.test(lower)) {
+    sceneType = 'closed_shutter_business';
+    comicTitle = 'CLOSED';
+  }
+  // 7. Startup Blueprint / 500K - 1.5M Capital
+  else if (/500\.000|1[,.]5 triệu|chưa kiếm nổi một xu|10 thùng|60 người|quy mô|mở một xưởng/i.test(lower)) {
+    sceneType = 'capital_startup_blueprint';
+    comicTitle = '$500K - $1.5M';
+  }
+  // 8. Money Drain / Break Even / Bank Account
+  else if (/tài khoản ngân hàng|hòa vốn|trầy trật|lần theo từng đồng/i.test(lower)) {
+    sceneType = 'pie_chart';
+    comicTitle = 'HÒA VỐN';
+  }
+  // 9. Crowd / Rush / Influx / Early Year / Queue / Gym join (Reference Image 1: WAVE)
+  else if (/đăng ký|ồ ạt|đông đúc|hội viên|làn sóng|tháng một|tháng 1|đầu năm|mùa hè|giờ cao điểm|xếp hàng|ùn ùn|nườm nượp|wave|cỗ máy doanh thu/i.test(lower)) {
+    sceneType = 'crowd_wave';
+    comicTitle = 'WAVE';
+  }
+  // 10. Obstacle / Not Easy / Padlocked door / Cancellation barrier (Reference Image 3: NOT EASY)
+  else if (/khó khăn|hủy|rào cản|không dễ|not easy|hợp đồng|thủ tục|rắc rối|phức tạp|bắt buộc|khóa|cản trở|bẫy|giữ chân|nản lòng/i.test(lower)) {
+    sceneType = 'locked_door';
+    comicTitle = 'NOT EASY';
+  }
+  // 11. Percentage / Royalty / Franchise / Fee cut (Reference Image 2: ROYALTY)
+  else if (/nhượng quyền|royalty|hoa hồng|chiết khấu|phí doanh thu|cắt giảm|chia chác|thuế/i.test(lower) || (percentage && /doanh thu|lợi nhuận|nộp|chia|phí|thương hiệu/i.test(lower))) {
+    sceneType = 'pie_chart';
+    comicTitle = percentage ? `ROYALTY ${percentage}` : 'ROYALTY';
+  }
+  // 12. Freedom / Walking away / Violation / Say NO / Clean exit (Reference Image 4: VIOLATION)
+  else if (/vi phạm|violation|khiếu nại|cơ quan quản lý|pháp luật|luật|bảo vệ|phạt|pháp lý|tự do|từ chối|hủy thành công|thoát|bước đi|rời bỏ|quyền/i.test(lower)) {
+    sceneType = 'street_walk';
+    comicTitle = 'VIOLATION';
+  }
+  // 13. Cooking / Broth / Kitchen / Recipe
+  else if (/\b(phở|xương|nước dùng|gia vị|bếp|ẩm thực|nướng|luộc|thảo quả|hoa hồi|thịt bò)\b/i.test(lower)) {
+    sceneType = 'cooking';
+    comicTitle = metric ? `${metric.toUpperCase()}` : 'CHUẨN VỊ';
+  }
+  // 14. Tech / Code / Algorithm / Python / JS
+  else if (/code|lập trình|thuật toán|developer|python|javascript|react|ai|dữ liệu|api|bug|bot|mã nguồn/i.test(lower)) {
+    sceneType = 'tech_code';
+    comicTitle = metric ? `${metric.toUpperCase()}` : 'ALGORITHM';
+  }
+  // 15. Compound Growth / Investment / Exponential wealth
+  else if (/lãi kép|đầu tư|sinh lời|tích lũy|7 tỷ|2 triệu|tăng trưởng|về hưu|cấp số nhân/i.test(lower)) {
+    sceneType = 'growth';
+    comicTitle = 'LÃI KÉP';
+  }
+  // 16. Pure Percentage fallback
+  else if (percentage) {
+    sceneType = 'pie_chart';
+    comicTitle = `TỶ LỆ ${percentage}`;
+  }
+  // 17. Lifestyle Inflation / Scooter vs Car / Income vs Expense
+  else if (/15 lên 30|xe máy|ô tô|lương|chi tiêu|lối sống|dậm chân|sĩ diện|lạm phát lối sống/i.test(lower)) {
+    sceneType = 'lifestyle_vs';
+    comicTitle = 'LÃI SUẤT';
+  }
+  // 18. Peaceful Morning / Freedom from alarm / True Wealth
+  else if (/thức dậy|buổi sáng|bình yên|báo thức|thảnh thơi|an nhiên|ngủ|xa xỉ/i.test(lower)) {
+    sceneType = 'peaceful_morning';
+    comicTitle = 'TỰ DO';
+  }
+  // 19. Fallback Universal
+  else {
+    sceneType = 'universal';
+    comicTitle = sceneTitle ? sceneTitle.replace(/^(CẢNH|SCENE)\s*\d+[:.-]\s*/i, '').trim().split(/\s+/).slice(0, 2).join(' ').toUpperCase() : 'CHIẾN LƯỢC';
+  }
+
+  return {
+    sceneType,
+    comicTitle,
+    percentage: percentage || '5-10%',
+    metric: metric || '100%',
+  };
+}
+
+/**
+ * Smart Visual Scene Analyzer using Gemini AI with Anti-Repetition Diversity
+ */
+async function analyzeWithGemini(clauseText, sceneTitle = '', customKey = null, previousSceneType = '') {
+  const apiKey = customKey || process.env.GEMINI_API_KEY || '';
+  if (!apiKey) return null;
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${apiKey}`;
+    const prompt = `You are an expert visual director for 2D minimalist cartoon explainer YouTube videos (style: Casually Explained, Vox).
+Given scene text: "${clauseText}"
+Scene title: "${sceneTitle}"
+Previous beat sceneType was: "${previousSceneType || 'none'}"
+
+CRITICAL DIVERSITY RULE:
+Do NOT repeat the same visual metaphor as previous beats! Pick the most specific, creative, and distinct visual sceneType.
+Available sceneTypes:
+- 'beer_crate_price': Cardboard beer crate with 12 cans, price tag, and red rising arrow (retail markup, high price, beer case).
+- 'beer_tap_hand': Hand pulling draft beer tap handle (FRESH ALE / LAGER), bar counter, handshake icon (taprooms, serving fresh beer, distributor deal).
+- 'brewery_tank_machine': Giant stainless steel conical brewing fermentation tank with cash slot ($15 bills flowing out, money machine).
+- 'ingredients_four': 4 circular pedestals showing Water, Barley/Malt, Hops, Yeast with a 15¢-30¢ price tag (raw materials).
+- 'profit_glass_jump': Giant +2,600% starburst badge with frosty foaming beer mug (extreme profit margin, price markup).
+- 'closed_shutter_business': Shuttered metal roll-down door of a bankrupt shop with CLOSED sign and 5 years calendar (business failure, struggling).
+- 'capital_startup_blueprint': Blueprint floor plan of taproom/brewery with giant red stamp $500K-$1.5M and 0$ income (massive upfront investment).
+- 'crowd_wave': Snaking crowd path heading into building with January calendar and $ NEW BILLING (rush, massive signups).
+- 'pie_chart': Giant pie chart with red slice, calendar ghim, worried stickman pointing (percentages, fee cuts, royalties, break even).
+- 'locked_door': NOT EASY padlocked heavy door with panicked stickman (obstacles, hard to cancel).
+- 'street_walk': Street sidewalk, tree, building with crossed-out poster, happy stickman walking with briefcase and checkmark (freedom, violation).
+- 'growth': Exponential growth curve, compound interest.
+- 'cooking': Chef stickman with aromatic broth pot and spices.
+- 'tech_code': Dark code terminal, developer stickman.
+- 'universal': Lightbulb eureka idea with metric.
+
+Return JSON:
+{
+  "comicTitle": "1 or 2 uppercase punchy words in Vietnamese or English (e.g. BEER $43, FRESH ALE, MÁY IN TIỀN, 4 NGUYÊN LIỆU, +2600%, CLOSED, $1.5 TRIỆU)",
+  "sceneType": "one of the above types (MUST BE DIFFERENT from '${previousSceneType}')",
+  "percentage": "extracted percentage if any, else null",
+  "metric": "extracted metric if any, else null"
+}`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: 'application/json' }
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (rawText) {
+        const parsed = JSON.parse(rawText);
+        return {
+          sceneType: parsed.sceneType || 'universal',
+          comicTitle: (parsed.comicTitle || 'CHIẾN LƯỢC').toUpperCase(),
+          percentage: parsed.percentage || null,
+          metric: parsed.metric || null,
+          fromGemini: true,
+        };
+      }
+    }
+  } catch (_) {
+    // Graceful fallback to local rules
+  }
+  return null;
+}
+
+/**
+ * Creative 2D Cartoon SVG Scene Synthesizer
+ * Matches the hand-drawn visual style of the reference images.
+ */
+function createCartoonSceneSvg({ clauseText, sceneTitle, sceneIndex, subIndex, features }) {
+  const { sceneType, comicTitle, percentage, metric } = features;
+  const safeTitle = escapeXml(comicTitle);
+  const safeClause = escapeXml(clauseText.length > 95 ? clauseText.substring(0, 92) + '...' : clauseText);
+
+  // 1. BEER CRATE WITH $43 PRICE TAG & RED RISING ARROW (Reference Image 4)
+  if (sceneType === 'beer_crate_price') {
+    const displayPrice = escapeXml(metric || '$43');
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#FFFFFF" />
+
+        <!-- Beer Crate & Cans Group -->
+        <g transform="translate(420, 260)">
+          <!-- Back Cans Row (peeking over) -->
+          <g transform="translate(60, 60)">
+            <g transform="translate(0, 0)">
+              <rect x="0" y="20" width="105" height="140" rx="16" fill="#4B6A45" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+              <ellipse cx="52" cy="20" rx="42" ry="18" fill="#D4AF37" stroke="#1E293B" stroke-width="6"/>
+            </g>
+            <g transform="translate(130, -5)">
+              <rect x="0" y="20" width="105" height="140" rx="16" fill="#4B6A45" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+              <ellipse cx="52" cy="20" rx="42" ry="18" fill="#D4AF37" stroke="#1E293B" stroke-width="6"/>
+            </g>
+            <g transform="translate(260, -10)">
+              <rect x="0" y="20" width="105" height="140" rx="16" fill="#4B6A45" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+              <ellipse cx="52" cy="20" rx="42" ry="18" fill="#D4AF37" stroke="#1E293B" stroke-width="6"/>
+            </g>
+            <g transform="translate(390, -15)">
+              <rect x="0" y="20" width="105" height="140" rx="16" fill="#4B6A45" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+              <ellipse cx="52" cy="20" rx="42" ry="18" fill="#D4AF37" stroke="#1E293B" stroke-width="6"/>
+            </g>
+          </g>
+
+          <!-- Cardboard Crate Handle Back Support -->
+          <path d="M 120 70 L 620 40 L 620 220 L 120 250 Z" fill="#C29462" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+          <rect x="300" y="90" width="180" height="50" rx="25" fill="#FFFFFF" stroke="#1E293B" stroke-width="8" transform="rotate(-3 390 115)"/>
+
+          <!-- Front Cans Row -->
+          <g transform="translate(80, 140)">
+            <g transform="translate(0, 20)">
+              <rect x="0" y="0" width="115" height="180" rx="20" fill="#587B51" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+              <ellipse cx="57" cy="0" rx="46" ry="20" fill="#E2C766" stroke="#1E293B" stroke-width="6"/>
+              <path d="M 20 80 Q 57 110 95 80" fill="none" stroke="#D1E7DD" stroke-width="6" opacity="0.6"/>
+            </g>
+            <g transform="translate(130, 12)">
+              <rect x="0" y="0" width="115" height="180" rx="20" fill="#587B51" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+              <ellipse cx="57" cy="0" rx="46" ry="20" fill="#E2C766" stroke="#1E293B" stroke-width="6"/>
+              <path d="M 20 80 Q 57 110 95 80" fill="none" stroke="#D1E7DD" stroke-width="6" opacity="0.6"/>
+            </g>
+            <g transform="translate(260, 4)">
+              <rect x="0" y="0" width="115" height="180" rx="20" fill="#587B51" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+              <ellipse cx="57" cy="0" rx="46" ry="20" fill="#E2C766" stroke="#1E293B" stroke-width="6"/>
+              <path d="M 20 80 Q 57 110 95 80" fill="none" stroke="#D1E7DD" stroke-width="6" opacity="0.6"/>
+            </g>
+            <g transform="translate(390, -4)">
+              <rect x="0" y="0" width="115" height="180" rx="20" fill="#587B51" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+              <ellipse cx="57" cy="0" rx="46" ry="20" fill="#E2C766" stroke="#1E293B" stroke-width="6"/>
+              <path d="M 20 80 Q 57 110 95 80" fill="none" stroke="#D1E7DD" stroke-width="6" opacity="0.6"/>
+            </g>
+          </g>
+
+          <!-- Cardboard Box Body -->
+          <polygon points="40,240 700,180 710,640 40,680" fill="#D3A26D" stroke="#1E293B" stroke-width="10" stroke-linejoin="round"/>
+          <polygon points="-80,310 40,240 40,680 -90,610" fill="#BA8957" stroke="#1E293B" stroke-width="10" stroke-linejoin="round"/>
+
+          <!-- Hand-Drawn BEER Text on Box Front -->
+          <text x="380" y="490" font-family="'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif" font-weight="900" font-size="140" fill="#1E293B" letter-spacing="12" text-anchor="middle" transform="rotate(-5 380 490)">
+            BEER
+          </text>
+
+          <!-- Hanging Price Tag -->
+          <g transform="translate(600, 10)">
+            <path d="M 30 110 Q 70 30 120 70 Q 140 10 170 30" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round"/>
+            <g transform="translate(130, 20) rotate(8)">
+              <polygon points="0,0 360,-40 420,120 60,160" fill="#FFFFFF" stroke="#1E293B" stroke-width="9" stroke-linejoin="round"/>
+              <circle cx="35" cy="70" r="12" fill="none" stroke="#1E293B" stroke-width="6"/>
+              <text x="210" y="95" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="120" fill="#1E293B" text-anchor="middle">
+                ${displayPrice}
+              </text>
+            </g>
+          </g>
+        </g>
+
+        <!-- Big Red Upward Arrow on the Right -->
+        <g transform="translate(1360, 420)">
+          <path d="M 140 0 L 260 180 L 190 180 L 190 420 L 90 420 L 90 180 L 20 180 Z" fill="#EF4444" stroke="#1E293B" stroke-width="12" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    `;
+  }
+
+  // 2. DRAFT BEER TAP & HANDSHAKE PARTNERSHIP (Reference Image 5)
+  if (sceneType === 'beer_tap_hand') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#FFFFFF" />
+
+        <!-- Partnership Handshake Icon in Top Left -->
+        <g transform="translate(180, 140)">
+          <g transform="scale(1.6)">
+            <rect x="0" y="50" width="30" height="44" rx="6" fill="#1E3A8A" stroke="#1E293B" stroke-width="6"/>
+            <path d="M 28 56 L 68 20 Q 95 35 78 68 L 50 82 Z" fill="#2563EB" stroke="#1E293B" stroke-width="6" stroke-linejoin="round"/>
+            <rect x="135" y="50" width="30" height="44" rx="6" fill="#1E3A8A" stroke="#1E293B" stroke-width="6"/>
+            <path d="M 137 56 L 97 20 Q 70 35 87 68 L 115 82 Z" fill="#60A5FA" stroke="#1E293B" stroke-width="6" stroke-linejoin="round"/>
+            <path d="M 45 72 Q 80 95 120 72" fill="none" stroke="#1E293B" stroke-width="7" stroke-linecap="round"/>
+            <circle cx="58" cy="84" r="8" fill="#2563EB" stroke="#1E293B" stroke-width="5"/>
+            <circle cx="78" cy="90" r="8" fill="#2563EB" stroke="#1E293B" stroke-width="5"/>
+            <circle cx="98" cy="88" r="8" fill="#60A5FA" stroke="#1E293B" stroke-width="5"/>
+            <circle cx="114" cy="80" r="8" fill="#60A5FA" stroke="#1E293B" stroke-width="5"/>
+          </g>
+        </g>
+
+        <!-- Bar Counter Line -->
+        <line x1="80" y1="880" x2="1840" y2="880" stroke="#854D0E" stroke-width="16" stroke-linecap="round"/>
+        <rect x="180" y="880" width="1580" height="24" fill="#A16207" stroke="#1E293B" stroke-width="4"/>
+
+        <!-- Beer Tap Column / Tower -->
+        <g transform="translate(720, 520)">
+          <ellipse cx="60" cy="460" rx="90" ry="24" fill="#334155" stroke="#1E293B" stroke-width="8"/>
+          <rect x="10" y="0" width="100" height="460" rx="10" fill="#475569" stroke="#1E293B" stroke-width="8"/>
+          <ellipse cx="60" cy="0" rx="50" ry="18" fill="#64748B" stroke="#1E293B" stroke-width="8"/>
+
+          <g transform="translate(100, 30)">
+            <rect x="0" y="10" width="70" height="40" rx="6" fill="#64748B" stroke="#1E293B" stroke-width="7"/>
+            <path d="M 60 40 Q 90 70 80 120 L 50 120 Q 55 80 40 50 Z" fill="#94A3B8" stroke="#1E293B" stroke-width="7" stroke-linejoin="round"/>
+            <g transform="translate(130, 220)">
+              <polygon points="10,0 70,0 60,110 20,110" fill="#FFFFFF" stroke="#1E293B" stroke-width="6"/>
+            </g>
+          </g>
+
+          <!-- Handle 1: LAGER -->
+          <g transform="translate(40, 40) rotate(-22)">
+            <polygon points="20,-240 70,-240 60,0 30,0" fill="#92400E" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+            <text x="45" y="-100" font-family="sans-serif" font-weight="900" font-size="28" fill="#1E293B" letter-spacing="6" text-anchor="middle" transform="rotate(90 45 -100)">
+              LAGER
+            </text>
+          </g>
+
+          <!-- Handle 2: FRESH ALE -->
+          <g transform="translate(130, 20) rotate(10)">
+            <polygon points="20,-260 80,-260 70,0 30,0" fill="#FDE047" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+            <path d="M 50 -130 Q 65 -110 50 -90 Q 35 -110 50 -130 Z" fill="#15803D" stroke="#1E293B" stroke-width="4"/>
+            <text x="50" y="-190" font-family="sans-serif" font-weight="900" font-size="24" fill="#1E293B" letter-spacing="2" text-anchor="middle">FRESH</text>
+            <text x="50" y="-160" font-family="sans-serif" font-weight="900" font-size="24" fill="#1E293B" letter-spacing="2" text-anchor="middle">ALE</text>
+          </g>
+
+          <!-- Hand gripping Handle 2 -->
+          <g transform="translate(140, -140)">
+            <path d="M 700 240 L 400 180 L 80 40 L 40 120 L 400 280 L 700 360 Z" fill="#FDBA74" stroke="#1E293B" stroke-width="9" stroke-linejoin="round"/>
+            <path d="M 700 240 L 540 208 L 540 338 L 700 360 Z" fill="#FB923C" stroke="#1E293B" stroke-width="8"/>
+            <circle cx="50" cy="50" r="32" fill="#FDBA74" stroke="#1E293B" stroke-width="7"/>
+            <ellipse cx="25" cy="30" rx="14" ry="10" fill="#FDBA74" stroke="#1E293B" stroke-width="6"/>
+            <ellipse cx="18" cy="55" rx="14" ry="10" fill="#FDBA74" stroke="#1E293B" stroke-width="6"/>
+            <ellipse cx="16" cy="80" rx="14" ry="10" fill="#FDBA74" stroke="#1E293B" stroke-width="6"/>
+            <path d="M 75 35 Q 95 65 75 95" fill="none" stroke="#1E293B" stroke-width="7" stroke-linecap="round"/>
+          </g>
+        </g>
+      </svg>
+    `;
+  }
+
+  // 3. BREWERY FERMENTATION TANK / MONEY PRINTING MACHINE
+  if (sceneType === 'brewery_tank_machine') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#FBF8EE" />
+
+        <text x="960" y="150" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="90" fill="#EAB308" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" text-anchor="middle" paint-order="stroke fill">
+          ${safeTitle}
+        </text>
+
+        <!-- Big Stainless Steel Conical Fermenter Tank -->
+        <g transform="translate(860, 480)">
+          <line x1="-160" y1="200" x2="-220" y2="440" stroke="#1E293B" stroke-width="12" stroke-linecap="round"/>
+          <line x1="160" y1="200" x2="220" y2="440" stroke="#1E293B" stroke-width="12" stroke-linecap="round"/>
+          <line x1="0" y1="240" x2="0" y2="440" stroke="#1E293B" stroke-width="12" stroke-linecap="round"/>
+
+          <rect x="-180" y="-220" width="360" height="380" rx="20" fill="#CBD5E1" stroke="#1E293B" stroke-width="10"/>
+          <ellipse cx="0" cy="-220" rx="180" ry="40" fill="#E2E8F0" stroke="#1E293B" stroke-width="10"/>
+          <path d="M -140 -200 L -140 140" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+          
+          <polygon points="-180,160 180,160 0,320" fill="#94A3B8" stroke="#1E293B" stroke-width="10" stroke-linejoin="round"/>
+          
+          <rect x="-20" y="320" width="40" height="50" fill="#475569" stroke="#1E293B" stroke-width="8"/>
+          <circle cx="35" cy="345" r="16" fill="#DC2626" stroke="#1E293B" stroke-width="6"/>
+
+          <g transform="translate(100, -270)">
+            <circle cx="0" cy="0" r="45" fill="#FFFFFF" stroke="#1E293B" stroke-width="8"/>
+            <line x1="0" y1="0" x2="22" y2="-18" stroke="#DC2626" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="0" cy="0" r="8" fill="#1E293B"/>
+          </g>
+
+          <!-- Cash Output Slot on Tank Front -->
+          <g transform="translate(-100, 20)">
+            <rect x="0" y="0" width="200" height="24" rx="6" fill="#1E293B"/>
+            <g transform="translate(30, 16) rotate(12)">
+              <rect x="0" y="0" width="130" height="70" rx="6" fill="#86EFAC" stroke="#1E293B" stroke-width="6"/>
+              <text x="65" y="44" font-family="sans-serif" font-weight="900" font-size="28" fill="#15803D" text-anchor="middle">$15</text>
+            </g>
+          </g>
+        </g>
+
+        <!-- Happy Stickman Holding Beer Glass on Left -->
+        <g transform="translate(360, 480)">
+          <circle cx="100" cy="100" r="65" fill="#FFFFFF" stroke="#1E293B" stroke-width="9"/>
+          <circle cx="85" cy="95" r="6" fill="#1E293B"/>
+          <circle cx="115" cy="95" r="6" fill="#1E293B"/>
+          <path d="M 85 125 Q 100 145 120 125" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round"/>
+
+          <path d="M 60 165 L 140 165 L 145 320 L 55 320 Z" fill="#60A5FA" stroke="#1E293B" stroke-width="9" stroke-linejoin="round"/>
+          
+          <path d="M 60 190 L -30 160 L -40 130" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round"/>
+          <g transform="translate(-110, 80)">
+            <rect x="0" y="30" width="60" height="90" rx="8" fill="#FDE047" stroke="#1E293B" stroke-width="6"/>
+            <path d="M -5 30 Q 30 10 65 30 Z" fill="#FFFFFF" stroke="#1E293B" stroke-width="5"/>
+            <circle cx="10" cy="18" r="14" fill="#FFFFFF" stroke="#1E293B" stroke-width="4"/>
+            <circle cx="35" cy="14" r="16" fill="#FFFFFF" stroke="#1E293B" stroke-width="4"/>
+            <circle cx="55" cy="20" r="12" fill="#FFFFFF" stroke="#1E293B" stroke-width="4"/>
+            <path d="M 0 45 Q -25 75 0 105" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round"/>
+          </g>
+          <path d="M 140 190 L 260 140" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round"/>
+
+          <line x1="85" y1="320" x2="85" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round"/>
+          <line x1="115" y1="320" x2="115" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round"/>
+          <ellipse cx="75" cy="485" rx="20" ry="10" fill="#1E293B"/>
+          <ellipse cx="125" cy="485" rx="20" ry="10" fill="#1E293B"/>
+        </g>
+      </svg>
+    `;
+  }
+
+  // 4. FOUR INGREDIENTS DISPLAY: WATER, MALT, HOPS, YEAST
+  if (sceneType === 'ingredients_four') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#FBF8EE" />
+
+        <text x="960" y="150" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="90" fill="#1E293B" text-anchor="middle">
+          ${safeTitle}
+        </text>
+
+        <!-- 4 Ingredient Circles -->
+        <g transform="translate(240, 360)">
+          <circle cx="120" cy="120" r="115" fill="#E0F2FE" stroke="#1E293B" stroke-width="9"/>
+          <path d="M 120 40 C 90 90 60 130 60 160 C 60 195 87 220 120 220 C 153 220 180 195 180 160 C 180 130 150 90 120 40 Z" fill="#38BDF8" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+          <text x="120" y="290" font-family="sans-serif" font-weight="900" font-size="34" fill="#1E293B" text-anchor="middle">NƯỚC</text>
+        </g>
+
+        <g transform="translate(600, 360)">
+          <circle cx="120" cy="120" r="115" fill="#FEF3C7" stroke="#1E293B" stroke-width="9"/>
+          <g transform="translate(120, 130)">
+            <line x1="0" y1="-80" x2="0" y2="80" stroke="#B45309" stroke-width="8" stroke-linecap="round"/>
+            <ellipse cx="-25" cy="-40" rx="20" ry="10" fill="#F59E0B" stroke="#1E293B" stroke-width="5" transform="rotate(-30 -25 -40)"/>
+            <ellipse cx="25" cy="-25" rx="20" ry="10" fill="#F59E0B" stroke="#1E293B" stroke-width="5" transform="rotate(30 25 -25)"/>
+            <ellipse cx="-25" cy="0" rx="20" ry="10" fill="#F59E0B" stroke="#1E293B" stroke-width="5" transform="rotate(-30 -25 0)"/>
+            <ellipse cx="25" cy="15" rx="20" ry="10" fill="#F59E0B" stroke="#1E293B" stroke-width="5" transform="rotate(30 25 15)"/>
+          </g>
+          <text x="120" y="290" font-family="sans-serif" font-weight="900" font-size="34" fill="#1E293B" text-anchor="middle">MẠCH NHA</text>
+        </g>
+
+        <g transform="translate(960, 360)">
+          <circle cx="120" cy="120" r="115" fill="#DCFCE7" stroke="#1E293B" stroke-width="9"/>
+          <g transform="translate(120, 120)">
+            <polygon points="0,-70 50,0 35,60 0,80 -35,60 -50,0" fill="#22C55E" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+            <path d="M -30 10 Q 0 -20 30 10" fill="none" stroke="#166534" stroke-width="6"/>
+            <path d="M -25 40 Q 0 10 25 40" fill="none" stroke="#166534" stroke-width="6"/>
+          </g>
+          <text x="120" y="290" font-family="sans-serif" font-weight="900" font-size="34" fill="#1E293B" text-anchor="middle">HOA BIA</text>
+        </g>
+
+        <g transform="translate(1320, 360)">
+          <circle cx="120" cy="120" r="115" fill="#FCE7F3" stroke="#1E293B" stroke-width="9"/>
+          <circle cx="100" cy="100" r="32" fill="#F43F5E" stroke="#1E293B" stroke-width="6"/>
+          <circle cx="145" cy="85" r="22" fill="#FB7185" stroke="#1E293B" stroke-width="5"/>
+          <circle cx="130" cy="140" r="28" fill="#FDA4AF" stroke="#1E293B" stroke-width="6"/>
+          <circle cx="90" cy="150" r="18" fill="#F43F5E" stroke="#1E293B" stroke-width="5"/>
+          <text x="120" y="290" font-family="sans-serif" font-weight="900" font-size="34" fill="#1E293B" text-anchor="middle">MEN BIA</text>
+        </g>
+
+        <g transform="translate(760, 800)">
+          <rect x="0" y="0" width="400" height="95" rx="16" fill="#EF4444" stroke="#1E293B" stroke-width="8"/>
+          <text x="200" y="65" font-family="sans-serif" font-weight="900" font-size="48" fill="#FFFFFF" text-anchor="middle">
+            15¢ - 30¢ / LY
+          </text>
+        </g>
+      </svg>
+    `;
+  }
+
+  // 5. GIANT PROFIT MARKUP BADGE (+2,600% / BEER GLASS)
+  if (sceneType === 'profit_glass_jump') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#FBF8EE" />
+
+        <!-- Giant +2,600% Badge -->
+        <g transform="translate(1180, 480)">
+          <circle cx="0" cy="0" r="320" fill="#EF4444" stroke="#1E293B" stroke-width="12"/>
+          <circle cx="0" cy="0" r="290" fill="#DC2626" stroke="#FFFFFF" stroke-width="6"/>
+          <text x="0" y="-40" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="110" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" paint-order="stroke fill" text-anchor="middle">
+            ${safeTitle}
+          </text>
+          <text x="0" y="70" font-family="sans-serif" font-weight="900" font-size="48" fill="#FEF08A" stroke="#1E293B" stroke-width="4" paint-order="stroke fill" text-anchor="middle">
+            CHÊNH LỆCH GIÁ
+          </text>
+          <text x="0" y="140" font-family="sans-serif" font-weight="900" font-size="34" fill="#FFFFFF" text-anchor="middle">
+            VỐN 30¢ ➔ BÁN 8$
+          </text>
+        </g>
+
+        <!-- Big Frosty Beer Glass on Left -->
+        <g transform="translate(420, 280)">
+          <polygon points="50,140 250,140 220,540 80,540" fill="#FEF08A" stroke="#1E293B" stroke-width="10" stroke-linejoin="round"/>
+          <ellipse cx="150" cy="540" rx="70" ry="24" fill="#E2E8F0" stroke="#1E293B" stroke-width="8"/>
+          <polygon points="65,190 235,190 215,520 85,520" fill="#FBBF24" stroke="none"/>
+          <path d="M 30 150 Q 150 70 270 150 Q 280 200 240 200 Q 150 170 60 200 Z" fill="#FFFFFF" stroke="#1E293B" stroke-width="8"/>
+          <circle cx="50" cy="120" r="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6"/>
+          <circle cx="95" cy="95" r="34" fill="#FFFFFF" stroke="#1E293B" stroke-width="6"/>
+          <circle cx="150" cy="85" r="38" fill="#FFFFFF" stroke="#1E293B" stroke-width="6"/>
+          <circle cx="205" cy="100" r="32" fill="#FFFFFF" stroke="#1E293B" stroke-width="6"/>
+          <circle cx="245" cy="130" r="26" fill="#FFFFFF" stroke="#1E293B" stroke-width="6"/>
+          <g transform="translate(220, 320) rotate(10)">
+            <polygon points="0,0 160,-20 180,60 20,80" fill="#22C55E" stroke="#1E293B" stroke-width="6"/>
+            <text x="90" y="48" font-family="sans-serif" font-weight="900" font-size="44" fill="#FFFFFF" text-anchor="middle">8$</text>
+          </g>
+        </g>
+      </svg>
+    `;
+  }
+
+  // 6. CLOSED SHUTTER / BANKRUPTCY (< 5 YEARS)
+  if (sceneType === 'closed_shutter_business') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#E2E8F0" />
+
+        <g transform="translate(480, 160)">
+          <rect x="-40" y="0" width="1040" height="840" fill="#94A3B8" stroke="#1E293B" stroke-width="10"/>
+          <rect x="0" y="80" width="960" height="720" fill="#64748B" stroke="#1E293B" stroke-width="8"/>
+          <line x1="0" y1="160" x2="960" y2="160" stroke="#334155" stroke-width="6"/>
+          <line x1="0" y1="240" x2="960" y2="240" stroke="#334155" stroke-width="6"/>
+          <line x1="0" y1="320" x2="960" y2="320" stroke="#334155" stroke-width="6"/>
+          <line x1="0" y1="400" x2="960" y2="400" stroke="#334155" stroke-width="6"/>
+          <line x1="0" y1="480" x2="960" y2="480" stroke="#334155" stroke-width="6"/>
+          <line x1="0" y1="560" x2="960" y2="560" stroke="#334155" stroke-width="6"/>
+
+          <g transform="translate(240, 240) rotate(-6)">
+            <line x1="80" y1="-80" x2="80" y2="0" stroke="#1E293B" stroke-width="8"/>
+            <line x1="400" y1="-80" x2="400" y2="0" stroke="#1E293B" stroke-width="8"/>
+            <rect x="0" y="0" width="480" height="180" rx="12" fill="#DC2626" stroke="#1E293B" stroke-width="10"/>
+            <text x="240" y="125" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="110" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" paint-order="stroke fill" letter-spacing="8" text-anchor="middle">
+              CLOSED
+            </text>
+          </g>
+
+          <g transform="translate(420, 680)">
+            <circle cx="60" cy="30" r="35" fill="none" stroke="#1E293B" stroke-width="14"/>
+            <rect x="20" y="30" width="80" height="80" rx="10" fill="#F59E0B" stroke="#1E293B" stroke-width="8"/>
+          </g>
+
+          <g transform="translate(740, 360) rotate(12)">
+            <rect x="0" y="0" width="180" height="190" rx="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="7"/>
+            <rect x="0" y="0" width="180" height="45" rx="10" fill="#EF4444" stroke="#1E293B" stroke-width="7"/>
+            <text x="90" y="32" font-family="sans-serif" font-weight="900" font-size="20" fill="#FFFFFF" text-anchor="middle">THỜI GIAN</text>
+            <text x="90" y="115" font-family="sans-serif" font-weight="900" font-size="52" fill="#1E293B" text-anchor="middle">&lt; 5</text>
+            <text x="90" y="160" font-family="sans-serif" font-weight="900" font-size="30" fill="#DC2626" text-anchor="middle">NĂM</text>
+          </g>
+        </g>
+
+        <!-- Sad stickman sitting -->
+        <g transform="translate(180, 520)">
+          <circle cx="100" cy="100" r="60" fill="#FFFFFF" stroke="#1E293B" stroke-width="9"/>
+          <path d="M 70 85 Q 85 95 100 85" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round"/>
+          <path d="M 75 135 Q 100 115 125 135" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round"/>
+          <circle cx="80" cy="100" r="6" fill="#1E293B"/>
+          <circle cx="120" cy="100" r="6" fill="#1E293B"/>
+          <path d="M 60 160 L 140 160 L 130 300 L 50 300 Z" fill="#94A3B8" stroke="#1E293B" stroke-width="9"/>
+          <path d="M 60 180 L 10 140 L 45 110" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round"/>
+          <line x1="70" y1="300" x2="30" y2="420" stroke="#1E293B" stroke-width="10" stroke-linecap="round"/>
+          <line x1="110" y1="300" x2="160" y2="420" stroke="#1E293B" stroke-width="10" stroke-linecap="round"/>
+        </g>
+      </svg>
+    `;
+  }
+
+  // 7. STARTUP CAPITAL BLUEPRINT ($500,000 - $1,500,000)
+  if (sceneType === 'capital_startup_blueprint') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#0F172A" />
+
+        <g stroke="#1E293B" stroke-width="2" opacity="0.6">
+          <line x1="0" y1="200" x2="1920" y2="200"/>
+          <line x1="0" y1="400" x2="1920" y2="400"/>
+          <line x1="0" y1="600" x2="1920" y2="600"/>
+          <line x1="0" y1="800" x2="1920" y2="800"/>
+          <line x1="300" y1="0" x2="300" y2="1080"/>
+          <line x1="600" y1="0" x2="600" y2="1080"/>
+          <line x1="900" y1="0" x2="900" y2="1080"/>
+          <line x1="1200" y1="0" x2="1200" y2="1080"/>
+          <line x1="1500" y1="0" x2="1500" y2="1080"/>
+        </g>
+
+        <g transform="translate(360, 220)">
+          <rect x="0" y="0" width="1200" height="660" rx="16" fill="#1E293B" stroke="#38BDF8" stroke-width="8"/>
+          <rect x="20" y="20" width="480" height="80" rx="8" fill="#0F172A" stroke="#38BDF8" stroke-width="4"/>
+          <text x="40" y="70" font-family="'Courier New', monospace" font-weight="900" font-size="34" fill="#38BDF8">
+            BLUEPRINT: 10 THÙNG / 60 CHỖ
+          </text>
+
+          <rect x="60" y="130" width="460" height="480" fill="none" stroke="#38BDF8" stroke-width="6" stroke-dasharray="16,8"/>
+          <text x="290" y="380" font-family="sans-serif" font-weight="900" font-size="38" fill="#94A3B8" text-anchor="middle">
+            KHU NẤU BIA (BREWERY)
+          </text>
+
+          <rect x="560" y="130" width="580" height="480" fill="none" stroke="#38BDF8" stroke-width="6" stroke-dasharray="16,8"/>
+          <text x="850" y="380" font-family="sans-serif" font-weight="900" font-size="38" fill="#94A3B8" text-anchor="middle">
+            QUẦY TAPROOM (BAR &amp; 60 GHẾ)
+          </text>
+
+          <g transform="translate(600, 320) rotate(-10)">
+            <rect x="-380" y="-80" width="760" height="160" rx="20" fill="none" stroke="#EF4444" stroke-width="12"/>
+            <text x="0" y="25" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="80" fill="#EF4444" text-anchor="middle">
+              $500,000 - $1,500,000
+            </text>
+          </g>
+
+          <g transform="translate(60, 530)">
+            <rect x="0" y="0" width="280" height="60" rx="8" fill="#F59E0B" stroke="#1E293B" stroke-width="4"/>
+            <text x="140" y="42" font-family="sans-serif" font-weight="900" font-size="28" fill="#1E293B" text-anchor="middle">
+              0$ DOANH THU
+            </text>
+          </g>
+        </g>
+      </svg>
+    `;
+  }
+
+  // 8. PIE CHART SCENE (Reference Image 2: ROYALTY 5-10% with worried character)
+  if (sceneType === 'pie_chart') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#FBF8EE" />
+
+        <!-- Bold Comic Title -->
+        <text x="960" y="160" font-family="'Comic Sans MS', 'Chalkboard SE', 'Fredoka', 'Be Vietnam Pro', system-ui, sans-serif" font-weight="900" font-size="96" fill="#EF4444" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" text-anchor="middle" paint-order="stroke fill">
+          ${safeTitle}
+        </text>
+
+        <!-- Giant Hand-Drawn Pie Chart -->
+        <g transform="translate(850, 560)">
+          <!-- Blue Base Circle -->
+          <circle cx="0" cy="0" r="300" fill="#60A5FA" stroke="#1E293B" stroke-width="12" />
+          <!-- Red Slice -->
+          <path d="M 0 0 L 0 -300 A 300 300 0 0 1 190 -230 Z" fill="#EF4444" stroke="#1E293B" stroke-width="10" />
+          <text x="90" y="-120" font-family="sans-serif" font-weight="900" font-size="52" fill="#FFFFFF" stroke="#1E293B" stroke-width="4" paint-order="stroke fill" text-anchor="middle">
+            ${escapeXml(percentage)}
+          </text>
+          
+          <!-- Pinned Mini Calendar -->
+          <g transform="translate(100, -50)">
+            <rect x="0" y="0" width="160" height="90" rx="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+            <line x1="0" y1="28" x2="160" y2="28" stroke="#1E293B" stroke-width="4" />
+            <text x="80" y="55" font-family="sans-serif" font-weight="900" font-size="20" fill="#1E293B" text-anchor="middle">EVERY</text>
+            <text x="80" y="78" font-family="sans-serif" font-weight="900" font-size="20" fill="#1E293B" text-anchor="middle">MONTH</text>
+          </g>
+        </g>
+
+        <!-- Worried Stickman Pointing Finger -->
+        <g transform="translate(1380, 480)">
+          <circle cx="100" cy="100" r="70" fill="#FFFFFF" stroke="#1E293B" stroke-width="10" />
+          <!-- Worried eyebrows & eyes -->
+          <path d="M 65 75 Q 80 65 95 80" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+          <path d="M 135 75 Q 120 65 105 80" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+          <circle cx="80" cy="95" r="8" fill="#1E293B" />
+          <circle cx="120" cy="95" r="8" fill="#1E293B" />
+          <path d="M 80 135 Q 100 120 120 135" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+          <!-- Sweat Drop -->
+          <path d="M 145 90 Q 155 100 150 110 Q 140 105 145 90 Z" fill="#38BDF8" stroke="#1E293B" stroke-width="3" />
+          
+          <!-- Light Blue Shirt -->
+          <path d="M 60 170 L 140 170 L 145 320 L 55 320 Z" fill="#BFDBFE" stroke="#1E293B" stroke-width="10" stroke-linejoin="round" />
+          <!-- Pointing Arm with Index Finger -->
+          <path d="M 60 200 L -120 120" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <circle cx="-125" cy="118" r="14" fill="#FFFFFF" stroke="#1E293B" stroke-width="5" />
+          <path d="M -125 118 L -155 105" stroke="#1E293B" stroke-width="7" stroke-linecap="round" />
+          <!-- Relaxed arm -->
+          <path d="M 140 200 L 170 270 L 165 310" fill="none" stroke="#1E293B" stroke-width="8" stroke-linecap="round" />
+          <!-- Legs -->
+          <line x1="85" y1="320" x2="85" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <line x1="115" y1="320" x2="115" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <ellipse cx="75" cy="485" rx="20" ry="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+          <ellipse cx="125" cy="485" rx="20" ry="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+        </g>
+      </svg>
+    `;
+  }
+
+  // 2. LOCKED DOOR SCENE (e.g. Image 3: NOT EASY / EASY crossed out)
+  if (sceneType === 'locked_door') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#EAECEF" />
+
+        <!-- Crossed out EASY in top left -->
+        <g transform="translate(180, 160)">
+          <text x="0" y="0" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="88" fill="#EF4444" stroke="#1E293B" stroke-width="4" paint-order="stroke fill">EASY</text>
+          <line x1="-30" y1="20" x2="250" y2="-70" stroke="#DC2626" stroke-width="12" stroke-linecap="round" />
+        </g>
+
+        <!-- Big sign: NOT EASY -->
+        <g transform="translate(800, 120)">
+          <rect x="0" y="0" width="560" height="120" fill="#FFFFFF" stroke="#1E293B" stroke-width="8" />
+          <text x="280" y="82" font-family="sans-serif" font-weight="900" font-size="80" fill="#1E293B" text-anchor="middle">${safeTitle}</text>
+        </g>
+
+        <!-- Heavy Door with multiple locks and padlocks -->
+        <g transform="translate(1000, 270)">
+          <rect x="-10" y="-10" width="340" height="660" fill="#CBD5E1" stroke="#1E293B" stroke-width="8" />
+          <rect x="10" y="10" width="300" height="620" fill="#E2E8F0" stroke="#1E293B" stroke-width="6" />
+          <!-- Glass Window -->
+          <rect x="110" y="80" width="80" height="160" fill="#F8FAFC" stroke="#1E293B" stroke-width="6" />
+          <line x1="125" y1="100" x2="145" y2="150" stroke="#94A3B8" stroke-width="3" />
+          <!-- Steel lock bars -->
+          <rect x="0" y="150" width="320" height="24" rx="4" fill="#94A3B8" stroke="#1E293B" stroke-width="5" />
+          <rect x="0" y="320" width="320" height="24" rx="4" fill="#94A3B8" stroke="#1E293B" stroke-width="5" />
+          <rect x="0" y="480" width="320" height="24" rx="4" fill="#94A3B8" stroke="#1E293B" stroke-width="5" />
+          <!-- Padlocks -->
+          <g transform="translate(50, 190)">
+            <circle cx="20" cy="10" r="16" fill="none" stroke="#1E293B" stroke-width="6" />
+            <rect x="5" y="10" width="30" height="30" rx="4" fill="#F59E0B" stroke="#1E293B" stroke-width="5" />
+          </g>
+          <g transform="translate(240, 360)">
+            <circle cx="20" cy="10" r="16" fill="none" stroke="#1E293B" stroke-width="6" />
+            <rect x="5" y="10" width="30" height="30" rx="4" fill="#F59E0B" stroke="#1E293B" stroke-width="5" />
+          </g>
+          <!-- Paper notices taped to door -->
+          <rect x="30" y="240" width="60" height="70" fill="#FFFFFF" stroke="#64748B" stroke-width="2" />
+          <rect x="220" y="80" width="70" height="90" fill="#FFFFFF" stroke="#64748B" stroke-width="2" />
+          <text x="255" y="110" font-size="12" font-weight="900" text-anchor="middle">FORMS</text>
+        </g>
+
+        <!-- Panicked Stickman in front of door -->
+        <g transform="translate(850, 320)">
+          <circle cx="100" cy="100" r="75" fill="#FFFFFF" stroke="#1E293B" stroke-width="10" />
+          <circle cx="75" cy="95" r="16" fill="none" stroke="#1E293B" stroke-width="6" />
+          <circle cx="75" cy="95" r="6" fill="#1E293B" />
+          <circle cx="125" cy="95" r="16" fill="none" stroke="#1E293B" stroke-width="6" />
+          <circle cx="125" cy="95" r="6" fill="#1E293B" />
+          <line x1="85" y1="135" x2="115" y2="135" stroke="#1E293B" stroke-width="7" stroke-linecap="round" />
+          <!-- Sweat drops flying -->
+          <path d="M 25 60 Q 10 70 20 80" fill="none" stroke="#38BDF8" stroke-width="5" stroke-linecap="round" />
+          <path d="M 175 60 Q 190 70 180 80" fill="none" stroke="#38BDF8" stroke-width="5" stroke-linecap="round" />
+          <!-- Blue shirt body -->
+          <path d="M 60 175 L 140 175 L 145 320 L 55 320 Z" fill="#3B82F6" stroke="#1E293B" stroke-width="10" stroke-linejoin="round" />
+          <!-- Raised hands in panic -->
+          <path d="M 60 205 L 10 160 L 25 100" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <path d="M 140 205 L 190 160 L 175 100" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <!-- Legs -->
+          <line x1="80" y1="320" x2="80" y2="480" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+          <line x1="120" y1="320" x2="120" y2="480" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+          <ellipse cx="70" cy="485" rx="20" ry="10" fill="#1E293B" stroke="#1E293B" stroke-width="4" />
+          <ellipse cx="130" cy="485" rx="20" ry="10" fill="#1E293B" stroke="#1E293B" stroke-width="4" />
+        </g>
+      </svg>
+    `;
+  }
+
+  // 3. STREET SUCCESS / ESCAPE / VIOLATION (e.g. Image 4)
+  if (sceneType === 'street_walk') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <!-- Sky background -->
+        <rect width="1920" height="760" fill="#93C5FD" />
+        
+        <!-- Green grass bank -->
+        <rect y="720" width="1920" height="70" fill="#86EFAC" stroke="#1E293B" stroke-width="4" />
+
+        <!-- Sidewalk -->
+        <polygon points="0,790 1920,790 1920,930 0,930" fill="#E2E8F0" stroke="#1E293B" stroke-width="5" />
+        <line x1="200" y1="790" x2="160" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="450" y1="790" x2="410" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="750" y1="790" x2="710" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="1050" y1="790" x2="1010" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="1350" y1="790" x2="1310" y2="930" stroke="#94A3B8" stroke-width="3" />
+        <line x1="1650" y1="790" x2="1610" y2="930" stroke="#94A3B8" stroke-width="3" />
+
+        <!-- Asphalt Road -->
+        <rect y="930" width="1920" height="150" fill="#334155" stroke="#1E293B" stroke-width="5" />
+
+        <!-- Tree on left -->
+        <g transform="translate(100, 280)">
+          <path d="M 80 500 L 100 240 Q 70 200 100 160 L 120 240 L 140 500 Z" fill="#78350F" stroke="#1E293B" stroke-width="6" />
+          <circle cx="110" cy="180" r="110" fill="#4ADE80" stroke="#1E293B" stroke-width="8" />
+          <circle cx="40" cy="220" r="70" fill="#22C55E" stroke="#1E293B" stroke-width="7" />
+          <circle cx="170" cy="200" r="75" fill="#4ADE80" stroke="#1E293B" stroke-width="7" />
+        </g>
+
+        <!-- Building on right -->
+        <g transform="translate(820, 200)">
+          <rect x="-20" y="0" width="960" height="46" rx="8" fill="#64748B" stroke="#1E293B" stroke-width="6" />
+          <rect x="0" y="46" width="920" height="540" fill="#FDBA74" stroke="#1E293B" stroke-width="8" />
+          
+          <text x="580" y="150" font-family="sans-serif" font-weight="900" font-size="90" fill="#1E293B">GYM</text>
+
+          <g transform="translate(500, 220)">
+            <rect x="0" y="0" width="180" height="366" fill="#FED7AA" stroke="#1E293B" stroke-width="6" />
+            <rect x="25" y="25" width="130" height="140" fill="#E0F2FE" stroke="#1E293B" stroke-width="5" />
+            <circle cx="150" cy="200" r="10" fill="#1E293B" />
+          </g>
+
+          <rect x="730" y="240" width="170" height="180" fill="#E0F2FE" stroke="#1E293B" stroke-width="6" />
+
+          <!-- Big Crossed Out Poster on Wall -->
+          <g transform="translate(60, 160)">
+            <rect x="0" y="0" width="380" height="300" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+            <text x="190" y="80" font-family="sans-serif" font-weight="900" font-size="44" fill="#DC2626" text-anchor="middle">MAKE</text>
+            <text x="190" y="150" font-family="sans-serif" font-weight="900" font-size="44" fill="#DC2626" text-anchor="middle">CANCELING</text>
+            <text x="190" y="220" font-family="sans-serif" font-weight="900" font-size="44" fill="#DC2626" text-anchor="middle">DIFFICULT</text>
+            <circle cx="190" cy="145" r="140" fill="none" stroke="#DC2626" stroke-width="18" opacity="0.85" />
+            <line x1="90" y1="45" x2="290" y2="245" stroke="#DC2626" stroke-width="18" opacity="0.85" />
+          </g>
+        </g>
+
+        <!-- Street Lamp -->
+        <g transform="translate(1820, 310)">
+          <line x1="20" y1="120" x2="20" y2="480" stroke="#1E293B" stroke-width="10" />
+          <path d="M 0 120 L 40 120 L 30 50 L 10 50 Z" fill="#FEF08A" stroke="#1E293B" stroke-width="6" />
+          <path d="M -10 50 Q 20 20 50 50 Z" fill="#1E293B" stroke="#1E293B" stroke-width="5" />
+        </g>
+
+        <!-- Happy Walking Stickman on Sidewalk with Briefcase & Green Checkmark -->
+        <g transform="translate(480, 480)">
+          <path d="M 80 -10 L 105 15 L 155 -35" fill="none" stroke="#22C55E" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+          
+          <g transform="translate(160, 50)">
+            <rect x="0" y="0" width="170" height="42" rx="6" fill="#FFFFFF" stroke="#1E293B" stroke-width="4" />
+            <text x="85" y="28" font-family="sans-serif" font-weight="900" font-size="20" fill="#1E293B" text-anchor="middle">${safeTitle}</text>
+          </g>
+
+          <circle cx="100" cy="100" r="54" fill="#FFFFFF" stroke="#1E293B" stroke-width="8" />
+          <circle cx="88" cy="92" r="5" fill="#1E293B" />
+          <circle cx="116" cy="92" r="5" fill="#1E293B" />
+          <path d="M 88 116 Q 102 130 116 116" fill="none" stroke="#1E293B" stroke-width="5" stroke-linecap="round" />
+          
+          <path d="M 70 156 L 130 156 L 135 270 L 65 270 Z" fill="#94A3B8" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" />
+          <path d="M 65 270 L 135 270 L 140 330 L 105 330 L 100 290 L 95 330 L 60 330 Z" fill="#2563EB" stroke="#1E293B" stroke-width="7" />
+
+          <line x1="80" y1="330" x2="45" y2="440" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+          <line x1="120" y1="330" x2="155" y2="440" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+          <ellipse cx="38" cy="445" rx="16" ry="8" fill="#FFFFFF" stroke="#1E293B" stroke-width="5" />
+          <ellipse cx="162" cy="445" rx="16" ry="8" fill="#FFFFFF" stroke="#1E293B" stroke-width="5" />
+
+          <path d="M 125 180 L 160 250 L 175 280" fill="none" stroke="#1E293B" stroke-width="8" stroke-linecap="round" />
+          <rect x="150" y="280" width="80" height="60" rx="8" fill="#065F46" stroke="#1E293B" stroke-width="5" />
+          <path d="M 175 280 L 175 268 Q 190 262 205 268 L 205 280" fill="none" stroke="#1E293B" stroke-width="4" />
+          <path d="M 75 180 L 40 230 L 25 250" fill="none" stroke="#1E293B" stroke-width="8" stroke-linecap="round" />
+        </g>
+      </svg>
+    `;
+  }
+
+  // 4. CROWD WAVE / REGISTRATION INFLUX (e.g. Image 1)
+  if (sceneType === 'crowd_wave') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="660" fill="#93C5FD" />
+        <rect y="640" width="1920" height="440" fill="#86EFAC" />
+
+        <text x="180" y="140" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="110" fill="#1E293B">${safeTitle}</text>
+
+        <!-- Calendar sheet -->
+        <g transform="translate(180, 320)">
+          <text x="120" y="-30" font-family="sans-serif" font-weight="900" font-size="28" fill="#1E293B" text-anchor="middle">MONTHLY BILLING</text>
+          <rect x="0" y="0" width="240" height="230" rx="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+          <rect x="0" y="0" width="240" height="50" rx="10" fill="#EF4444" stroke="#1E293B" stroke-width="6" />
+          <text x="120" y="36" font-family="sans-serif" font-weight="900" font-size="24" fill="#FFFFFF" text-anchor="middle">JANUARY</text>
+          <circle cx="55" cy="140" r="18" fill="none" stroke="#EF4444" stroke-width="4" />
+          <text x="55" y="146" font-size="18" font-family="sans-serif" font-weight="800" text-anchor="middle">15</text>
+          <circle cx="55" cy="190" r="18" fill="none" stroke="#EF4444" stroke-width="4" />
+          <text x="55" y="196" font-size="18" font-family="sans-serif" font-weight="800" text-anchor="middle">29</text>
+        </g>
+
+        <!-- Golden Dollar Sign -->
+        <g transform="translate(850, 160)">
+          <text x="0" y="210" font-family="sans-serif" font-weight="900" font-size="190" fill="#FCD34D" stroke="#1E293B" stroke-width="8" paint-order="stroke fill" text-anchor="middle">$</text>
+          <text x="0" y="270" font-family="sans-serif" font-weight="900" font-size="34" fill="#1E293B" text-anchor="middle">NEW BILLING</text>
+        </g>
+
+        <!-- Building on right -->
+        <g transform="translate(1320, 220)">
+          <rect x="-20" y="0" width="620" height="46" rx="8" fill="#64748B" stroke="#1E293B" stroke-width="6" />
+          <rect x="0" y="46" width="600" height="600" fill="#FDBA74" stroke="#1E293B" stroke-width="8" />
+          <text x="260" y="160" font-family="sans-serif" font-weight="900" font-size="80" fill="#1E293B" letter-spacing="10">G-Y-M</text>
+          <rect x="180" y="260" width="140" height="386" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+          <text x="250" y="365" font-family="sans-serif" font-weight="900" font-size="20" fill="#1E293B" text-anchor="middle">JOIN NOW</text>
+        </g>
+
+        <!-- Winding pathway -->
+        <path d="M 0 780 Q 400 780 700 680 Q 1000 580 1420 780 L 1520 780 L 1520 860 Q 1000 660 700 760 Q 400 860 0 860 Z" fill="#E2E8F0" stroke="#1E293B" stroke-width="6" />
+
+        <!-- Crowd stick figures -->
+        <g transform="translate(0, 0)">
+          <g transform="translate(1380, 600)"><circle cx="50" cy="50" r="26" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="170" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="170" x2="25" y2="230" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="170" x2="70" y2="230" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(1260, 620)"><circle cx="50" cy="50" r="26" fill="#1E293B" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="170" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="170" x2="25" y2="230" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="170" x2="70" y2="230" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(1080, 600)"><circle cx="50" cy="50" r="26" fill="#F8FAFC" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="20" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="65" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(860, 560)"><circle cx="50" cy="50" r="26" fill="#F59E0B" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="25" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="70" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(680, 590)"><circle cx="50" cy="50" r="26" fill="#3B82F6" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="25" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="70" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(420, 680)"><circle cx="50" cy="50" r="26" fill="#10B981" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="25" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="70" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+          <g transform="translate(180, 710)"><circle cx="50" cy="50" r="26" fill="#F8FAFC" stroke="#1E293B" stroke-width="6" /><line x1="50" y1="76" x2="45" y2="160" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="25" y2="220" stroke="#1E293B" stroke-width="7" /><line x1="45" y1="160" x2="70" y2="220" stroke="#1E293B" stroke-width="7" /></g>
+        </g>
+      </svg>
+    `;
+  }
+
+  // 5. CULINARY / COOKING SCENE (Giant Stock Pot & Chef Stickman)
+  if (sceneType === 'cooking') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#FBF8EE" />
+
+        <text x="960" y="160" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="96" fill="#EA580C" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" text-anchor="middle" paint-order="stroke fill">
+          ${safeTitle}
+        </text>
+
+        <!-- Big Broth Pot with aromatic steam -->
+        <g transform="translate(800, 520)">
+          <!-- Steam curls -->
+          <path d="M 0 -120 Q -30 -180 0 -240 Q 30 -300 0 -360" fill="none" stroke="#F97316" stroke-width="8" stroke-linecap="round" />
+          <path d="M 120 -120 Q 150 -180 120 -240 Q 90 -300 120 -360" fill="none" stroke="#FB923C" stroke-width="10" stroke-linecap="round" />
+          <path d="M -120 -120 Q -90 -180 -120 -240 Q -150 -300 -120 -360" fill="none" stroke="#F97316" stroke-width="8" stroke-linecap="round" />
+
+          <!-- Pot -->
+          <ellipse cx="0" cy="0" rx="360" ry="45" fill="#E2E8F0" stroke="#1E293B" stroke-width="12" />
+          <path d="M -360 0 L -330 280 Q 0 360 330 280 L 360 0" fill="#FFFFFF" stroke="#1E293B" stroke-width="12" />
+          <ellipse cx="0" cy="20" rx="320" ry="35" fill="#FDBA74" />
+          <ellipse cx="0" cy="20" rx="220" ry="22" fill="#EA580C" />
+          <!-- Pot Handles -->
+          <path d="M -360 50 Q -430 50 -430 110 Q -430 170 -350 170" fill="none" stroke="#1E293B" stroke-width="12" />
+          <path d="M 360 50 Q 430 50 430 110 Q 430 170 350 170" fill="none" stroke="#1E293B" stroke-width="12" />
+          <!-- Gas Flame -->
+          <path d="M -200 340 Q -160 280 -120 340 Q -80 280 -40 340 Q 0 280 40 340 Q 80 280 120 340 Q 160 280 200 340" fill="none" stroke="#EF4444" stroke-width="14" stroke-linecap="round" />
+
+          <!-- Big Timer Badge -->
+          <g transform="translate(0, 360)">
+            <rect x="-180" y="0" width="360" height="74" rx="20" fill="#F97316" stroke="#1E293B" stroke-width="6" />
+            <text x="0" y="50" font-family="sans-serif" font-weight="900" font-size="34" fill="#FFFFFF" text-anchor="middle">⏱️ ${escapeXml(metric)}</text>
+          </g>
+        </g>
+
+        <!-- Chef Stickman -->
+        <g transform="translate(1420, 460)">
+          <!-- Toque hat -->
+          <path d="M 60 70 Q 45 20 80 15 Q 100 5 120 15 Q 155 20 140 70 Z" fill="#FFFFFF" stroke="#1E293B" stroke-width="8" />
+          <rect x="62" y="65" width="76" height="20" rx="4" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
+          <circle cx="100" cy="115" r="54" fill="#FFFFFF" stroke="#1E293B" stroke-width="8" />
+          <circle cx="88" cy="106" r="6" fill="#1E293B" />
+          <circle cx="116" cy="106" r="6" fill="#1E293B" />
+          <path d="M 88 132 Q 102 146 116 132" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+
+          <path d="M 60 175 L 140 175 L 145 320 L 55 320 Z" fill="#FFFFFF" stroke="#1E293B" stroke-width="10" stroke-linejoin="round" />
+          <!-- Apron lines -->
+          <line x1="80" y1="200" x2="120" y2="200" stroke="#F97316" stroke-width="6" />
+          <!-- Holding wooden spoon into pot -->
+          <path d="M 60 200 L -120 140" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <line x1="-120" y1="140" x2="-220" y2="90" stroke="#78350F" stroke-width="12" stroke-linecap="round" />
+          <ellipse cx="-230" cy="85" rx="20" ry="12" fill="#F59E0B" stroke="#1E293B" stroke-width="4" />
+          <!-- Legs -->
+          <line x1="80" y1="320" x2="80" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <line x1="120" y1="320" x2="120" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+        </g>
+      </svg>
+    `;
+  }
+
+  // 6. TECH / CODE / ALGORITHM SCENE
+  if (sceneType === 'tech_code') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#F1F5F9" />
+
+        <text x="960" y="160" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="96" fill="#0284C7" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" text-anchor="middle" paint-order="stroke fill">
+          ${safeTitle}
+        </text>
+
+        <!-- Giant Monitor with Code -->
+        <g transform="translate(680, 240)">
+          <!-- Monitor Frame -->
+          <rect x="0" y="0" width="760" height="520" rx="24" fill="#0F172A" stroke="#1E293B" stroke-width="10" />
+          <rect x="20" y="20" width="720" height="480" rx="14" fill="#020617" />
+          <!-- Window Dots -->
+          <circle cx="50" cy="50" r="8" fill="#EF4444" />
+          <circle cx="75" cy="50" r="8" fill="#F59E0B" />
+          <circle cx="100" cy="50" r="8" fill="#10B981" />
+          <line x1="20" y1="75" x2="740" y2="75" stroke="#1E293B" stroke-width="3" />
+
+          <!-- Syntax Lines -->
+          <text x="50" y="130" font-family="monospace" font-weight="700" font-size="28" fill="#F43F5E">const</text>
+          <text x="145" y="130" font-family="monospace" font-weight="700" font-size="28" fill="#FCD34D">target</text>
+          <text x="260" y="130" font-family="monospace" font-weight="700" font-size="28" fill="#F43F5E">=</text>
+          <text x="290" y="130" font-family="monospace" font-weight="700" font-size="28" fill="#38BDF8">"${escapeXml(metric)}";</text>
+
+          <text x="50" y="200" font-family="monospace" font-weight="700" font-size="28" fill="#818CF8">function</text>
+          <text x="195" y="200" font-family="monospace" font-weight="700" font-size="28" fill="#34D399">optimize()</text>
+          <text x="360" y="200" font-family="monospace" font-weight="700" font-size="28" fill="#F8FAFC">{</text>
+
+          <text x="90" y="270" font-family="monospace" font-weight="700" font-size="28" fill="#F43F5E">return</text>
+          <text x="205" y="270" font-family="monospace" font-weight="700" font-size="28" fill="#A7F3D0">"100% Success ✓";</text>
+
+          <text x="50" y="340" font-family="monospace" font-weight="700" font-size="28" fill="#F8FAFC">}</text>
+
+          <!-- Terminal Status Box -->
+          <rect x="40" y="380" width="680" height="90" rx="12" fill="#0F172A" stroke="#22C55E" stroke-width="4" />
+          <text x="70" y="435" font-family="monospace" font-weight="900" font-size="26" fill="#22C55E">&gt; BUILD PASSED • ZERO BUGS ⚡</text>
+
+          <!-- Monitor Stand -->
+          <rect x="340" y="520" width="80" height="90" fill="#64748B" stroke="#1E293B" stroke-width="8" />
+          <ellipse cx="380" cy="620" rx="160" ry="24" fill="#94A3B8" stroke="#1E293B" stroke-width="8" />
+        </g>
+
+        <!-- Tech Stickman Typing -->
+        <g transform="translate(320, 460)">
+          <circle cx="100" cy="100" r="65" fill="#FFFFFF" stroke="#1E293B" stroke-width="9" />
+          <!-- Tech Visor -->
+          <rect x="65" y="80" width="70" height="24" rx="8" fill="#06B6D4" stroke="#1E293B" stroke-width="4" />
+          <circle cx="85" cy="92" r="4" fill="#FFFFFF" />
+          <circle cx="115" cy="92" r="4" fill="#FFFFFF" />
+          <path d="M 88 130 Q 100 142 112 130" fill="none" stroke="#1E293B" stroke-width="5" stroke-linecap="round" />
+
+          <!-- Body with blue shirt -->
+          <path d="M 60 170 L 140 170 L 135 320 L 65 320 Z" fill="#0284C7" stroke="#1E293B" stroke-width="9" />
+          <!-- Typing Arms extended to monitor -->
+          <path d="M 130 200 L 260 220 L 340 260" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+          <path d="M 110 210 L 240 240 L 320 280" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+          <!-- Legs -->
+          <line x1="85" y1="320" x2="60" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <line x1="115" y1="320" x2="140" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+        </g>
+      </svg>
+    `;
+  }
+
+  // 7. COMPOUND GROWTH / WEALTH SCENE
+  if (sceneType === 'growth') {
+    return `
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1920" height="1080" fill="#F0FDF4" />
+
+        <text x="960" y="160" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="96" fill="#15803D" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" text-anchor="middle" paint-order="stroke fill">
+          ${safeTitle}
+        </text>
+
+        <!-- Rocket Growth Curve & Coin Stairs -->
+        <g transform="translate(680, 260)">
+          <!-- Coin Stack 1 -->
+          <rect x="0" y="380" width="100" height="120" rx="10" fill="#FBBF24" stroke="#1E293B" stroke-width="6" />
+          <text x="50" y="445" font-family="sans-serif" font-weight="900" font-size="34" fill="#78350F" text-anchor="middle">₫</text>
+
+          <!-- Coin Stack 2 -->
+          <rect x="140" y="280" width="100" height="220" rx="10" fill="#FBBF24" stroke="#1E293B" stroke-width="6" />
+          <text x="190" y="395" font-family="sans-serif" font-weight="900" font-size="34" fill="#78350F" text-anchor="middle">₫</text>
+
+          <!-- Coin Stack 3 -->
+          <rect x="280" y="160" width="100" height="340" rx="10" fill="#FBBF24" stroke="#1E293B" stroke-width="6" />
+          <text x="330" y="340" font-family="sans-serif" font-weight="900" font-size="34" fill="#78350F" text-anchor="middle">₫</text>
+
+          <!-- Coin Stack 4 (Huge) -->
+          <rect x="420" y="40" width="120" height="460" rx="10" fill="#F59E0B" stroke="#1E293B" stroke-width="7" />
+          <text x="480" y="260" font-family="sans-serif" font-weight="900" font-size="44" fill="#78350F" text-anchor="middle">7 TỶ</text>
+
+          <!-- Giant Green Upward Curve -->
+          <path d="M -40 450 Q 200 360 480 0" fill="none" stroke="#16A34A" stroke-width="18" stroke-linecap="round" />
+          <polygon points="450,-30 520,10 460,40" fill="#16A34A" stroke="#1E293B" stroke-width="4" />
+        </g>
+
+        <!-- Confident Investor Stickman Gesturing -->
+        <g transform="translate(360, 460)">
+          <circle cx="100" cy="100" r="68" fill="#FFFFFF" stroke="#1E293B" stroke-width="9" />
+          <circle cx="86" cy="90" r="7" fill="#1E293B" />
+          <circle cx="118" cy="90" r="7" fill="#1E293B" />
+          <path d="M 88 122 Q 102 138 120 122" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+
+          <path d="M 60 170 L 140 170 L 145 320 L 55 320 Z" fill="#10B981" stroke="#1E293B" stroke-width="9" />
+          <!-- Gesturing Arm to Growth -->
+          <path d="M 140 200 L 260 140 L 380 90" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <polygon points="375,80 405,88 385,108" fill="#10B981" stroke="#1E293B" stroke-width="3" />
+          <!-- Other Arm Holding Seedling Pot -->
+          <path d="M 60 200 L -20 230 L -30 270" fill="none" stroke="#1E293B" stroke-width="8" stroke-linecap="round" />
+          <circle cx="-35" cy="285" r="22" fill="#FBBF24" stroke="#1E293B" stroke-width="5" />
+          <text x="-35" y="294" font-weight="900" font-size="24" fill="#78350F" text-anchor="middle">₫</text>
+
+          <line x1="85" y1="320" x2="65" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+          <line x1="115" y1="320" x2="135" y2="480" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+        </g>
+      </svg>
+    `;
+  }
+
+  // 8. FALLBACK UNIVERSAL CARTOON (Clean, bold, creative, zero clutter)
+  return `
+    <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1920" height="1080" fill="#FBF8EE" />
+
+      <!-- Top Bold Comic Title -->
+      <text x="960" y="160" font-family="'Comic Sans MS', sans-serif" font-weight="900" font-size="96" fill="#3B82F6" stroke="#1E293B" stroke-width="8" stroke-linejoin="round" text-anchor="middle" paint-order="stroke fill">
+        ${safeTitle}
+      </text>
+
+      <!-- Centerpiece Creative Idea / Metaphor -->
+      <g transform="translate(860, 480)">
+        <!-- Giant Glowing Lightbulb -->
+        <circle cx="0" cy="0" r="180" fill="#FDE047" stroke="#1E293B" stroke-width="12" />
+        <rect x="-60" y="150" width="120" height="70" rx="10" fill="#94A3B8" stroke="#1E293B" stroke-width="8" />
+        <line x1="-50" y1="185" x2="50" y2="185" stroke="#1E293B" stroke-width="6" />
+        <!-- Filament -->
+        <path d="M -50 40 Q 0 -60 50 40" fill="none" stroke="#CA8A04" stroke-width="10" stroke-linecap="round" />
+        
+        <!-- Sparkle Rays -->
+        <line x1="0" y1="-220" x2="0" y2="-280" stroke="#EAB308" stroke-width="12" stroke-linecap="round" />
+        <line x1="180" y1="-140" x2="230" y2="-190" stroke="#EAB308" stroke-width="12" stroke-linecap="round" />
+        <line x1="-180" y1="-140" x2="-230" y2="-190" stroke="#EAB308" stroke-width="12" stroke-linecap="round" />
+        <line x1="220" y1="0" x2="280" y2="0" stroke="#EAB308" stroke-width="12" stroke-linecap="round" />
+        <line x1="-220" y1="0" x2="-280" y2="0" stroke="#EAB308" stroke-width="12" stroke-linecap="round" />
+
+        <text x="0" y="270" font-family="sans-serif" font-weight="900" font-size="44" fill="#1E293B" text-anchor="middle">
+          ${escapeXml(metric)}
+        </text>
+      </g>
+
+      <!-- Eureka Stickman Character on Left -->
+      <g transform="translate(360, 460)">
+        <circle cx="100" cy="100" r="68" fill="#FFFFFF" stroke="#1E293B" stroke-width="9" />
+        <circle cx="86" cy="90" r="7" fill="#1E293B" />
+        <circle cx="118" cy="90" r="7" fill="#1E293B" />
+        <path d="M 88 122 Q 102 138 120 122" fill="none" stroke="#1E293B" stroke-width="6" stroke-linecap="round" />
+
+        <!-- Blue shirt -->
+        <path d="M 60 170 L 140 170 L 145 320 L 55 320 Z" fill="#3B82F6" stroke="#1E293B" stroke-width="9" />
+        <!-- Both Arms Raised in Excitement -->
+        <path d="M 60 200 L -20 130 L -10 60" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+        <path d="M 140 200 L 220 130 L 280 80" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+        <polygon points="275,70 305,78 285,98" fill="#3B82F6" />
+
+        <!-- Jumping Legs -->
+        <path d="M 75 320 L 40 400 L 60 480" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+        <path d="M 125 320 L 160 400 L 180 480" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
+      </g>
+    </svg>
+  `;
+}
+
+/**
+ * High-Quality Voice TTS Synthesis
+ */
+async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', speed = 1.0) {
+  const safeSpeed = Math.min(Math.max(Number(speed) || 1.0, 0.5), 2.0);
+  const tempRaw = outputPath.replace('.mp3', '_raw.mp3');
+
+  let success = false;
+  try {
+    const ratePercent = Math.round((safeSpeed - 1.0) * 100);
+    const rateStr = ratePercent >= 0 ? `+${ratePercent}%` : `${ratePercent}%`;
+    const edgeVoice = voice.includes('Nam') ? 'vi-VN-NamMinhNeural' : 'vi-VN-HoaiMyNeural';
+    execSync(
+      `edge-tts --voice "${edgeVoice}" --rate="${rateStr}" --text "${text.replace(/"/g, '\\"')}" --write-media "${outputPath}" 2>/dev/null`
+    );
+    if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
+      success = true;
+    }
+  } catch (_) {
+    success = false;
+  }
+
+  if (!success) {
     try {
-      const base64 = await googleTTS.getAudioBase64(text, {
+      const base64Audio = await googleTTS.getAudioBase64(text, {
         lang: 'vi',
         slow: false,
         host: 'https://translate.google.com',
-        timeout: 12000,
+        timeout: 10000,
       });
-      fs.writeFileSync(tempRaw, Buffer.from(base64, 'base64'));
-      generated = true;
-    } catch (e) {
-      console.error('Google TTS error:', e);
+      const buffer = Buffer.from(base64Audio, 'base64');
+      fs.writeFileSync(tempRaw, buffer);
+    } catch (err) {
+      execSync(`/opt/homebrew/bin/ffmpeg -y -f lavfi -i anullsrc=r=24000:cl=mono -t 3.5 -q:a 9 -acodec libmp3lame "${tempRaw}" 2>/dev/null`);
+    }
+
+    if (safeSpeed !== 1.0 && fs.existsSync(tempRaw)) {
+      execSync(`/opt/homebrew/bin/ffmpeg -y -i "${tempRaw}" -filter:a "atempo=${safeSpeed}" -vn "${outputPath}" 2>/dev/null`);
+      try { fs.unlinkSync(tempRaw); } catch (_) {}
+    } else if (fs.existsSync(tempRaw)) {
+      fs.copyFileSync(tempRaw, outputPath);
+      try { fs.unlinkSync(tempRaw); } catch (_) {}
     }
   }
 
-  // Adjust playback speed if needed
-  const safeSpeed = Math.max(0.5, Math.min(2.0, Number(speed) || 1.0));
-  if (safeSpeed !== 1.0) {
-    execSync(`/opt/homebrew/bin/ffmpeg -y -i "${tempRaw}" -filter:a "atempo=${safeSpeed}" -vn "${outputPath}" 2>/dev/null`);
-    try { fs.unlinkSync(tempRaw); } catch (_) {}
-  } else {
-    fs.copyFileSync(tempRaw, outputPath);
-    try { fs.unlinkSync(tempRaw); } catch (_) {}
-  }
-
-  // Probe exact duration with ffprobe
   let durationInSeconds = 4.0;
   try {
     const probe = execSync(`/opt/homebrew/bin/ffprobe -i "${outputPath}" -show_entries format=duration -v quiet -of csv="p=0"`).toString().trim();
@@ -287,676 +1348,23 @@ async function generateTTSAudio(text, voiceId, speed, outputPath) {
   return durationInSeconds;
 }
 
-function escapeXml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-/**
- * Intelligent Semantic Keyword & Thematic Scene Analyzer for Visual Beats
- */
-function analyzeClauseTheme(clauseText) {
-  const t = clauseText.toLowerCase();
-
-  // 1. Dopamine, Shopping, Impulse buy
-  if (/dopamine|bộ não|mua hàng|mua sắm|bấm nút|sung sướng|tức thời|tức thì|cảm xúc|shopping|khoái cảm|hưng phấn/i.test(t)) {
-    return {
-      theme: 'shopping_dopamine',
-      pose: 'buying_dopamine',
-      icon: '🧠🛒',
-      badgeColor: '#EC4899',
-      accentColor: '#DB2777',
-      title: 'BẪY DOPAMINE &amp; MUA SẮM CẢM XÚC',
-    };
-  }
-
-  // 2. Lifestyle Inflation, Income vs Expense, Motorbike to Car
-  if (/15|30 triệu|lương|thu nhập|chi tiêu|ô tô|xe máy|dậm chân|tiết kiệm|lối sống|lạm phát|chạy đua|sĩ diện/i.test(t)) {
-    return {
-      theme: 'lifestyle_inflation',
-      pose: 'shocked_wallet',
-      icon: '🛵🚗',
-      badgeColor: '#EF4444',
-      accentColor: '#DC2626',
-      title: 'HIỆU ỨNG LẠM PHÁT LỐI SỐNG',
-    };
-  }
-
-  // 3. Compound Interest, 10%, 2 Million, 7 Billion, Retirement
-  if (/lãi kép|đầu tư|2 triệu|10%|tuổi 20|7 tỷ|thời gian|đòn bẩy|hưu|tích lũy|sinh lời|kỳ diệu|cấp số nhân/i.test(t)) {
-    return {
-      theme: 'compound_growth',
-      pose: 'compound_growth',
-      icon: '📈💰',
-      badgeColor: '#10B981',
-      accentColor: '#059669',
-      title: 'SỨC MẠNH KỲ DIỆU CỦA LÃI KÉP',
-    };
-  }
-
-  // 4. 50-30-20 Rule, 50%, 30%, 20%, Essentials, Desires, Freedom Fund
-  if (/50%|30%|20%|50-30-20|thiết yếu|mong muốn|quỹ tự do|quy tắc|hũ|ngân sách|phân bổ|tự do tài chính/i.test(t)) {
-    return {
-      theme: 'rule_50_30_20',
-      pose: 'three_jars',
-      icon: '🏺📊',
-      badgeColor: '#3B82F6',
-      accentColor: '#2563EB',
-      title: 'QUY TẮC QUẢN LÝ TIỀN 50 - 30 - 20',
-    };
-  }
-
-  // 5. True Financial Freedom, Saying NO, Luxury vs Real Peace
-  if (/tự do tài chính|xa xỉ|từ chối|thức dậy|sáng|hạnh phúc thực|bình yên|đích thực|an nhiên|không muốn làm/i.test(t)) {
-    return {
-      theme: 'financial_freedom',
-      pose: 'peaceful_freedom',
-      icon: '☀️☕',
-      badgeColor: '#F59E0B',
-      accentColor: '#D97706',
-      title: 'TỰ DO TÀI CHÍNH ĐÍCH THỰC',
-    };
-  }
-
-  // 6. Technology, AI, Automation
-  if (/ai|công nghệ|máy móc|robot|tự động|thuật toán|số hóa|máy tính|dữ liệu/i.test(t)) {
-    return {
-      theme: 'tech',
-      pose: 'tech_robot',
-      icon: '🤖⚡',
-      badgeColor: '#06B6D4',
-      accentColor: '#0891B2',
-      title: 'CÔNG NGHỆ &amp; ĐỘT PHÁ TỰ ĐỘNG',
-    };
-  }
-
-  // 7. Gym, Fitness, Discipline, Health
-  if (/gym|tập luyện|sức khỏe|thể thao|cơ bắp|chạy bộ|tạ|huấn luyện|kỷ luật/i.test(t)) {
-    return {
-      theme: 'fitness',
-      pose: 'fitness_lifting',
-      icon: '🏋️💪',
-      badgeColor: '#EA580C',
-      accentColor: '#C2410C',
-      title: 'KỶ LUẬT THỂ CHẤT &amp; SỨC KHỎE',
-    };
-  }
-
-  // Fallback: Explaining & Strategy
-  return {
-    theme: 'explaining',
-    pose: 'explaining',
-    icon: '💡🎯',
-    badgeColor: '#6366F1',
-    accentColor: '#4F46E5',
-    title: 'NGUYÊN LÝ &amp; PHÂN TÍCH CHUYÊN SÂU',
-  };
-}
-
-/**
- * Intelligent Vietnamese Clause Segmenter into Visual Beats
- * Decides number of images based on audio duration and semantic pauses.
- */
-function segmentSceneIntoBeats(scene, durationInSeconds, totalFrames, sceneIndex, totalScenes) {
-  const text = scene.text || '';
-  
-  // 1. Split text into candidate phrases using punctuation and conjunctions
-  const rawPhrases = text
-    .split(/([.,!?;:\n]+|\s+—\s+|\s+-\s+)/)
-    .map((p) => p.trim())
-    .filter((p) => p && !/^[.,!?;:\n-]+$/.test(p));
-
-  // Merge very short phrases (< 4 words) with adjacent phrase
-  const mergedClauses = [];
-  let buffer = '';
-
-  for (const part of rawPhrases) {
-    if (!buffer) {
-      buffer = part;
-    } else if (buffer.split(/\s+/).length < 4 || part.split(/\s+/).length < 3) {
-      buffer += ', ' + part;
-    } else {
-      mergedClauses.push(buffer);
-      buffer = part;
-    }
-  }
-  if (buffer) mergedClauses.push(buffer);
-
-  // If a clause is still very long and total duration is long, split on conjunctions
-  let finalClauses = [];
-  for (const clause of mergedClauses) {
-    const words = clause.split(/\s+/);
-    if (words.length > 10 && durationInSeconds > 5.5) {
-      const sub = clause.split(/\s+(nhưng|mà là|thì|khi|nếu|trong khi|do đó|vì vậy|đồng thời)\s+/i);
-      if (sub.length > 1) {
-        let temp = '';
-        for (let i = 0; i < sub.length; i++) {
-          if (i % 2 === 1) {
-            temp += ' ' + sub[i];
-          } else {
-            if (temp) {
-              finalClauses.push(temp.trim());
-              temp = sub[i];
-            } else {
-              temp = sub[i];
-            }
-          }
-        }
-        if (temp) finalClauses.push(temp.trim());
-      } else {
-        finalClauses.push(clause);
-      }
-    } else {
-      finalClauses.push(clause);
-    }
-  }
-
-  if (finalClauses.length === 0) finalClauses = [text];
-
-  // Guarantee that no beat exceeds 5.0 seconds (150 frames @ 30 FPS)
-  // If only 1 clause exists but duration > 5.0s, split evenly
-  if (finalClauses.length === 1 && durationInSeconds > 5.0) {
-    const words = finalClauses[0].split(/\s+/);
-    const mid = Math.ceil(words.length / 2);
-    finalClauses = [
-      words.slice(0, mid).join(' '),
-      words.slice(mid).join(' '),
-    ];
-  }
-
-  const totalWords = finalClauses.reduce((acc, c) => acc + c.split(/\s+/).length, 0) || 1;
-  let allocatedFrames = 0;
-
-  const beats = finalClauses.map((clause, idx) => {
-    const clauseWords = clause.split(/\s+/).length;
-    const isLast = idx === finalClauses.length - 1;
-    const weight = clauseWords / totalWords;
-
-    let beatFrames = Math.round(totalFrames * weight);
-    beatFrames = Math.max(60, beatFrames); // at least 2.0s
-
-    if (isLast) {
-      beatFrames = Math.max(60, totalFrames - allocatedFrames);
-    }
-
-    const startOffset = allocatedFrames;
-    allocatedFrames += beatFrames;
-    const durSec = Number((beatFrames / 30).toFixed(2));
-
-    const analysis = analyzeClauseTheme(clause);
-    const beatTitle = `${scene.title} - Ý ${idx + 1}`;
-    const beatPrompt = `Minimalist 2D line art, stickman ${analysis.pose} explaining ${clause}, clean whiteboard explainer vector style, flat pastel background, 1080p.`;
-
-    const svgContent = createBeatSvg({
-      sceneId: scene.id,
-      sceneTitle: scene.title,
-      sceneIndex,
-      totalScenes,
-      subIndex: idx + 1,
-      totalBeats: finalClauses.length,
-      clauseText: clause,
-      analysis,
-      durSec,
-    });
-
-    return {
-      id: `scene_${scene.id}_beat_${idx + 1}`,
-      sub_index: idx + 1,
-      title: beatTitle,
-      prompt: beatPrompt,
-      caption: clause,
-      image_file: `scene_${scene.id}_beat_${idx + 1}.png`,
-      svg_data: svgContent,
-      duration_in_seconds: durSec,
-      duration_in_frames: beatFrames,
-      start_frame_offset: startOffset,
-      analysis,
-    };
-  });
-
-  return beats;
-}
-
-/**
- * Generate 1080p SVG with rich Whiteboard Stickman illustrations
- */
-function createBeatSvg({
-  sceneId,
-  sceneTitle,
-  sceneIndex,
-  totalScenes,
-  subIndex,
-  totalBeats,
-  clauseText,
-  analysis,
-  durSec,
-}) {
-  const bg = BG_PALETTES[(sceneIndex + subIndex) % BG_PALETTES.length];
-  const poseFn = POSES[analysis.pose] || POSES.explaining;
-  const charSvg = poseFn(140, 360, '#1E293B');
-
-  const cleanTitle = escapeXml(sceneTitle || `Cảnh ${sceneId}`);
-  const rawShort = clauseText.length > 95 ? clauseText.substring(0, 92) + '...' : clauseText;
-  const shortClause = escapeXml(rawShort);
-
-  // Render Theme-Specific Centerpiece Vector Illustration
-  let stageGraphic = '';
-
-  if (analysis.theme === 'shopping_dopamine') {
-    stageGraphic = `
-      <!-- Shopping & Dopamine Stage -->
-      <g transform="translate(680, 160)">
-        <!-- Giant Smartphone Mockup -->
-        <rect x="0" y="20" width="340" height="580" rx="36" fill="#0F172A" stroke="#334155" stroke-width="6" />
-        <rect x="18" y="45" width="304" height="530" rx="24" fill="#FFFFFF" />
-        <rect x="110" y="28" width="120" height="12" rx="6" fill="#334155" />
-        <!-- App Header -->
-        <rect x="18" y="45" width="304" height="60" rx="20" fill="#EC4899" />
-        <text x="170" y="84" font-weight="900" font-size="20" fill="#FFFFFF" text-anchor="middle">FLASH SALE 90%</text>
-        <!-- Product Card inside Phone -->
-        <rect x="38" y="125" width="264" height="180" rx="16" fill="#FDF2F8" stroke="#F472B6" stroke-width="3" />
-        <text x="170" y="210" font-size="64" text-anchor="middle">👟</text>
-        <text x="170" y="260" font-weight="900" font-size="20" fill="#BE185D" text-anchor="middle">GIÀY TRENDY 2026</text>
-        <text x="170" y="285" font-weight="700" font-size="16" fill="#9D174D" text-anchor="middle">1.990.000₫</text>
-        <!-- Giant BUY NOW Button with Pulse -->
-        <rect x="38" y="340" width="264" height="74" rx="20" fill="#EF4444" stroke="#DC2626" stroke-width="5" />
-        <text x="170" y="386" font-weight="900" font-size="24" fill="#FFFFFF" text-anchor="middle">⚡ MUA NGAY ⚡</text>
-        <text x="170" y="450" font-weight="700" font-size="16" fill="#64748B" text-anchor="middle">1-Click Fast Delivery</text>
-
-        <!-- Right Side: Brain & Dopamine Explosion -->
-        <g transform="translate(400, 30)">
-          <!-- Brain Card Container -->
-          <rect x="0" y="0" width="620" height="570" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
-          <rect x="0" y="0" width="620" height="76" rx="24" fill="#DB2777" stroke="#1E293B" stroke-width="5" />
-          <text x="310" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">BẪY KHOÁI CẢM TỨC THÌ</text>
-
-          <!-- Floating Brain Vector -->
-          <circle cx="310" cy="210" r="90" fill="#FCE7F3" stroke="#DB2777" stroke-width="6" />
-          <text x="310" y="235" font-size="80" text-anchor="middle">🧠</text>
-          
-          <!-- Energy Sparks -->
-          <path d="M 200 150 L 160 120 M 420 150 L 460 120 M 310 100 L 310 70" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" />
-          <text x="310" y="340" font-weight="900" font-size="30" fill="#BE185D" text-anchor="middle">DOPAMINE PHÓNG THÍCH</text>
-          
-          <!-- Comparison tags -->
-          <rect x="40" y="380" width="250" height="130" rx="16" fill="#FEE2E2" stroke="#EF4444" stroke-width="3" />
-          <text x="165" y="420" font-weight="900" font-size="20" fill="#991B1B" text-anchor="middle">❌ TỨC THỜI</text>
-          <text x="165" y="455" font-weight="700" font-size="16" fill="#7F1D1D" text-anchor="middle">Sung sướng 1 vài phút</text>
-          <text x="165" y="485" font-weight="600" font-size="15" fill="#991B1B" text-anchor="middle">Ví tiền rỗng tuếch</text>
-
-          <rect x="330" y="380" width="250" height="130" rx="16" fill="#DCFCE7" stroke="#10B981" stroke-width="3" />
-          <text x="455" y="420" font-weight="900" font-size="20" fill="#065F46" text-anchor="middle">✓ BỀN VỮNG</text>
-          <text x="455" y="455" font-weight="700" font-size="16" fill="#064E3B" text-anchor="middle">Hạnh phúc thực sự</text>
-          <text x="455" y="485" font-weight="600" font-size="15" fill="#047857" text-anchor="middle">Tài chính an tâm</text>
-        </g>
-      </g>
-    `;
-  } else if (analysis.theme === 'lifestyle_inflation') {
-    stageGraphic = `
-      <!-- Lifestyle Inflation Stage: Scooter vs Car -->
-      <g transform="translate(680, 160)">
-        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
-        <rect x="0" y="0" width="1040" height="76" rx="24" fill="#DC2626" stroke="#1E293B" stroke-width="5" />
-        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">NGHỊCH LÝ: LƯƠNG TĂNG GẤP ĐÔI NHƯNG KHÔNG CÒN ĐỒNG NÀO</text>
-
-        <!-- Left Column: Motorbike 15M -->
-        <g transform="translate(50, 120)">
-          <rect x="0" y="0" width="430" height="440" rx="20" fill="#F8FAFC" stroke="#94A3B8" stroke-width="4" />
-          <rect x="20" y="20" width="390" height="50" rx="12" fill="#E2E8F0" />
-          <text x="215" y="52" font-weight="900" font-size="22" fill="#334155" text-anchor="middle">LƯƠNG 15 TRIỆU / THÁNG</text>
-          
-          <text x="215" y="160" font-size="70" text-anchor="middle">🛵</text>
-          <text x="215" y="205" font-weight="800" font-size="20" fill="#475569" text-anchor="middle">Đi xe máy - Chi tiêu 12Tr</text>
-          
-          <rect x="30" y="240" width="370" height="80" rx="14" fill="#DCFCE7" stroke="#10B981" stroke-width="3" />
-          <text x="215" y="275" font-weight="900" font-size="22" fill="#047857" text-anchor="middle">TIẾT KIỆM: 3.000.000₫</text>
-          <text x="215" y="305" font-weight="700" font-size="16" fill="#065F46" text-anchor="middle">Tích lũy đều đặn mỗi tháng</text>
-          
-          <rect x="30" y="340" width="370" height="70" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2" />
-          <text x="215" y="382" font-weight="700" font-size="18" fill="#64748B" text-anchor="middle">Áp lực tài chính: THẤP</text>
-        </g>
-
-        <!-- Crisp Vector Arrow -->
-        <g transform="translate(500, 320)">
-          <line x1="-20" y1="0" x2="30" y2="0" stroke="#DC2626" stroke-width="8" stroke-linecap="round" />
-          <polyline points="15,-15 30,0 15,15" fill="none" stroke="#DC2626" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
-        </g>
-
-        <!-- Right Column: Car 30M -->
-        <g transform="translate(560, 120)">
-          <rect x="0" y="0" width="430" height="440" rx="20" fill="#FEF2F2" stroke="#EF4444" stroke-width="4" />
-          <rect x="20" y="20" width="390" height="50" rx="12" fill="#FEE2E2" stroke="#EF4444" stroke-width="2" />
-          <text x="215" y="52" font-weight="900" font-size="22" fill="#B91C1C" text-anchor="middle">LƯƠNG TĂNG 30 TRIỆU</text>
-          
-          <text x="215" y="160" font-size="70" text-anchor="middle">🚗</text>
-          <text x="215" y="205" font-weight="800" font-size="20" fill="#B91C1C" text-anchor="middle">Mua Ô Tô - Nợ vay &amp; Bảo dưỡng</text>
-          
-          <rect x="30" y="240" width="370" height="80" rx="14" fill="#FEE2E2" stroke="#EF4444" stroke-width="3" />
-          <text x="215" y="275" font-weight="900" font-size="24" fill="#DC2626" text-anchor="middle">TIẾT KIỆM: 0 ĐỒNG ⚠️</text>
-          <text x="215" y="305" font-weight="700" font-size="16" fill="#991B1B" text-anchor="middle">Chi phí tự động phình to theo lương</text>
-
-          <rect x="30" y="340" width="370" height="70" rx="14" fill="#FEF2F2" stroke="#EF4444" stroke-width="2" />
-          <text x="215" y="382" font-weight="800" font-size="18" fill="#DC2626" text-anchor="middle">Áp lực tài chính: BÁO ĐỘNG</text>
-        </g>
-      </g>
-    `;
-  } else if (analysis.theme === 'compound_growth') {
-    stageGraphic = `
-      <!-- Compound Interest & Exponential Growth Graph -->
-      <g transform="translate(680, 160)">
-        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
-        <rect x="0" y="0" width="1040" height="76" rx="24" fill="#059669" stroke="#1E293B" stroke-width="5" />
-        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">ĐÒN BẨY THỜI GIAN: ĐẦU TƯ 2 TRIỆU / THÁNG (LÃI 10%/NĂM)</text>
-
-        <!-- Coordinate System -->
-        <g transform="translate(100, 130)">
-          <!-- Y Axis -->
-          <line x1="50" y1="380" x2="50" y2="40" stroke="#64748B" stroke-width="5" />
-          <polygon points="45,40 50,20 55,40" fill="#64748B" />
-          <text x="40" y="20" font-weight="800" font-size="18" fill="#64748B" text-anchor="end">TÀI SẢN</text>
-
-          <!-- X Axis -->
-          <line x1="50" y1="380" x2="820" y2="380" stroke="#64748B" stroke-width="5" />
-          <polygon points="820,375 840,380 820,385" fill="#64748B" />
-          <text x="840" y="415" font-weight="800" font-size="18" fill="#64748B" text-anchor="middle">THỜI GIAN</text>
-
-          <!-- Grid Lines -->
-          <line x1="50" y1="280" x2="820" y2="280" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="6 6" />
-          <line x1="50" y1="180" x2="820" y2="180" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="6 6" />
-          <line x1="50" y1="80" x2="820" y2="80" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="6 6" />
-
-          <!-- Exponential Curve Gradient Area -->
-          <path d="M 50 380 Q 420 370 600 240 T 800 50 L 800 380 Z" fill="rgba(16, 185, 129, 0.12)" />
-          <!-- Exponential Curve Line -->
-          <path d="M 50 380 Q 420 370 600 240 T 800 50" fill="none" stroke="#10B981" stroke-width="8" stroke-linecap="round" />
-
-          <!-- Age 20 Milestone -->
-          <circle cx="120" cy="375" r="12" fill="#3B82F6" stroke="#1E293B" stroke-width="4" />
-          <text x="120" y="420" font-weight="800" font-size="18" fill="#1E293B" text-anchor="middle">Tuổi 20</text>
-          <text x="120" y="445" font-weight="700" font-size="15" fill="#64748B" text-anchor="middle">Bắt đầu 2Tr/tháng</text>
-
-          <!-- Age 40 Milestone -->
-          <circle cx="480" cy="330" r="12" fill="#F59E0B" stroke="#1E293B" stroke-width="4" />
-          <text x="480" y="370" font-weight="800" font-size="18" fill="#1E293B" text-anchor="middle">Tuổi 40</text>
-          <text x="480" y="420" font-weight="700" font-size="16" fill="#D97706" text-anchor="middle">1.2 Tỷ Đồng</text>
-
-          <!-- Age 60 Peak Milestone -->
-          <circle cx="800" cy="50" r="18" fill="#10B981" stroke="#1E293B" stroke-width="5" />
-          <!-- Giant Highlight Tag -->
-          <g transform="translate(560, 40)">
-            <rect x="0" y="0" width="220" height="90" rx="16" fill="#DCFCE7" stroke="#10B981" stroke-width="4" />
-            <text x="110" y="40" font-weight="900" font-size="28" fill="#047857" text-anchor="middle">7.000.000.000₫</text>
-            <text x="110" y="70" font-weight="800" font-size="16" fill="#065F46" text-anchor="middle">HƠN 7 TỶ KHI NGHỈ HƯU</text>
-          </g>
-        </g>
-      </g>
-    `;
-  } else if (analysis.theme === 'rule_50_30_20') {
-    stageGraphic = `
-      <!-- 50-30-20 Rule Stage: 3 Distinct Visual Jars -->
-      <g transform="translate(680, 160)">
-        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
-        <rect x="0" y="0" width="1040" height="76" rx="24" fill="#2563EB" stroke="#1E293B" stroke-width="5" />
-        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">QUY TẮC PHÂN BỔ THU NHẬP 50 - 30 - 20</text>
-
-        <g transform="translate(50, 120)">
-          <!-- Jar 1: 50% Essentials -->
-          <g transform="translate(0, 0)">
-            <rect x="0" y="0" width="290" height="440" rx="22" fill="#EFF6FF" stroke="#3B82F6" stroke-width="4" />
-            <!-- Jar Lid -->
-            <rect x="70" y="-14" width="150" height="24" rx="8" fill="#1D4ED8" />
-            <circle cx="145" cy="65" r="45" fill="#DBEAFE" stroke="#3B82F6" stroke-width="4" />
-            <text x="145" y="75" font-weight="900" font-size="34" fill="#1D4ED8" text-anchor="middle">50%</text>
-            
-            <text x="145" y="145" font-weight="900" font-size="22" fill="#1E40AF" text-anchor="middle">NHU CẦU THIẾT YẾU</text>
-            <line x1="30" y1="165" x2="260" y2="165" stroke="#93C5FD" stroke-width="3" />
-            
-            <text x="50" y="215" font-size="30">🏠</text>
-            <text x="95" y="215" font-weight="700" font-size="18" fill="#1E3A8A">Tiền thuê nhà / Ở</text>
-
-            <text x="50" y="275" font-size="30">🍲</text>
-            <text x="95" y="275" font-weight="700" font-size="18" fill="#1E3A8A">Ăn uống sinh hoạt</text>
-
-            <text x="50" y="335" font-size="30">💡</text>
-            <text x="95" y="335" font-weight="700" font-size="18" fill="#1E3A8A">Điện nước hóa đơn</text>
-
-            <rect x="25" y="375" width="240" height="42" rx="10" fill="#DBEAFE" />
-            <text x="145" y="402" font-weight="800" font-size="16" fill="#1D4ED8" text-anchor="middle">Không vượt quá 50%</text>
-          </g>
-
-          <!-- Jar 2: 30% Desires -->
-          <g transform="translate(325, 0)">
-            <rect x="0" y="0" width="290" height="440" rx="22" fill="#FFFBEB" stroke="#F59E0B" stroke-width="4" />
-            <rect x="70" y="-14" width="150" height="24" rx="8" fill="#D97706" />
-            <circle cx="145" cy="65" r="45" fill="#FEF3C7" stroke="#F59E0B" stroke-width="4" />
-            <text x="145" y="75" font-weight="900" font-size="34" fill="#B45309" text-anchor="middle">30%</text>
-
-            <text x="145" y="145" font-weight="900" font-size="22" fill="#92400E" text-anchor="middle">MONG MUỐN CÁ NHÂN</text>
-            <line x1="30" y1="165" x2="260" y2="165" stroke="#FCD34D" stroke-width="3" />
-
-            <text x="50" y="215" font-size="30">☕</text>
-            <text x="95" y="215" font-weight="700" font-size="18" fill="#78350F">Cà phê, hẹn hò</text>
-
-            <text x="50" y="275" font-size="30">✈️</text>
-            <text x="95" y="275" font-weight="700" font-size="18" fill="#78350F">Du lịch trải nghiệm</text>
-
-            <text x="50" y="335" font-size="30">🎬</text>
-            <text x="95" y="335" font-weight="700" font-size="18" fill="#78350F">Giải trí, sở thích</text>
-
-            <rect x="25" y="375" width="240" height="42" rx="10" fill="#FEF3C7" />
-            <text x="145" y="402" font-weight="800" font-size="16" fill="#B45309" text-anchor="middle">Tận hưởng có kiểm soát</text>
-          </g>
-
-          <!-- Jar 3: 20% Freedom Fund -->
-          <g transform="translate(650, 0)">
-            <rect x="0" y="0" width="290" height="440" rx="22" fill="#F0FDF4" stroke="#10B981" stroke-width="5" />
-            <rect x="70" y="-14" width="150" height="24" rx="8" fill="#059669" />
-            <circle cx="145" cy="65" r="45" fill="#DCFCE7" stroke="#10B981" stroke-width="4" />
-            <text x="145" y="75" font-weight="900" font-size="34" fill="#047857" text-anchor="middle">20%</text>
-
-            <text x="145" y="145" font-weight="900" font-size="22" fill="#065F46" text-anchor="middle">TỰ DO TÀI CHÍNH</text>
-            <line x1="30" y1="165" x2="260" y2="165" stroke="#6EE7B7" stroke-width="3" />
-
-            <text x="50" y="215" font-size="30">🔒</text>
-            <text x="95" y="215" font-weight="700" font-size="18" fill="#064E3B">Quỹ dự phòng khẩn cấp</text>
-
-            <text x="50" y="275" font-size="30">📈</text>
-            <text x="95" y="275" font-weight="700" font-size="18" fill="#064E3B">Đầu tư sinh lời dài hạn</text>
-
-            <text x="50" y="335" font-size="30">🛡️</text>
-            <text x="95" y="335" font-weight="700" font-size="18" fill="#064E3B">Bảo vệ tương lai</text>
-
-            <rect x="25" y="375" width="240" height="42" rx="10" fill="#DCFCE7" stroke="#10B981" stroke-width="2" />
-            <text x="145" y="402" font-weight="900" font-size="16" fill="#047857" text-anchor="middle">CHUYỂN NGAY KHI CÓ TIỀN</text>
-          </g>
-        </g>
-      </g>
-    `;
-  } else if (analysis.theme === 'financial_freedom') {
-    stageGraphic = `
-      <!-- Financial Freedom: Freedom to Say NO -->
-      <g transform="translate(680, 160)">
-        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
-        <rect x="0" y="0" width="1040" height="76" rx="24" fill="#D97706" stroke="#1E293B" stroke-width="5" />
-        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">ĐỊNH NGHĨA GIÀU CÓ: KHÔNG PHẢI KHOE KHOANG MÀ LÀ TỰ DO</text>
-
-        <!-- Left: Crossed Out Luxury -->
-        <g transform="translate(50, 120)">
-          <rect x="0" y="0" width="430" height="440" rx="20" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="4" />
-          <text x="215" y="50" font-weight="900" font-size="22" fill="#64748B" text-anchor="middle">❌ KHÔNG PHẢI LÀ</text>
-          
-          <g transform="translate(40, 90)">
-            <rect x="0" y="0" width="350" height="80" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3" />
-            <text x="45" y="52" font-size="36">⌚</text>
-            <text x="125" y="48" font-weight="800" font-size="20" fill="#475569">Đồng hồ xa xỉ đắt tiền</text>
-            <line x1="25" y1="44" x2="330" y2="44" stroke="#EF4444" stroke-width="5" />
-          </g>
-
-          <g transform="translate(40, 190)">
-            <rect x="0" y="0" width="350" height="80" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3" />
-            <text x="45" y="52" font-size="36">🏎️</text>
-            <text x="125" y="48" font-weight="800" font-size="20" fill="#475569">Siêu xe mua trả góp</text>
-            <line x1="25" y1="44" x2="330" y2="44" stroke="#EF4444" stroke-width="5" />
-          </g>
-
-          <g transform="translate(40, 290)">
-            <rect x="0" y="0" width="350" height="80" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3" />
-            <text x="45" y="52" font-size="36">💎</text>
-            <text x="125" y="48" font-weight="800" font-size="20" fill="#475569">Đồ hiệu để gây ấn tượng</text>
-            <line x1="25" y1="44" x2="330" y2="44" stroke="#EF4444" stroke-width="5" />
-          </g>
-
-          <text x="215" y="410" font-weight="700" font-size="16" fill="#94A3B8" text-anchor="middle">Sống để người khác đánh giá</text>
-        </g>
-
-        <!-- Right: Real Peace of Mind -->
-        <g transform="translate(560, 120)">
-          <rect x="0" y="0" width="430" height="440" rx="20" fill="#FEF3C7" stroke="#F59E0B" stroke-width="4" />
-          <text x="215" y="50" font-weight="900" font-size="22" fill="#B45309" text-anchor="middle">✓ MÀ LÀ QUYỀN NĂNG</text>
-
-          <g transform="translate(30, 90)">
-            <circle cx="60" cy="50" r="38" fill="#FDE68A" />
-            <text x="60" y="60" font-size="42" text-anchor="middle">🔕</text>
-            <text x="120" y="40" font-weight="800" font-size="20" fill="#78350F">Tắt báo thức mỗi sáng</text>
-            <text x="120" y="68" font-weight="600" font-size="16" fill="#92400E">Thức dậy trong thảnh thơi</text>
-          </g>
-
-          <g transform="translate(30, 190)">
-            <circle cx="60" cy="50" r="38" fill="#FDE68A" />
-            <text x="60" y="60" font-size="42" text-anchor="middle">☕</text>
-            <text x="120" y="40" font-weight="800" font-size="20" fill="#78350F">Làm chủ quỹ thời gian</text>
-            <text x="120" y="68" font-weight="600" font-size="16" fill="#92400E">Không bị cuốn vào vòng xoáy</text>
-          </g>
-
-          <!-- Speech bubble "SAY NO" -->
-          <g transform="translate(30, 290)">
-            <rect x="0" y="0" width="370" height="110" rx="18" fill="#FFFFFF" stroke="#D97706" stroke-width="4" />
-            <text x="185" y="45" font-weight="900" font-size="24" fill="#B45309" text-anchor="middle">QUYỀN TỪ CHỐI ✋</text>
-            <text x="185" y="80" font-weight="700" font-size="17" fill="#78350F" text-anchor="middle">Những gì bạn không muốn làm!</text>
-          </g>
-        </g>
-      </g>
-    `;
-  } else {
-    // General explainer strategy stage
-    stageGraphic = `
-      <!-- General Whiteboard Analytical Stage -->
-      <g transform="translate(680, 160)">
-        <rect x="0" y="0" width="1040" height="610" rx="28" fill="#FFFFFF" stroke="#1E293B" stroke-width="6" />
-        <rect x="0" y="0" width="1040" height="76" rx="24" fill="${analysis.accentColor}" stroke="#1E293B" stroke-width="5" />
-        <text x="520" y="50" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">${analysis.icon} ${analysis.title}</text>
-
-        <!-- Big Analytical Roadmap / Steps -->
-        <g transform="translate(60, 130)">
-          <!-- Step 1 -->
-          <rect x="0" y="0" width="280" height="400" rx="18" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="4" />
-          <circle cx="140" cy="70" r="38" fill="${analysis.badgeColor}" />
-          <text x="140" y="82" font-weight="900" font-size="30" fill="#FFFFFF" text-anchor="middle">01</text>
-          <text x="140" y="150" font-weight="800" font-size="22" fill="#1E293B" text-anchor="middle">NHẬN DIỆN VẤN ĐỀ</text>
-          <line x1="40" y1="175" x2="240" y2="175" stroke="#CBD5E1" stroke-width="3" />
-          <text x="140" y="220" font-weight="600" font-size="17" fill="#64748B" text-anchor="middle">Quan sát quy luật cốt lõi</text>
-          <text x="140" y="260" font-weight="600" font-size="17" fill="#64748B" text-anchor="middle">Tránh bẫy tâm lý thường gặp</text>
-          <circle cx="140" cy="330" r="28" fill="#DCFCE7" />
-          <text x="140" y="340" font-size="28" text-anchor="middle">🔍</text>
-
-          <!-- Step 2 -->
-          <rect x="320" y="0" width="280" height="400" rx="18" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="4" />
-          <circle cx="460" cy="70" r="38" fill="${analysis.badgeColor}" />
-          <text x="460" y="82" font-weight="900" font-size="30" fill="#FFFFFF" text-anchor="middle">02</text>
-          <text x="460" y="150" font-weight="800" font-size="22" fill="#1E293B" text-anchor="middle">THIẾT LẬP KỶ LUẬT</text>
-          <line x1="360" y1="175" x2="560" y2="175" stroke="#CBD5E1" stroke-width="3" />
-          <text x="460" y="220" font-weight="600" font-size="17" fill="#64748B" text-anchor="middle">Tối ưu hóa hành vi</text>
-          <text x="460" y="260" font-weight="600" font-size="17" fill="#64748B" text-anchor="middle">Tự động hóa hệ thống</text>
-          <circle cx="460" cy="330" r="28" fill="#FEF3C7" />
-          <text x="460" y="340" font-size="28" text-anchor="middle">⚙️</text>
-
-          <!-- Step 3 -->
-          <rect x="640" y="0" width="280" height="400" rx="18" fill="#F0FDF4" stroke="#10B981" stroke-width="4" />
-          <circle cx="780" cy="70" r="38" fill="#10B981" />
-          <text x="780" y="82" font-weight="900" font-size="30" fill="#FFFFFF" text-anchor="middle">03</text>
-          <text x="780" y="150" font-weight="800" font-size="22" fill="#065F46" text-anchor="middle">KẾT QUẢ BỀN VỮNG</text>
-          <line x1="680" y1="175" x2="880" y2="175" stroke="#6EE7B7" stroke-width="3" />
-          <text x="780" y="220" font-weight="700" font-size="17" fill="#047857" text-anchor="middle">Tự do &amp; An tâm tuyệt đối</text>
-          <text x="780" y="260" font-weight="700" font-size="17" fill="#047857" text-anchor="middle">Đạt mục tiêu dài hạn</text>
-          <circle cx="780" cy="330" r="28" fill="#DCFCE7" />
-          <text x="780" y="340" font-size="28" text-anchor="middle">🏆</text>
-        </g>
-      </g>
-    `;
-  }
-
-  return `
-    <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
-      <!-- Whiteboard Canvas Background -->
-      <rect width="1920" height="1080" fill="${bg}" />
-      
-      <!-- Top Header Navigation Bar -->
-      <rect x="0" y="0" width="1920" height="74" fill="rgba(15, 23, 42, 0.05)" />
-      
-      <!-- Scene Badge -->
-      <g transform="translate(60, 18)">
-        <rect x="0" y="0" width="170" height="38" rx="10" fill="#1E293B" />
-        <text x="85" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="16" fill="#F8FAFC" text-anchor="middle">
-          CẢNH ${sceneId}/${totalScenes}
-        </text>
-      </g>
-
-      <text x="250" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="22" fill="#1E293B">
-        ${cleanTitle.toUpperCase()}
-      </text>
-
-      <!-- Beat Timing Chip -->
-      <g transform="translate(1540, 16)">
-        <rect x="0" y="0" width="320" height="42" rx="12" fill="${analysis.badgeColor}" />
-        <text x="160" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="16" fill="#FFFFFF" text-anchor="middle">
-          Ý ${subIndex}/${totalBeats} • ${durSec.toFixed(1)}s (Đổi hình theo nhịp)
-        </text>
-      </g>
-
-      <!-- Ground / Horizon Line for Characters -->
-      <line x1="60" y1="870" x2="1860" y2="870" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round" />
-
-      <!-- Expressive Stickman Character -->
-      ${charSvg}
-
-      <!-- Centerpiece Thematic Stage Graphic -->
-      ${stageGraphic}
-
-      <!-- Bottom Subtitle Bar (Exact spoken clause) -->
-      <g transform="translate(120, 930)">
-        <rect x="0" y="0" width="1680" height="100" rx="24" fill="rgba(15, 23, 42, 0.94)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="3" />
-        <text x="840" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="26" text-anchor="middle" fill="#FFFFFF">
-          ${shortClause}
-        </text>
-      </g>
-    </svg>
-  `;
-}
-
 /**
  * Main Video Generator Pipeline
- * 1. Generates TTS audio from voice and content
- * 2. Calculates audio duration, analyzes semantic clauses, generates multiple visual beats per scene
- * 3. Assembles with Remotion & FFmpeg
  */
-async function generateVideo({ title, subtitle, voice, speed, scenes }) {
+async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiKey }) {
   const selectedVoice = voice || 'vi-VN-Standard-A';
   const playbackSpeed = Number(speed) || 1.0;
 
   console.log(`\n======================================================`);
-  console.log(`[VIDEO GENERATOR] Bắt đầu quy trình sản xuất video 3 bước:`);
-  console.log(`1. Tạo Audio TTS (${selectedVoice}, ${playbackSpeed}x)`);
-  console.log(`2. Phân tích ngữ nghĩa, chia Visual Beats theo mốc thời gian audio`);
-  console.log(`3. Ghép nối kho ảnh & audio bằng Remotion & FFmpeg`);
-  console.log(`======================================================`);
+  console.log(`🎨 [TẠO VIDEO THEO PHONG CÁCH STICKMAN CARTOON EXPLAINER]`);
+  console.log(`Tiêu đề: ${title}`);
+  console.log(`Giọng đọc: ${selectedVoice} (${playbackSpeed}x)`);
+  console.log(`Số phân cảnh nạp vào: ${scenes.length}`);
+  console.log(`======================================================\n`);
 
+  let totalFrames = 0;
   const finalizedScenes = [];
   const sceneClipPaths = [];
-  let totalFrames = 0;
 
   for (let i = 0; i < scenes.length; i++) {
     const rawScene = scenes[i];
@@ -964,48 +1372,111 @@ async function generateVideo({ title, subtitle, voice, speed, scenes }) {
     const sceneTitle = rawScene.title || `Cảnh ${sceneId}`;
     const sceneText = rawScene.text || '';
 
+    console.log(`\n--- Phân cảnh ${sceneId}/${scenes.length}: "${sceneTitle}" ---`);
+    console.log(`Nội dung: ${sceneText.substring(0, 80)}...`);
+
+    // 1. Generate Voice Audio via Edge-TTS / Google-TTS
     const audioFileName = `scene_${sceneId}.mp3`;
     const audioPath = path.join(AUDIO_DIR, audioFileName);
 
-    console.log(`\n--- [Cảnh ${sceneId}/${scenes.length}]: "${sceneTitle}" ---`);
-    console.log(`[Bước 1/3] Đang tổng hợp audio TTS...`);
+    console.log(`[Bước 1/3] Đang tổng hợp giọng nói AI cho cảnh ${sceneId}...`);
+    const durationInSeconds = await generateTTSAudio(sceneText, audioPath, selectedVoice, playbackSpeed);
+    const durationInFrames = Math.round(durationInSeconds * 30);
+    console.log(`✓ Audio cảnh ${sceneId} hoàn tất: ${durationInSeconds.toFixed(2)}s (${durationInFrames} frames)`);
 
-    // 1. Generate Audio
-    const durationInSeconds = await generateTTSAudio(sceneText, selectedVoice, playbackSpeed, audioPath);
-    const durationInFrames = Math.ceil(durationInSeconds * 30) + 12; // 30 FPS + 12 padding frames
-
-    console.log(`✓ Audio xong: ${durationInSeconds.toFixed(2)}s (${durationInFrames} frames)`);
-    console.log(`[Bước 2/3] Phân tích ngữ nghĩa & ngắt ý tạo Visual Beats...`);
-
-    // 2. Intelligent Visual Beats Segmentation based on Audio Duration
-    const beats = segmentSceneIntoBeats(
+    // 2. Segment naturally without arbitrary <= 5s limit
+    console.log(`[Bước 2/3] Phân tích ngữ cảnh nội dung & phân bổ hình minh họa theo ý kịch bản...`);
+    const naturalBeats = segmentSceneNaturally(
       { id: sceneId, title: sceneTitle, text: sceneText },
       durationInSeconds,
-      durationInFrames,
-      i,
-      scenes.length
+      durationInFrames
     );
 
-    console.log(`✓ Đã tạo ${beats.length} visual beats cho cảnh ${sceneId}:`);
-    beats.forEach((b) => {
-      console.log(`   - Beat ${b.sub_index} (${b.duration_in_seconds}s, frames ${b.start_frame_offset}..${b.start_frame_offset + b.duration_in_frames}): "${b.caption}" [${b.analysis.theme}]`);
-    });
+    console.log(`✓ Cảnh ${sceneId} được minh họa bằng ${naturalBeats.length} bức tranh cartoon sáng tạo:`);
 
-    // 3. Render PNG images for all beats
-    const beatClipPaths = [];
-    const tempSceneDir = path.join('/tmp', `scene_${sceneId}_${Date.now()}`);
+    const tempSceneDir = path.join(PUBLIC_DIR, `temp_scene_${sceneId}`);
     if (!fs.existsSync(tempSceneDir)) fs.mkdirSync(tempSceneDir, { recursive: true });
+    const beatClipPaths = [];
 
+    const beats = [];
+    const usedSceneTypes = new Set();
+
+    for (const beat of naturalBeats) {
+      const excludedList = Array.from(usedSceneTypes).join(', ');
+      let features = await analyzeWithGemini(beat.text, sceneTitle, geminiApiKey, excludedList);
+      const sourceLabel = features?.fromGemini ? 'Gemini AI' : 'Local Rule';
+      if (!features) {
+        features = extractComicFeatures(beat.text, sceneTitle);
+      } else {
+        const fallback = extractComicFeatures(beat.text, sceneTitle);
+        if (!features.percentage) features.percentage = fallback.percentage;
+        if (!features.metric) features.metric = fallback.metric;
+      }
+
+      // Enforce zero repetition across the video: every beat gets a unique visual metaphor
+      if (usedSceneTypes.has(features.sceneType)) {
+        const fallbackLocal = extractComicFeatures(beat.text, sceneTitle);
+        if (!usedSceneTypes.has(fallbackLocal.sceneType)) {
+          features.sceneType = fallbackLocal.sceneType;
+          features.comicTitle = fallbackLocal.comicTitle;
+        } else {
+          const diversePool = [
+            'beer_crate_price',
+            'beer_tap_hand',
+            'brewery_tank_machine',
+            'ingredients_four',
+            'profit_glass_jump',
+            'closed_shutter_business',
+            'capital_startup_blueprint',
+            'pie_chart',
+            'street_walk',
+            'locked_door',
+            'crowd_wave',
+            'growth',
+            'universal',
+          ];
+          const unused = diversePool.find((t) => !usedSceneTypes.has(t));
+          if (unused) {
+            features.sceneType = unused;
+          }
+        }
+      }
+      usedSceneTypes.add(features.sceneType);
+
+      const svgContent = createCartoonSceneSvg({
+        clauseText: beat.text,
+        sceneTitle,
+        sceneIndex: i,
+        subIndex: beat.sub_index,
+        features,
+      });
+
+      console.log(`   • Beat ${beat.sub_index} [${sourceLabel}]: [${features.sceneType}] "${features.comicTitle}" -> ${beat.duration_in_seconds}s (Ảnh: scene_${sceneId}_beat_${beat.sub_index}.png)`);
+
+      beats.push({
+        id: beat.id,
+        sub_index: beat.sub_index,
+        title: beat.title,
+        prompt: `2D cartoon stickman explainer, ${features.comicTitle}, clean minimalist style, hand-drawn vector art, 1080p.`,
+        caption: beat.caption,
+        image_file: `scene_${sceneId}_beat_${beat.sub_index}.png`,
+        svg_data: svgContent,
+        duration_in_seconds: beat.duration_in_seconds,
+        duration_in_frames: beat.duration_in_frames,
+        start_frame_offset: beat.start_frame_offset,
+        features,
+      });
+    }
+
+    // 3. Render PNG & Video Clips for beats
     for (const beat of beats) {
       const beatPngPath = path.join(IMAGES_DIR, beat.image_file);
       await sharp(Buffer.from(beat.svg_data)).png({ quality: 95 }).toFile(beatPngPath);
 
-      // Also ensure scene_X.png exists for beat 1
       if (beat.sub_index === 1) {
         fs.copyFileSync(beatPngPath, path.join(IMAGES_DIR, `scene_${sceneId}.png`));
       }
 
-      // Render video clip segment for this beat
       const beatClipOut = path.join(tempSceneDir, `beat_${beat.sub_index}.mp4`);
       const beatSec = (beat.duration_in_frames / 30).toFixed(2);
       try {
@@ -1019,8 +1490,8 @@ async function generateVideo({ title, subtitle, voice, speed, scenes }) {
       }
     }
 
-    // 4. Combine beat clips with scene audio to create the scene's video clip
-    console.log(`[Bước 3/3] Ghép nối các visual beats với file audio của cảnh...`);
+    // 4. Combine beat clips with scene audio
+    console.log(`[Bước 3/3] Ghép nối hình ảnh minh họa với file audio của cảnh...`);
     const sceneClipOut = path.join(PUBLIC_DIR, `clip_${sceneId}.mp4`);
 
     if (beatClipPaths.length > 0) {
@@ -1028,7 +1499,6 @@ async function generateVideo({ title, subtitle, voice, speed, scenes }) {
       fs.writeFileSync(beatListFile, beatClipPaths.map((p) => `file '${p}'`).join('\n'));
 
       try {
-        // Concatenate beat video segments and mux with scene audio
         execSync(
           `/opt/homebrew/bin/ffmpeg -y -f concat -safe 0 -i "${beatListFile}" -i "${audioPath}" -c:v copy -c:a aac -b:a 192k -af "apad=pad_dur=0.4" -shortest "${sceneClipOut}"`,
           { stdio: 'ignore' }
@@ -1043,7 +1513,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes }) {
       id: sceneId,
       title: sceneTitle,
       text: sceneText,
-      prompt: beats[0]?.prompt || `Minimalist 2D line art, stickman explaining ${sceneTitle}`,
+      prompt: beats[0]?.prompt || `2D cartoon stickman explainer, ${sceneTitle}`,
       audio_file: audioFileName,
       image_file: `scene_${sceneId}_beat_1.png`,
       beats: beats.map((b) => ({
@@ -1057,6 +1527,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes }) {
         duration_in_frames: b.duration_in_frames,
         start_frame_offset: b.start_frame_offset,
         caption: b.caption,
+        features: b.features,
       })),
       duration_in_seconds: Number(durationInSeconds.toFixed(2)),
       duration_in_frames: durationInFrames,
@@ -1095,7 +1566,6 @@ async function generateVideo({ title, subtitle, voice, speed, scenes }) {
     created_at: new Date().toISOString(),
     voice: selectedVoice,
     speed: playbackSpeed,
-    max_image_duration_sec: 5.0,
   };
 
   const outputData = {
@@ -1103,15 +1573,13 @@ async function generateVideo({ title, subtitle, voice, speed, scenes }) {
     scenes: finalizedScenes,
   };
 
-  // Write scenes.json in public/ and src/data/
   fs.writeFileSync(path.join(PUBLIC_DIR, 'scenes.json'), JSON.stringify(outputData, null, 2));
   fs.writeFileSync(path.join(SRC_DATA_DIR, 'scenes.json'), JSON.stringify(outputData, null, 2));
 
-  console.log(`\n🎉 [HOÀN TẤT XUẤT SẮC]:`);
+  console.log(`\n🎉 [HOÀN TẤT XUẤT SẮC THEO PHONG CÁCH CARTOON YOUTUBE EXPLAINER]:`);
   console.log(`- ${finalizedScenes.length} Cảnh`);
-  console.log(`- ${totalBeatsCount} Hình ảnh Stickman Visual Beats (Max <= 5s/hình)`);
+  console.log(`- ${totalBeatsCount} Hình ảnh Cartoon Stickman chất lượng cao, ít chữ, sáng tạo & độc đáo!`);
   console.log(`- Tổng thời lượng: ${(totalFrames / 30).toFixed(1)}s (${totalFrames} frames)`);
-  console.log(`- Đã đồng bộ hoàn hảo với Remotion Player và lưu vào final-video.mp4!`);
 
   return {
     success: true,
@@ -1124,5 +1592,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes }) {
 module.exports = {
   generateVideo,
   generateTTSAudio,
-  segmentSceneIntoBeats,
+  segmentSceneNaturally,
+  extractComicFeatures,
+  createCartoonSceneSvg,
 };
