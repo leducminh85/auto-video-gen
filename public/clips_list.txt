@@ -1,1 +1,5 @@
 file '/Users/ducminh/Documents/Tool/autoVideo/antigravity/remix-stickman-video-studio/public/clip_1.mp4'
+file '/Users/ducminh/Documents/Tool/autoVideo/antigravity/remix-stickman-video-studio/public/clip_2.mp4'
+file '/Users/ducminh/Documents/Tool/autoVideo/antigravity/remix-stickman-video-studio/public/clip_3.mp4'
+file '/Users/ducminh/Documents/Tool/autoVideo/antigravity/remix-stickman-video-studio/public/clip_4.mp4'
+file '/Users/ducminh/Documents/Tool/autoVideo/antigravity/remix-stickman-video-studio/public/clip_5.mp4'
