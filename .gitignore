@@ -7,3 +7,10 @@ coverage/
 .env*
 !.env.example
 public/temp_scene_*/
+
+# Media and generated video assets
+public/audio/scene_*.mp3
+public/images/
+public/*.mp4
+public/clips_list.txt
+*.mp4
