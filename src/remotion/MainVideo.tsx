@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sequence } from 'remotion';
 import { SceneData } from '../types/scenes';
-import { StickmanScene } from './StickmanScene';
+import { SceneRenderer } from './SceneRenderer';
 
 interface MainVideoProps {
   scenes: SceneData[];
@@ -26,7 +26,7 @@ export const MainVideo: React.FC<MainVideoProps> = ({ scenes }) => {
             durationInFrames={scene.duration_in_frames}
             name={`Scene ${scene.id} - ${scene.title}`}
           >
-            <StickmanScene scene={scene} />
+            <SceneRenderer scene={scene} />
           </Sequence>
         );
       })}

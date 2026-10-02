@@ -292,6 +292,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           subtitle: scriptSubtitle || `Giọng đọc ${speed}×`,
           voice: selectedVoice,
           speed,
+          content: textContent,
           scenes: rawParsedScenes,
           geminiApiKey: geminiApiKey.trim() || undefined,
         }),

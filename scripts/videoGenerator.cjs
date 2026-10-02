@@ -1351,48 +1351,60 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
 /**
  * Main Video Generator Pipeline
  */
-async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiKey }) {
+async function generateVideo({ title, subtitle, voice, speed, scenes, script, content, geminiApiKey }) {
+  const { generateStoryboardFromContent } = require('./storyboardGenerator.cjs');
+
   const selectedVoice = voice || 'vi-VN-Standard-A';
   const playbackSpeed = Number(speed) || 1.0;
 
   console.log(`\n======================================================`);
   console.log(`🎨 [TẠO VIDEO THEO PHONG CÁCH STICKMAN CARTOON EXPLAINER]`);
-  console.log(`Tiêu đề: ${title}`);
+  console.log(`Tiêu đề: ${title || 'Video Giải Thích Mới'}`);
   console.log(`Giọng đọc: ${selectedVoice} (${playbackSpeed}x)`);
-  console.log(`Số phân cảnh nạp vào: ${scenes.length}`);
   console.log(`======================================================\n`);
+
+  // 1. Run AI Storyboard Generator to split content & plan diverse visuals
+  console.log(`[Bước 1/4] Chạy AI Storyboard Generator để phân tích và lập kế hoạch hình ảnh...`);
+  const plannedScenes = await generateStoryboardFromContent({
+    content: content || script,
+    scenesInput: scenes,
+    geminiApiKey,
+  });
+
+  console.log(`✓ Kế hoạch Storyboard gồm ${plannedScenes.length} phân cảnh:`);
+  plannedScenes.forEach((sc, i) => {
+    console.log(`   [${i + 1}] Loại: [${sc.visual_type.toUpperCase()}] | Tiêu đề: "${sc.title}" | Text chính: "${sc.main_text}"`);
+  });
 
   let totalFrames = 0;
   const finalizedScenes = [];
   const sceneClipPaths = [];
 
-  for (let i = 0; i < scenes.length; i++) {
-    const rawScene = scenes[i];
+  for (let i = 0; i < plannedScenes.length; i++) {
+    const rawScene = plannedScenes[i];
     const sceneId = i + 1;
     const sceneTitle = rawScene.title || `Cảnh ${sceneId}`;
-    const sceneText = rawScene.text || '';
+    const sceneText = (rawScene.narration || rawScene.text || '').trim();
 
-    console.log(`\n--- Phân cảnh ${sceneId}/${scenes.length}: "${sceneTitle}" ---`);
+    console.log(`\n--- Phân cảnh ${sceneId}/${plannedScenes.length}: "${sceneTitle}" [${rawScene.visual_type.toUpperCase()}] ---`);
     console.log(`Nội dung: ${sceneText.substring(0, 80)}...`);
 
     // 1. Generate Voice Audio via Edge-TTS / Google-TTS
     const audioFileName = `scene_${sceneId}.mp3`;
     const audioPath = path.join(AUDIO_DIR, audioFileName);
 
-    console.log(`[Bước 1/3] Đang tổng hợp giọng nói AI cho cảnh ${sceneId}...`);
+    console.log(`[Bước 2/4] Đang tổng hợp giọng nói AI cho cảnh ${sceneId}...`);
     const durationInSeconds = await generateTTSAudio(sceneText, audioPath, selectedVoice, playbackSpeed);
     const durationInFrames = Math.round(durationInSeconds * 30);
     console.log(`✓ Audio cảnh ${sceneId} hoàn tất: ${durationInSeconds.toFixed(2)}s (${durationInFrames} frames)`);
 
     // 2. Segment naturally without arbitrary <= 5s limit
-    console.log(`[Bước 2/3] Phân tích ngữ cảnh nội dung & phân bổ hình minh họa theo ý kịch bản...`);
+    console.log(`[Bước 3/4] Phân tích ngữ cảnh nội dung & phân bổ hình minh họa theo ý kịch bản...`);
     const naturalBeats = segmentSceneNaturally(
       { id: sceneId, title: sceneTitle, text: sceneText },
       durationInSeconds,
       durationInFrames
     );
-
-    console.log(`✓ Cảnh ${sceneId} được minh họa bằng ${naturalBeats.length} bức tranh cartoon sáng tạo:`);
 
     const tempSceneDir = path.join(PUBLIC_DIR, `temp_scene_${sceneId}`);
     if (!fs.existsSync(tempSceneDir)) fs.mkdirSync(tempSceneDir, { recursive: true });
@@ -1413,34 +1425,18 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiK
         if (!features.metric) features.metric = fallback.metric;
       }
 
-      // Enforce zero repetition across the video: every beat gets a unique visual metaphor
-      if (usedSceneTypes.has(features.sceneType)) {
-        const fallbackLocal = extractComicFeatures(beat.text, sceneTitle);
-        if (!usedSceneTypes.has(fallbackLocal.sceneType)) {
-          features.sceneType = fallbackLocal.sceneType;
-          features.comicTitle = fallbackLocal.comicTitle;
-        } else {
-          const diversePool = [
-            'beer_crate_price',
-            'beer_tap_hand',
-            'brewery_tank_machine',
-            'ingredients_four',
-            'profit_glass_jump',
-            'closed_shutter_business',
-            'capital_startup_blueprint',
-            'pie_chart',
-            'street_walk',
-            'locked_door',
-            'crowd_wave',
-            'growth',
-            'universal',
-          ];
-          const unused = diversePool.find((t) => !usedSceneTypes.has(t));
-          if (unused) {
-            features.sceneType = unused;
-          }
-        }
-      }
+      // Map visual_type to sceneType if present
+      if (rawScene.visual_type === 'chart') features.sceneType = 'pie_chart';
+      if (rawScene.visual_type === 'numbers') features.sceneType = 'crowd_wave';
+      if (rawScene.visual_type === 'environment') features.sceneType = 'street_walk';
+      if (rawScene.visual_type === 'comparison') features.sceneType = 'lifestyle_vs';
+      if (rawScene.visual_type === 'process') features.sceneType = 'growth';
+      if (rawScene.visual_type === 'object_metaphor') features.sceneType = 'locked_door';
+
+      if (rawScene.main_text) features.comicTitle = rawScene.main_text;
+      if (rawScene.metric) features.metric = rawScene.metric;
+      if (rawScene.percentage) features.percentage = rawScene.percentage;
+
       usedSceneTypes.add(features.sceneType);
 
       const svgContent = createCartoonSceneSvg({
@@ -1451,13 +1447,13 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiK
         features,
       });
 
-      console.log(`   • Beat ${beat.sub_index} [${sourceLabel}]: [${features.sceneType}] "${features.comicTitle}" -> ${beat.duration_in_seconds}s (Ảnh: scene_${sceneId}_beat_${beat.sub_index}.png)`);
+      console.log(`   • Beat ${beat.sub_index} [${sourceLabel}]: [${rawScene.visual_type}] "${features.comicTitle}" -> ${beat.duration_in_seconds}s`);
 
       beats.push({
         id: beat.id,
         sub_index: beat.sub_index,
         title: beat.title,
-        prompt: `2D cartoon stickman explainer, ${features.comicTitle}, clean minimalist style, hand-drawn vector art, 1080p.`,
+        prompt: `2D cartoon explainer, ${rawScene.visual_type}, ${features.comicTitle}, clean vector art, 1080p.`,
         caption: beat.caption,
         image_file: `scene_${sceneId}_beat_${beat.sub_index}.png`,
         svg_data: svgContent,
@@ -1465,6 +1461,10 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiK
         duration_in_frames: beat.duration_in_frames,
         start_frame_offset: beat.start_frame_offset,
         features,
+        visual_type: rawScene.visual_type,
+        main_text: rawScene.main_text,
+        sub_text: rawScene.sub_text,
+        motion: rawScene.motion,
       });
     }
 
@@ -1491,7 +1491,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiK
     }
 
     // 4. Combine beat clips with scene audio
-    console.log(`[Bước 3/3] Ghép nối hình ảnh minh họa với file audio của cảnh...`);
+    console.log(`[Bước 4/4] Ghép nối hình ảnh minh họa với file audio của cảnh...`);
     const sceneClipOut = path.join(PUBLIC_DIR, `clip_${sceneId}.mp4`);
 
     if (beatClipPaths.length > 0) {
@@ -1511,11 +1511,26 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiK
 
     const sceneRecord = {
       id: sceneId,
+      scene_id: rawScene.scene_id || `scene_0${sceneId}`,
       title: sceneTitle,
       text: sceneText,
-      prompt: beats[0]?.prompt || `2D cartoon stickman explainer, ${sceneTitle}`,
+      narration: sceneText,
+      prompt: beats[0]?.prompt || `2D cartoon explainer, ${sceneTitle}`,
       audio_file: audioFileName,
       image_file: `scene_${sceneId}_beat_1.png`,
+      visual_type: rawScene.visual_type || 'character',
+      visual_description: rawScene.visual_description || '',
+      subject: rawScene.subject || '',
+      environment: rawScene.environment || '',
+      objects: rawScene.objects || [],
+      composition: rawScene.composition || '',
+      action: rawScene.action || '',
+      main_text: rawScene.main_text || sceneTitle,
+      sub_text: rawScene.sub_text || '',
+      motion: rawScene.motion || 'slide',
+      camera: rawScene.camera || 'static',
+      metric: rawScene.metric || null,
+      percentage: rawScene.percentage || null,
       beats: beats.map((b) => ({
         id: b.id,
         sub_index: b.sub_index,
@@ -1528,6 +1543,10 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiK
         start_frame_offset: b.start_frame_offset,
         caption: b.caption,
         features: b.features,
+        visual_type: rawScene.visual_type || 'character',
+        main_text: rawScene.main_text || sceneTitle,
+        sub_text: rawScene.sub_text || '',
+        motion: rawScene.motion || 'slide',
       })),
       duration_in_seconds: Number(durationInSeconds.toFixed(2)),
       duration_in_frames: durationInFrames,
@@ -1555,7 +1574,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiK
   const totalBeatsCount = finalizedScenes.reduce((acc, sc) => acc + (sc.beats?.length || 1), 0);
 
   const metadata = {
-    title: title || 'Video Stickman Mới',
+    title: title || 'Video Giải Thích Đa Dạng',
     subtitle: subtitle || `Giọng đọc ${playbackSpeed}x`,
     fps: 30,
     width: 1920,
@@ -1576,9 +1595,11 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiK
   fs.writeFileSync(path.join(PUBLIC_DIR, 'scenes.json'), JSON.stringify(outputData, null, 2));
   fs.writeFileSync(path.join(SRC_DATA_DIR, 'scenes.json'), JSON.stringify(outputData, null, 2));
 
-  console.log(`\n🎉 [HOÀN TẤT XUẤT SẮC THEO PHONG CÁCH CARTOON YOUTUBE EXPLAINER]:`);
-  console.log(`- ${finalizedScenes.length} Cảnh`);
-  console.log(`- ${totalBeatsCount} Hình ảnh Cartoon Stickman chất lượng cao, ít chữ, sáng tạo & độc đáo!`);
+  console.log(`\n🎉 [HOÀN TẤT XUẤT SẮC - DATA-DRIVEN CARTOON EXPLAINER]:`);
+  console.log(`- ${finalizedScenes.length} Phân cảnh với các loại Visual:`);
+  finalizedScenes.forEach((s) => {
+    console.log(`  • Cảnh ${s.id}: [${s.visual_type?.toUpperCase()}] - ${s.title}`);
+  });
   console.log(`- Tổng thời lượng: ${(totalFrames / 30).toFixed(1)}s (${totalFrames} frames)`);
 
   return {
@@ -1587,6 +1608,46 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, geminiApiK
     scenes: finalizedScenes,
     finalVideoUrl: '/final-video.mp4',
   };
+}
+
+// Support direct execution via CLI
+if (require.main === module) {
+  (async () => {
+    try {
+      const args = process.argv.slice(2);
+      let content = null;
+      if (args[0]) {
+        if (fs.existsSync(args[0])) {
+          content = fs.readFileSync(args[0], 'utf8');
+        } else {
+          content = args.join(' ');
+        }
+      }
+      const testContent = content || `CẢNH 1: Nghịch Lý Giá Cà Phê
+Một ly cà phê take-away có giá 50.000 đồng, trong khi chi phí hạt cà phê và nước thực tế chưa tới 3.000 đồng.
+
+CẢNH 2: 94% Giá Trị Nằm Ở Đâu?
+Chênh lệch khổng lồ hơn 1.500% không biến chủ quán thành triệu phú, mà bị chia cắt bởi tiền mặt bằng đắc địa và khấu hao máy pha espresso.
+
+CẢNH 3: Bẫy Khách Ngồi Cả Ngày
+Khách hàng mua một ly cà phê 35.000 đồng rồi cắm sạc laptop ngồi suốt 6 tiếng làm tiêu hao tiền điện và triệt tiêu doanh thu trên mỗi mét vuông.
+
+CẢNH 4: Quy Tắc Take-Away Tối Ưu
+Các chuỗi cà phê thành công nhất tối ưu 80% doanh thu từ khách mua mang đi trong 60 giây thay vì mở rộng diện tích bàn ghế sang chảnh.
+
+CẢNH 5: Bí Quyết Kinh Doanh Bền Vững
+Lợi nhuận thực sự đến từ tốc độ quay vòng ly cà phê mỗi sáng, chứ không phụ thuộc vào việc trang trí quán đẹp để khách check-in sống ảo.`;
+
+      await generateVideo({
+        title: 'Kinh Tế Học Quán Cà Phê',
+        subtitle: 'The Coffee Economics',
+        content: testContent,
+      });
+    } catch (err) {
+      console.error('CLI execution error:', err);
+      process.exit(1);
+    }
+  })();
 }
 
 module.exports = {
