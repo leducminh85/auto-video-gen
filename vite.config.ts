@@ -16,19 +16,43 @@ function videoApiPlugin(): Plugin {
             body += chunk;
           });
           req.on('end', async () => {
+            res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+            res.setHeader('Cache-Control', 'no-cache, no-transform');
+            res.setHeader('Connection', 'keep-alive');
+
             try {
               const data = JSON.parse(body);
+              Object.keys(require.cache).forEach((k) => {
+                if (k.includes('/scripts/')) {
+                  delete require.cache[k];
+                }
+              });
               const scriptPath = require.resolve('./scripts/videoGenerator.cjs');
-              delete require.cache[scriptPath];
               const { generateVideo } = require(scriptPath);
-              const result = await generateVideo(data);
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify(result));
+
+              const onProgress = (prog: any) => {
+                try {
+                  res.write(JSON.stringify(prog) + '\n');
+                } catch (e) {
+                  // ignore if socket closed
+                }
+              };
+
+              const result = await generateVideo({
+                ...data,
+                onProgress,
+              });
+
+              res.write(JSON.stringify({ type: 'complete', percent: 100, result }) + '\n');
+              res.end();
             } catch (err: any) {
               console.error('API Error in /api/generate-video:', err);
-              res.statusCode = 500;
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify({ success: false, error: err.message || String(err) }));
+              try {
+                res.write(JSON.stringify({ type: 'error', error: err.message || String(err) }) + '\n');
+                res.end();
+              } catch (e) {
+                // socket already closed
+              }
             }
           });
           return;

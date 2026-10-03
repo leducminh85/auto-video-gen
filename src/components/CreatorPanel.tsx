@@ -11,10 +11,67 @@ import {
   AlertCircle,
   X,
   ChevronRight,
+  CheckCircle2,
+  Loader2,
+  Check,
+  Layers,
+  Film,
+  Image as ImageIcon,
+  Terminal,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { VoiceOption, SceneData, VideoMetadata } from '../types/scenes';
 import { buildMultiBeatScenes } from '../utils/stickmanArtGenerator';
 import { audioPreviewManager, SAMPLE_PHRASES } from '../utils/audioPreview';
+
+export interface PipelineStepDef {
+  key: string;
+  number: number;
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ style?: React.CSSProperties; className?: string }>;
+}
+
+export const PIPELINE_STEPS: PipelineStepDef[] = [
+  {
+    key: 'storyboard',
+    number: 1,
+    title: 'Phân tích Kịch bản & Cấu trúc Phân cảnh',
+    desc: 'Bóc tách nội dung, xây dựng cấu trúc visual explainer và dàn ý cảnh',
+    icon: FileText,
+  },
+  {
+    key: 'tts',
+    number: 2,
+    title: 'Tổng hợp Giọng đọc AI (Voiceover)',
+    desc: 'Thu âm giọng đọc Neural, chuẩn hóa cao độ & đo thời lượng từng cảnh',
+    icon: Mic,
+  },
+  {
+    key: 'beat_plan',
+    number: 3,
+    title: 'Lập Kế hoạch Nhịp Thị Giác (Visual Beats)',
+    desc: 'Chia nhỏ 2–4 nhịp/cảnh, xác định hành động nhân vật & ẩn dụ trực quan',
+    icon: Layers,
+  },
+  {
+    key: 'images',
+    number: 4,
+    title: 'Tạo Hình ảnh Minh họa Đa dạng',
+    desc: 'Sinh hình 1080p theo kịch bản (Local FLUX.1 M4 / DALL-E 3 / Vector Art)',
+    icon: ImageIcon,
+  },
+  {
+    key: 'render',
+    number: 5,
+    title: 'Dựng Chuyển động & Xuất Video MP4',
+    desc: 'Hiệu ứng Ken-Burns zoom/pan mượt mà, đồng bộ lồng tiếng Remotion',
+    icon: Film,
+  },
+];
+
+const STEP_ORDER = ['storyboard', 'tts', 'beat_plan', 'images', 'render', 'done'];
 
 export const VOICE_OPTIONS: VoiceOption[] = [
   // Tiếng Việt
@@ -258,9 +315,13 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState<boolean>(false);
-  const [creationStep, setCreationStep] = useState<number>(0);
+  const [progressPercent, setProgressPercent] = useState<number>(0);
+  const [currentStepKey, setCurrentStepKey] = useState<string>('storyboard');
+  const [currentMessage, setCurrentMessage] = useState<string>('');
+  const [progressDetails, setProgressDetails] = useState<Record<string, any>>({});
   const [creationLogs, setCreationLogs] = useState<string[]>([]);
   const [creationSuccess, setCreationSuccess] = useState<boolean>(false);
+  const [showTerminalLogs, setShowTerminalLogs] = useState<boolean>(true);
   const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
     return localStorage.getItem('gemini_api_key') || '';
   });
@@ -270,10 +331,17 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     return () => { audioPreviewManager.stop(); };
   }, []);
+
+  useEffect(() => {
+    if (showTerminalLogs && logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [creationLogs, showTerminalLogs]);
 
   const handleTogglePlayVoice = (voice: VoiceOption, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -307,6 +375,32 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     reader.onload = (event) => {
       const text = event.target?.result as string;
       if (text) {
+        const trimmed = text.trim();
+        // Check if JSON
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (parsed.metadata?.title) {
+              setScriptTitle(parsed.metadata.title);
+            } else {
+              setScriptTitle(file.name.replace(/\.[^/.]+$/, ''));
+            }
+            if (parsed.metadata?.subtitle) {
+              setScriptSubtitle(parsed.metadata.subtitle);
+            }
+            const scenesList = Array.isArray(parsed) ? parsed : (parsed.scenes || parsed.data || []);
+            if (Array.isArray(scenesList) && scenesList.length > 0) {
+              const formatted = scenesList
+                .map((s: any, idx: number) =>
+                  `CẢNH ${idx + 1}: ${s.title || `Cảnh ${idx + 1}`}\n${s.narration || s.text || s.caption || ''}`
+                )
+                .join('\n\n');
+              setTextContent(formatted);
+              return;
+            }
+          } catch (_) {}
+        }
+
         setTextContent(text);
         setScriptTitle(file.name.replace(/\.[^/.]+$/, ''));
       }
@@ -315,31 +409,102 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   };
 
   const parseContentToScenes = (rawText: string): { title: string; text: string }[] => {
-    const lines = rawText.split('\n').map((l) => l.trim()).filter(Boolean);
+    const trimmed = (rawText || '').trim();
+    if (!trimmed) return [];
+
+    // 1. JSON parsing check
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        const scenesList = Array.isArray(parsed) ? parsed : (parsed.scenes || parsed.data || []);
+        if (Array.isArray(scenesList) && scenesList.length > 0) {
+          return scenesList
+            .map((s: any, idx: number) => ({
+              title: s.title || `Cảnh ${idx + 1}`,
+              text: s.narration || s.text || s.caption || '',
+            }))
+            .filter((s: any) => s.text.length > 0);
+        }
+      } catch (_) {}
+    }
+
+    // 2. Explicit CẢNH / SCENE / # / 1. delimited check
+    const lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean);
     const parsed: { title: string; text: string }[] = [];
     let currentTitle = '';
     let currentBody: string[] = [];
+
+    const isDelimiter = (line: string) =>
+      /^(CẢNH|SCENE|PHẦN|ĐOẠN)\s*\d+[:.-]/i.test(line) ||
+      /^#+\s+/i.test(line) ||
+      /^\d+[\.\)]\s+[A-ZÀ-Ỹ]/i.test(line);
+
     for (const line of lines) {
-      if (/^(CẢNH|SCENE|PHẦN|ĐOẠN)\s*\d+[:.-]/i.test(line) || /^#+\s+/i.test(line)) {
+      if (isDelimiter(line)) {
         if (currentTitle && currentBody.length > 0) {
           parsed.push({ title: currentTitle, text: currentBody.join(' ') });
         }
-        currentTitle = line.replace(/^(CẢNH|SCENE|PHẦN|ĐOẠN)\s*\d+[:.-]\s*/i, '').replace(/^#+\s*/, '').trim();
+        currentTitle = line
+          .replace(/^(CẢNH|SCENE|PHẦN|ĐOẠN)\s*\d+[:.-]\s*/i, '')
+          .replace(/^#+\s*/, '')
+          .replace(/^\d+[\.\)]\s+/, '')
+          .trim();
         currentBody = [];
       } else {
-        if (!currentTitle) currentTitle = `Cảnh ${parsed.length + 1}`;
+        if (!currentTitle) currentTitle = `Cảnh 1`;
         currentBody.push(line);
       }
     }
     if (currentTitle && currentBody.length > 0) {
       parsed.push({ title: currentTitle, text: currentBody.join(' ') });
     }
-    if (parsed.length === 0) {
-      const paragraphs = rawText.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
-      paragraphs.forEach((p, idx) => {
-        parsed.push({ title: `Cảnh ${idx + 1}`, text: p.trim() });
-      });
+
+    // 3. If only 1 scene resulted, but text has blank line paragraphs or multiple sentences:
+    if (parsed.length <= 1) {
+      const paragraphs = trimmed
+        .split(/\n\s*\n/)
+        .map((p) => p.trim())
+        .filter((p) => p.length > 10);
+
+      if (paragraphs.length > 1) {
+        return paragraphs.map((p, idx) => {
+          const firstLine = p.split('\n')[0].replace(/^#+\s*/, '').trim();
+          const title = firstLine.length < 35 ? firstLine : `Cảnh ${idx + 1}`;
+          const text = p.length > firstLine.length ? p.substring(firstLine.length).trim() : p;
+          return { title, text: text || firstLine };
+        });
+      }
+
+      // 4. Single continuous block with many words -> split by sentences!
+      const totalWords = trimmed.split(/\s+/).length;
+      if (totalWords > 30) {
+        const sentences = trimmed
+          .split(/(?<=[.!?;\n])\s+/)
+          .map((s) => s.trim())
+          .filter((s) => s.length > 5);
+
+        if (sentences.length > 1) {
+          const sceneCount = Math.min(6, Math.max(2, Math.ceil(sentences.length / 2)));
+          const buckets: string[][] = Array.from({ length: sceneCount }, () => []);
+          const baseSize = Math.floor(sentences.length / sceneCount);
+          let remainder = sentences.length % sceneCount;
+          let idx = 0;
+          for (let b = 0; b < sceneCount; b++) {
+            const take = baseSize + (remainder > 0 ? 1 : 0);
+            if (remainder > 0) remainder--;
+            buckets[b] = sentences.slice(idx, idx + take);
+            idx += take;
+          }
+          return buckets
+            .filter((b) => b.length > 0)
+            .map((b, sIdx) => ({
+              title: `Cảnh ${sIdx + 1}`,
+              text: b.join(' '),
+            }));
+        }
+      }
     }
+
     return parsed;
   };
 
@@ -353,8 +518,14 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     setPlayingVoiceId(null);
     setIsCreating(true);
     setCreationSuccess(false);
-    setCreationStep(1);
-    setCreationLogs(['[1/4] Phân tích kịch bản & trích xuất phân cảnh...']);
+    setProgressPercent(3);
+    setCurrentStepKey('storyboard');
+    setCurrentMessage('Đang khởi động tiến trình & chuẩn bị kịch bản...');
+    setProgressDetails({});
+    setCreationLogs([
+      `[${new Date().toLocaleTimeString()}] 🚀 Bắt đầu tiến trình tạo video explainer...`,
+      `[${new Date().toLocaleTimeString()}] Giọng đọc: ${selectedVoiceObj.name} (${speed}×)`,
+    ]);
 
     const rawParsedScenes = parseContentToScenes(textContent);
     if (rawParsedScenes.length === 0) {
@@ -363,17 +534,20 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       return;
     }
 
-    setCreationLogs([
-      `[1/3] Tạo Audio TTS: Phân tích ${rawParsedScenes.length} cảnh & tổng hợp giọng đọc (${selectedVoiceObj.name}, ${speed}×)...`,
-    ]);
-    setCreationStep(1);
-
     try {
+      let effectiveTitle = (scriptTitle || '').trim();
+      const isGymPresetTitle = effectiveTitle === 'Kinh Tế Học Phòng Gym';
+      const textIsActuallyGym = /gym|phòng tập|thể hình|máy chạy bộ|tạ tay/i.test(textContent);
+      if (!effectiveTitle || (isGymPresetTitle && !textIsActuallyGym)) {
+        const firstScene = rawParsedScenes[0];
+        effectiveTitle = firstScene?.title ? firstScene.title : 'Video Stickman Mới';
+      }
+
       const response = await fetch('/api/generate-video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: scriptTitle || 'Video Stickman Mới',
+          title: effectiveTitle,
           subtitle: scriptSubtitle || `Giọng đọc ${speed}×`,
           voice: selectedVoice,
           speed,
@@ -389,40 +563,93 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
         throw new Error(errJson.error || `Lỗi máy chủ (${response.status})`);
       }
 
-      setCreationLogs((prev) => [
-        ...prev,
-        '✓ Audio đã tạo xong & đo chính xác thời lượng từng phân cảnh',
-        '[2/3] Phân tích ngữ nghĩa, ngắt câu đổi ý & tạo kho ảnh Stickman theo mốc thời gian audio...',
-      ]);
-      setCreationStep(2);
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Tạo video không thành công.');
+      if (!response.body) {
+        throw new Error('Trình duyệt không hỗ trợ đọc phản hồi stream');
       }
 
-      const multiBeatScenes = buildMultiBeatScenes(data.scenes);
-      let totalBeatsCount = 0;
-      multiBeatScenes.forEach((s) => {
-        totalBeatsCount += s.beats ? s.beats.length : 1;
-      });
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finalResultData: any = null;
 
-      setCreationLogs((prev) => [
-        ...prev,
-        `✓ Đã tạo ${totalBeatsCount} hình ảnh Stickman 1080p khớp theo từng nhịp ngắt ý`,
-        '[3/3] Ghép nối Remotion & render video MP4 hoàn tất, nạp vào Player...',
-      ]);
-      setCreationStep(3);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      setCreationSuccess(true);
-      await new Promise((r) => setTimeout(r, 600));
-      onGenerateNewVideo(multiBeatScenes, data.metadata);
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event = JSON.parse(line);
+
+            if (event.type === 'progress') {
+              if (typeof event.percent === 'number') {
+                setProgressPercent(event.percent);
+              }
+              if (event.stepKey) {
+                setCurrentStepKey(event.stepKey);
+              }
+              if (event.message) {
+                setCurrentMessage(event.message);
+                setCreationLogs((prev) => [
+                  ...prev,
+                  `[${event.timestamp || new Date().toLocaleTimeString()}] ${event.message}`,
+                ]);
+              }
+              if (event.details || event.sceneIndex || event.totalScenes) {
+                setProgressDetails((prev) => ({
+                  ...prev,
+                  ...event,
+                  ...(event.details || {}),
+                }));
+              }
+            } else if (event.type === 'complete') {
+              finalResultData = event.result;
+              setProgressPercent(100);
+              setCurrentStepKey('done');
+              setCreationSuccess(true);
+              setCurrentMessage('🎉 Hoàn tất 100%! Đang tải video vào Remotion Player...');
+              setCreationLogs((prev) => [
+                ...prev,
+                `[${new Date().toLocaleTimeString()}] 🎉 Hoàn tất xuất sắc! Video đã sẵn sàng phát.`,
+              ]);
+            } else if (event.type === 'error') {
+              throw new Error(event.error || 'Lỗi trong quá trình tạo video');
+            }
+          } catch (lineErr: any) {
+            if (lineErr.message && !lineErr.message.includes('JSON')) {
+              throw lineErr;
+            }
+          }
+        }
+      }
+
+      if (!finalResultData || !finalResultData.scenes) {
+        throw new Error('Không nhận được dữ liệu phân cảnh từ hệ thống.');
+      }
+
+      const multiBeatScenes = buildMultiBeatScenes(finalResultData.scenes);
+      await new Promise((r) => setTimeout(r, 700));
+      onGenerateNewVideo(multiBeatScenes, finalResultData.metadata);
       setIsCreating(false);
     } catch (err: any) {
       console.error('Error generating video:', err);
       setErrorMessage(err.message || 'Lỗi trong quá trình tạo video. Vui lòng thử lại.');
       setIsCreating(false);
     }
+  };
+
+  const currentStepIndex = STEP_ORDER.indexOf(currentStepKey);
+
+  const getStepStatus = (stepKey: string, stepIndex: number) => {
+    if (creationSuccess || currentStepKey === 'done') return 'completed';
+    const targetIndex = STEP_ORDER.indexOf(stepKey);
+    if (targetIndex < currentStepIndex) return 'completed';
+    if (targetIndex === currentStepIndex) return 'active';
+    return 'pending';
   };
 
   const wordCount = textContent.trim().split(/\s+/).filter(Boolean).length;
@@ -833,149 +1060,454 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             padding: '10px 24px',
             fontSize: 14,
             fontWeight: 700,
-            opacity: isCreating ? 0.6 : 1,
+            opacity: isCreating ? 0.7 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
           }}
         >
           {isCreating ? (
             <>
-              <div
-                style={{
-                  width: 14,
-                  height: 14,
-                  border: '2px solid var(--text-inverse)',
-                  borderTopColor: 'transparent',
-                  borderRadius: '50%',
-                  animation: 'spin 0.6s linear infinite',
-                }}
-              />
-              Đang xử lý...
+              <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+              <span>Đang tạo video ({progressPercent}%)...</span>
             </>
           ) : (
             <>
               <Zap style={{ width: 16, height: 16 }} />
-              Tạo Video
+              <span>Tạo Video</span>
             </>
           )}
         </button>
       </div>
 
-      {/* Creation Progress Modal */}
+      {/* Creation Progress Modal & Real-Time Pipeline Checklist */}
       {isCreating && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 60,
+            zIndex: 70,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 24,
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(8px)',
+            padding: '16px',
+            background: 'rgba(5, 6, 10, 0.82)',
+            backdropFilter: 'blur(12px)',
           }}
           className="animate-fade-in"
         >
           <div
             style={{
               background: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
+              border: '1px solid var(--border-hover)',
               borderRadius: 'var(--radius-xl)',
-              padding: 32,
-              maxWidth: 440,
+              padding: '24px 28px',
+              maxWidth: 'min(640px, 95vw)',
               width: '100%',
-              textAlign: 'center',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06)',
             }}
           >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 'var(--radius-lg)',
-                background: 'var(--accent-muted)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
-              }}
-            >
-              {creationSuccess ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              ) : (
-                <Zap style={{ width: 24, height: 24, color: 'var(--accent)' }} />
-              )}
+            {/* Top Modal Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 'var(--radius-xl)',
+                    background: creationSuccess ? 'rgba(52, 211, 153, 0.15)' : 'rgba(129, 140, 248, 0.15)',
+                    border: `1px solid ${creationSuccess ? 'var(--success-border)' : 'var(--accent-border)'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: creationSuccess ? '0 0 20px rgba(52, 211, 153, 0.25)' : '0 0 20px rgba(129, 140, 248, 0.25)',
+                  }}
+                >
+                  {creationSuccess ? (
+                    <CheckCircle2 style={{ width: 26, height: 26, color: 'var(--success)' }} />
+                  ) : (
+                    <Zap style={{ width: 24, height: 24, color: 'var(--accent)' }} />
+                  )}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                      {creationSuccess ? 'Tạo Video Hoàn Tất!' : 'Đang Tạo Video Explainer'}
+                    </h3>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        padding: '2px 8px',
+                        borderRadius: 99,
+                        background: creationSuccess ? 'rgba(52, 211, 153, 0.12)' : 'rgba(129, 140, 248, 0.12)',
+                        color: creationSuccess ? 'var(--success)' : 'var(--accent)',
+                        border: `1px solid ${creationSuccess ? 'var(--success-border)' : 'var(--accent-border)'}`,
+                      }}
+                    >
+                      {creationSuccess ? 'Thành công' : 'Live Pipeline'}
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--text-secondary)',
+                      margin: '4px 0 0',
+                      maxWidth: 380,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {creationSuccess
+                      ? 'Đã ghép chuyển động Remotion và nạp video vào Player'
+                      : currentMessage || 'Hệ thống đang tiến hành xử lý kịch bản...'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Exact Percentage Badge */}
+              <div
+                style={{
+                  textAlign: 'right',
+                  padding: '8px 16px',
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  minWidth: 96,
+                }}
+              >
+                <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  Tiến độ
+                </div>
+                <div
+                  className="mono"
+                  style={{
+                    fontSize: 26,
+                    fontWeight: 900,
+                    lineHeight: 1.1,
+                    color: creationSuccess ? 'var(--success)' : 'var(--accent)',
+                  }}
+                >
+                  {progressPercent}%
+                </div>
+              </div>
             </div>
 
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px' }}>
-              {creationSuccess ? 'Hoàn tất!' : 'Đang tạo video...'}
-            </h3>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 20px' }}>
-              {creationSuccess ? 'Video sẽ phát ngay sau đây' : 'Phân cảnh, sinh ảnh stickman, nạp Remotion'}
-            </p>
-
-            {/* Progress bar */}
-            <div style={{ marginBottom: 16 }}>
+            {/* Shimmering Animated Progress Bar */}
+            <div style={{ marginBottom: 20 }}>
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
                   fontSize: 11,
-                  color: 'var(--text-muted)',
-                  marginBottom: 6,
+                  color: 'var(--text-secondary)',
+                  marginBottom: 8,
                 }}
               >
-                <span>Tiến trình</span>
-                <span className="mono" style={{ color: 'var(--accent)' }}>
-                  {creationSuccess ? '100%' : `${Math.round((creationStep / 3) * 100)}%`}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {!creationSuccess && <span className="pulse-dot" />}
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {creationSuccess
+                      ? 'Đã hoàn tất 5/5 bước xử lý'
+                      : `Bước ${Math.min(5, Math.max(1, currentStepIndex + 1))}/5: ${PIPELINE_STEPS[Math.min(4, Math.max(0, currentStepIndex))]?.title}`}
+                  </span>
+                </span>
+                <span className="mono" style={{ color: creationSuccess ? 'var(--success)' : 'var(--accent)', fontWeight: 700 }}>
+                  {progressPercent}%
                 </span>
               </div>
+
               <div
                 style={{
                   width: '100%',
-                  height: 6,
-                  background: 'var(--bg-base)',
+                  height: 10,
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border)',
                   borderRadius: 99,
                   overflow: 'hidden',
+                  padding: 1,
+                  position: 'relative',
                 }}
               >
                 <div
+                  className={creationSuccess ? '' : 'progress-striped'}
                   style={{
                     height: '100%',
-                    width: `${creationSuccess ? 100 : (creationStep / 3) * 100}%`,
-                    background: creationSuccess ? 'var(--success)' : 'var(--accent)',
+                    width: `${progressPercent}%`,
+                    background: creationSuccess
+                      ? 'linear-gradient(90deg, #10b981 0%, #34d399 100%)'
+                      : 'linear-gradient(90deg, #6366f1 0%, #818cf8 35%, #a855f7 70%, #34d399 100%)',
                     borderRadius: 99,
-                    transition: 'width 0.3s ease-out',
+                    transition: 'width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: creationSuccess
+                      ? '0 0 12px rgba(52, 211, 153, 0.4)'
+                      : '0 0 14px rgba(129, 140, 248, 0.4)',
                   }}
                 />
               </div>
             </div>
 
-            {/* Logs */}
+            {/* Checklist: 5 Detailed Pipeline Steps */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
+              {PIPELINE_STEPS.map((step, idx) => {
+                const status = getStepStatus(step.key, idx);
+                const IconComponent = step.icon;
+                const isActive = status === 'active';
+                const isCompleted = status === 'completed';
+
+                return (
+                  <div
+                    key={step.key}
+                    className="step-card"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: 'var(--radius-lg)',
+                      border: isActive
+                        ? '1px solid var(--accent-border)'
+                        : isCompleted
+                        ? '1px solid rgba(52, 211, 153, 0.2)'
+                        : '1px solid var(--border)',
+                      background: isActive
+                        ? 'rgba(129, 140, 248, 0.08)'
+                        : isCompleted
+                        ? 'rgba(52, 211, 153, 0.04)'
+                        : 'var(--bg-input)',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+                      {/* Step Indicator Circle */}
+                      <div
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          background: isCompleted
+                            ? 'rgba(52, 211, 153, 0.15)'
+                            : isActive
+                            ? 'rgba(129, 140, 248, 0.2)'
+                            : 'var(--bg-surface)',
+                          border: `1.5px solid ${
+                            isCompleted
+                              ? 'var(--success)'
+                              : isActive
+                              ? 'var(--accent)'
+                              : 'var(--border)'
+                          }`,
+                        }}
+                      >
+                        {isCompleted ? (
+                          <Check style={{ width: 14, height: 14, color: 'var(--success)', strokeWidth: 3 }} />
+                        ) : isActive ? (
+                          <Loader2 style={{ width: 14, height: 14, color: 'var(--accent)' }} className="animate-spin" />
+                        ) : (
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>
+                            {step.number}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Step Title & Sub-detail */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span
+                            style={{
+                              fontSize: 13,
+                              fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
+                              color: isActive
+                                ? 'var(--accent-hover)'
+                                : isCompleted
+                                ? 'var(--text-primary)'
+                                : 'var(--text-secondary)',
+                            }}
+                          >
+                            Bước {step.number}: {step.title}
+                          </span>
+                        </div>
+
+                        {/* Dynamic Step Status Description */}
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                            marginTop: 2,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {isActive ? (
+                            <span style={{ color: 'var(--accent-hover)', fontWeight: 500 }}>
+                              ▶ {currentMessage || step.desc}
+                            </span>
+                          ) : isCompleted ? (
+                            <span style={{ color: 'var(--success)' }}>
+                              ✓ Hoàn thành: {step.desc}
+                            </span>
+                          ) : (
+                            <span>{step.desc}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step Status Badge on the Right */}
+                    <div style={{ marginLeft: 12, flexShrink: 0 }}>
+                      {isCompleted ? (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: 'var(--success)',
+                            background: 'rgba(52, 211, 153, 0.12)',
+                            border: '1px solid var(--success-border)',
+                            borderRadius: 99,
+                            padding: '3px 10px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          <Check style={{ width: 10, height: 10, strokeWidth: 3 }} />
+                          Xong
+                        </span>
+                      ) : isActive ? (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: 'var(--accent)',
+                            background: 'rgba(129, 140, 248, 0.14)',
+                            border: '1px solid var(--accent-border)',
+                            borderRadius: 99,
+                            padding: '3px 10px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}
+                        >
+                          <span className="pulse-dot" />
+                          Đang chạy
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: 'var(--text-muted)',
+                            background: 'var(--bg-surface)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 99,
+                            padding: '3px 10px',
+                          }}
+                        >
+                          Chờ
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Collapsible Real-Time System Log Terminal */}
             <div
-              className="mono"
               style={{
-                background: 'var(--bg-base)',
                 border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-md)',
-                padding: 12,
-                maxHeight: 120,
-                overflow: 'auto',
-                textAlign: 'left',
-                fontSize: 11,
-                lineHeight: 1.6,
+                borderRadius: 'var(--radius-lg)',
+                background: 'var(--bg-input)',
+                overflow: 'hidden',
               }}
             >
-              {creationLogs.map((log, idx) => (
-                <p
-                  key={idx}
+              <div
+                onClick={() => setShowTerminalLogs(!showTerminalLogs)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  background: 'var(--bg-surface)',
+                  borderBottom: showTerminalLogs ? '1px solid var(--border)' : 'none',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Terminal style={{ width: 13, height: 13, color: 'var(--accent)' }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    Nhật ký chi tiết thời gian thực ({creationLogs.length})
+                  </span>
+                  {creationLogs.length > 0 && (
+                    <span
+                      className="mono"
+                      style={{
+                        fontSize: 10,
+                        padding: '1px 6px',
+                        borderRadius: 4,
+                        background: 'var(--bg-elevated)',
+                        color: 'var(--accent)',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      stream active
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)' }}>
+                  <span>{showTerminalLogs ? 'Thu gọn' : 'Mở rộng'}</span>
+                  {showTerminalLogs ? (
+                    <ChevronUp style={{ width: 13, height: 13 }} />
+                  ) : (
+                    <ChevronDown style={{ width: 13, height: 13 }} />
+                  )}
+                </div>
+              </div>
+
+              {showTerminalLogs && (
+                <div
+                  className="mono"
                   style={{
-                    margin: 0,
-                    color: idx === creationLogs.length - 1 ? 'var(--accent)' : 'var(--text-muted)',
-                    fontWeight: idx === creationLogs.length - 1 ? 600 : 400,
+                    padding: '10px 14px',
+                    maxHeight: 120,
+                    overflowY: 'auto',
+                    fontSize: 11,
+                    lineHeight: 1.6,
+                    background: '#090a0f',
                   }}
                 >
-                  {log}
-                </p>
-              ))}
+                  {creationLogs.map((log, idx) => {
+                    const isLatest = idx === creationLogs.length - 1;
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          color: isLatest ? 'var(--accent-hover)' : 'var(--text-muted)',
+                          fontWeight: isLatest ? 600 : 400,
+                          display: 'flex',
+                          gap: 6,
+                        }}
+                      >
+                        <span style={{ color: 'var(--text-muted)', opacity: 0.5, flexShrink: 0 }}>›</span>
+                        <span style={{ wordBreak: 'break-word' }}>{log}</span>
+                      </div>
+                    );
+                  })}
+                  <div ref={logsEndRef} />
+                </div>
+              )}
             </div>
           </div>
         </div>

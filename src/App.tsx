@@ -321,6 +321,7 @@ export default function App() {
           <div className="player-container">
             {activeTab === 'preview' && (
               <Player
+                key={videoTimestamp}
                 ref={remotionPlayerRef}
                 component={MainVideo}
                 inputProps={{ scenes }}
@@ -419,9 +420,11 @@ export default function App() {
                             >
                               <img
                                 src={
-                                  sc.beats?.[0]?.svg_data
-                                    ? `data:image/svg+xml;utf8,${encodeURIComponent(sc.beats[0].svg_data)}`
-                                    : `/images/${sc.image_file}`
+                                  sc.image_file
+                                    ? `/images/${sc.image_file}?v=${videoTimestamp}`
+                                    : sc.beats?.[0]?.svg_data
+                                      ? `data:image/svg+xml;utf8,${encodeURIComponent(sc.beats[0].svg_data)}`
+                                      : `/images/${sc.image_file}?v=${videoTimestamp}`
                                 }
                                 alt={sc.title}
                                 style={{
@@ -840,9 +843,11 @@ export default function App() {
                   >
                     <img
                       src={
-                        beat.svg_data
-                          ? `data:image/svg+xml;utf8,${encodeURIComponent(beat.svg_data)}`
-                          : `/images/${beat.image_file || selectedScene.image_file}`
+                        beat.image_file
+                          ? `/images/${beat.image_file}?v=${videoTimestamp}`
+                          : beat.svg_data
+                            ? `data:image/svg+xml;utf8,${encodeURIComponent(beat.svg_data)}`
+                            : `/images/${selectedScene.image_file}?v=${videoTimestamp}`
                       }
                       alt={beat.title}
                       style={{
@@ -1086,9 +1091,11 @@ export default function App() {
                 >
                   <img
                     src={
-                      sc.beats?.[0]?.svg_data
-                        ? `data:image/svg+xml;utf8,${encodeURIComponent(sc.beats[0].svg_data)}`
-                        : `/images/${sc.image_file}`
+                      sc.image_file
+                        ? `/images/${sc.image_file}?v=${videoTimestamp}`
+                        : sc.beats?.[0]?.svg_data
+                          ? `data:image/svg+xml;utf8,${encodeURIComponent(sc.beats[0].svg_data)}`
+                          : `/images/${sc.image_file}?v=${videoTimestamp}`
                     }
                     alt={sc.title}
                     style={{

@@ -43,8 +43,10 @@ function escapeXml(str) {
 function extractSemanticConcepts(text, sceneContext = {}) {
   const clean = (text || '').trim();
   const lower = clean.toLowerCase();
-  const contextStr = `${sceneContext.sceneTitle || ''} ${sceneContext.sceneText || ''} ${sceneContext.videoTitle || ''}`.toLowerCase();
-  const combined = `${lower} ${contextStr}`;
+  const sceneTitleStr = (sceneContext.sceneTitle || '').toLowerCase();
+  const sceneTextStr = (sceneContext.sceneText || '').toLowerCase();
+  const sceneStr = `${lower} ${sceneTitleStr} ${sceneTextStr}`.trim();
+  const contextStr = `${sceneStr} ${(sceneContext.videoTitle || '').toLowerCase()}`;
 
   // Metrics & Numbers
   const percentMatch = clean.match(/(\d+(?:[.,]\d+)?\s*%)/i) || contextStr.match(/(\d+(?:[.,]\d+)?\s*%)/i);
@@ -55,46 +57,48 @@ function extractSemanticConcepts(text, sceneContext = {}) {
   const money = moneyMatch ? moneyMatch[0] : null;
   const time = timeMatch ? timeMatch[0] : null;
 
-  // Global Domain Check
-  const isGymDomain = /gym|phòng tập|thể hình|máy chạy bộ|hội viên|lễ tân|đăng ký tập|tập luyện|cardio|máy móc tập|thẻ tập|hủy thẻ|cử tạ|tạ tay|pt\b|huấn luyện/i.test(combined);
-  const isCoffeeDomain = /cà phê|coffee|espresso|take-away|mang đi|hạt cà phê|quán cà phê|takeaway|barista/i.test(combined);
+  // Global Domain Check - STRICTLY anchored on the current scene content, never poisoned by stale video title!
+  const isGymDomain = /gym|phòng tập|thể hình|máy chạy bộ|cử tạ|tạ tay|huấn luyện thể|hội viên tập|thẻ tập gym/i.test(sceneStr);
+  const isCoffeeDomain = /cà phê|coffee|espresso|take-away|mang đi|hạt cà phê|quán cà phê|takeaway|barista/i.test(sceneStr);
+  const isCookingDomain = /nấu|nước dùng|món ăn|ẩm thực|công thức|phở|bếp|nướng|luộc|gia vị|thịt|cá|nước mắm|thảo mộc|hầm|nêm nếm/i.test(sceneStr);
+  const isTechDomain = /lập trình|code|developer|phần mềm|ai|trí tuệ nhân tạo|thuật toán|dữ liệu|máy tính|app|web|database|javascript|python/i.test(sceneStr);
+  const isEducationDomain = /học tập|sinh viên|trường học|sách|kiến thức|kỹ năng|ôn thi|bài giảng|đọc sách|giáo dục/i.test(sceneStr);
 
-  // Exact Concept Triggers
+  // Exact Concept Triggers - STRICTLY GUARDED by domain
   const isGymRushHour = isGymDomain && /máy chạy bộ|quầy lễ tân|kín người|xếp hàng/i.test(lower);
   const isGymEntrance = isGymDomain && /đến phòng gym|bước vào|giờ cao điểm|ảo tưởng/i.test(lower) && !isGymRushHour;
-  const isCashMachineDelusion = /cỗ máy in tiền|in tiền|béo bở/i.test(lower);
-  const isCapacityParadox = /nghịch lý sức chứa|7 ngàn|200 người|chỉ chứa nổi/i.test(lower);
-  const isRealityQuestion = /bản chất thực sự|là gì\?|sự thật đằng sau/i.test(lower);
+  const isCashMachineDelusion = isGymDomain && /cỗ máy in tiền|in tiền|béo bở/i.test(lower);
+  const isCapacityParadox = isGymDomain && /nghịch lý sức chứa|7 ngàn|200 người|chỉ chứa nổi/i.test(lower);
+  const isRealityQuestion = isGymDomain && /bản chất thực sự|sự thật đằng sau/i.test(lower);
 
-  const isGymCost300k1M = /300 ngàn|1 triệu|chi phí mở cửa|tốn kém|đầu tư ban đầu/i.test(lower);
-  const isCashDrain = /mua đứt|ngốn sạch|dòng tiền dự phòng|kiệt quệ|cạn kiệt/i.test(lower);
-  const isDebtLeasing = /thuê tài chính|lãi suất|nợ cố định|nợ|gánh nặng/i.test(lower);
+  const isGymCost300k1M = isGymDomain && /300 ngàn|1 triệu|chi phí mở cửa|tốn kém|đầu tư ban đầu/i.test(lower);
+  const isCashDrain = isGymDomain && /mua đứt|ngốn sạch|dòng tiền dự phòng|kiệt quệ|cạn kiệt/i.test(lower);
+  const isDebtLeasing = isGymDomain && /thuê tài chính|lãi suất|nợ cố định|nợ|gánh nặng/i.test(lower);
 
-  const isMachineWear = /làm mòn máy móc|chăm chỉ|hao mòn/i.test(lower);
-  const isGhostIntro = (/bí mật lợi nhuận|hội viên vô hình/i.test(lower)) && !/100%|lặn mất tăm/i.test(lower);
-  const isGhostMemberSecret = /lặn mất tăm|100% lợi nhuận|100%|đóng tiền rồi lặn/i.test(lower);
-  const isJanuaryWave = /cú lừa tháng một|tháng một|tháng 1|đăng ký ồ ạt|12%/i.test(lower);
-  const isDropoff80 = /80% sẽ bỏ cuộc|bỏ cuộc|trước mùa hè|bỏ tập|nghỉ tập/i.test(lower);
+  const isMachineWear = isGymDomain && /làm mòn máy móc|chăm chỉ|hao mòn/i.test(lower);
+  const isGhostIntro = isGymDomain && (/bí mật lợi nhuận|hội viên vô hình/i.test(lower)) && !/100%|lặn mất tăm/i.test(lower);
+  const isGhostMemberSecret = isGymDomain && /lặn mất tăm|100% lợi nhuận|100%|đóng tiền rồi lặn/i.test(lower);
+  const isJanuaryWave = isGymDomain && /cú lừa tháng một|tháng một|tháng 1|đăng ký ồ ạt|12%/i.test(lower);
+  const isDropoff80 = isGymDomain && /80% sẽ bỏ cuộc|bỏ cuộc|trước mùa hè|bỏ tập|nghỉ tập/i.test(lower);
 
-  const isContractTrap = /rào cản hủy|hợp đồng|bản quyền âm nhạc|tinh quái|khó hủy/i.test(lower);
-  const isAirConditioningBill = /máy lạnh|tiền điện|24\/7|bào mòn túi tiền|điện/i.test(lower);
+  const isContractTrap = isGymDomain && /rào cản hủy|hợp đồng|bản quyền âm nhạc|tinh quái|khó hủy/i.test(lower);
+  const isAirConditioningBill = isGymDomain && /máy lạnh|tiền điện|24\/7|bào mòn túi tiền/i.test(lower);
 
-  const isSmallGroupPT = /huấn luyện|nhóm nhỏ|4 người|vũ khí tối ưu|pt\b|huấn luyện viên/i.test(lower);
-  const isSurvivalRule = /sống sót dựa trên|không bao giờ đến tập|bài học|chìa khóa/i.test(lower);
+  const isSmallGroupPT = isGymDomain && /huấn luyện|nhóm nhỏ|4 người|vũ khí tối ưu|pt\b|huấn luyện viên/i.test(lower);
+  const isSurvivalRule = isGymDomain && /sống sót dựa trên|không bao giờ đến tập/i.test(lower);
 
-  // Coffee Triggers
+  // Coffee Triggers - STRICTLY GUARDED by domain
   const isCoffeePrice = isCoffeeDomain && /50\.000|3\.000|giá|chi phí hạt|nguyên liệu/i.test(lower);
   const isCoffeeSpeed = isCoffeeDomain && /60 giây|tốc độ|quay vòng|nhanh|chớp nhoáng|take-away/i.test(lower);
-  const isLaptopSitting6h = /laptop|cắm sạc|tiền điện|ngồi suốt 6 tiếng|ngồi 6 tiếng/i.test(lower);
+  const isLaptopSitting6h = isCoffeeDomain && /laptop|cắm sạc|ngồi suốt 6 tiếng|ngồi 6 tiếng/i.test(lower);
   const isCoffeeStorefront = isCoffeeDomain && /mặt bằng|đắc địa|máy pha espresso|khấu hao/i.test(lower);
 
-  // Other domains
+  // General Concept Triggers (Work dynamically across any domain)
   const isDopamineOrShopping = /dopamine|mua hàng|bấm nút|giỏ hàng|sung sướng|phấn khích|tiêu sài|tiêu tiền|mua sắm/i.test(lower);
   const isCompoundingOrWealth = /lãi kép|tích lũy|warren buffett|đầu tư|tài sản|cấp số nhân|tự do tài chính|tuổi 50/i.test(lower);
-  const isAllocationRule = /50\/30\/20|phân bổ|thiết yếu|sở thích|tiết kiệm|ngân sách|50%|30%|20%/i.test(lower);
-  const isTechOrCode = /\btrí tuệ nhân tạo\b|\bai\s+(?:model|agent|tool|sinh|tạo)\b|\bchatgpt\b|\bllm\b|\bdeveloper\b|\blập trình\b|\bviết code\b|\bthuật toán\b|\bmã nguồn\b/i.test(lower);
+  const isTechOrCode = /\blập trình\b|\bviết code\b|\bthuật toán\b|\bmã nguồn\b|\bpython\b|\bjavascript\b|\bdeveloper\b|\bsoftware code\b/i.test(lower);
   const isComparison = /thay vì|so với|chênh lệch|khác biệt|chứ không|ngược lại|đối lập|nhầm lẫn/i.test(lower);
-  const isConclusionOrWisdom = /lợi nhuận thực sự|bí quyết|nguyên tắc|bài học|chìa khóa|hạnh phúc|cốt lõi|tóm lại|kết luận/i.test(lower);
+  const isConclusionOrWisdom = /nguyên tắc vàng|bài học cốt lõi|chìa khóa thành công|kết luận|tóm lại/i.test(lower);
 
   return {
     percentage,
@@ -123,6 +127,9 @@ function extractSemanticConcepts(text, sceneContext = {}) {
     isCoffeeSpeed,
     isLaptopSitting6h,
     isCoffeeStorefront,
+    isCookingDomain,
+    isTechDomain,
+    isEducationDomain,
     isDopamineOrShopping,
     isCompoundingOrWealth,
     isAllocationRule,
@@ -235,6 +242,44 @@ function segmentSceneIntoBeats(scene, durationInSeconds, totalFrames) {
   });
 }
 
+const BEAT_STOPWORDS = new Set([
+  'chúng', 'ta', 'tôi', 'bạn', 'mọi', 'người', 'của', 'và', 'hoặc', 'nhưng', 'mà', 'thì', 'là',
+  'rằng', 'ở', 'tại', 'với', 'cho', 'để', 'được', 'bị', 'do', 'bởi', 'khiến', 'làm', 'này',
+  'đó', 'kia', 'những', 'các', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'ngày', 'nay', 'hiện',
+  'tại', 'trong', 'ngoài', 'trên', 'dưới', 'rất', 'quá', 'lắm', 'luôn', 'sẽ', 'đang', 'đã',
+  'cũng', 'chỉ', 'đều', 'vừa', 'mới', 'tự', 'ra', 'vào', 'lại', 'thấy', 'nghĩ', 'rõ', 'không',
+  'chưa', 'chẳng', 'thế', 'nào', 'gì', 'sao'
+]);
+
+function extractDynamicKeyText(text, fallbackTitle) {
+  if (!text) return (fallbackTitle || 'Ý CHÍNH').toUpperCase();
+
+  // 1. Metric / Number / Percentage first
+  const metricMatch = text.match(/(\d+(?:[.,]\d+)?\s*(?:%|triệu|tỷ|usd|đ|k|tiếng|giờ|phút|giây|tháng|năm|người|kg|members|\$))/i);
+  if (metricMatch) {
+    return metricMatch[0].trim().toUpperCase();
+  }
+
+  // 2. Strong keyword phrases in quotation marks
+  const quoteMatch = text.match(/["'«“]([^"'»”]{2,20})["'»”]/);
+  if (quoteMatch) {
+    return quoteMatch[1].trim().toUpperCase();
+  }
+
+  // 3. Extract 2-3 content words
+  const clean = text.replace(/[,.!?;:()"'«»“”\n\r]/g, ' ').trim();
+  const words = clean.split(/\s+/).filter(Boolean);
+  const contentWords = words.filter((w) => !BEAT_STOPWORDS.has(w.toLowerCase()));
+
+  if (contentWords.length >= 2) {
+    return contentWords.slice(0, 3).join(' ').toUpperCase();
+  } else if (contentWords.length === 1) {
+    return contentWords[0].toUpperCase();
+  }
+
+  return (fallbackTitle || 'Ý CHÍNH').toUpperCase();
+}
+
 /**
  * Smart Content-Driven Visual Beat Planner with Scene Context
  */
@@ -246,172 +291,215 @@ function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, scen
   let shotType = 'medium';
   let meaning = clean;
   let subject = 'Nhân vật và bối cảnh';
-  let action = 'Diễn đạt ý tưởng của phân cảnh';
-  let keyText = 'Ý CHÍNH';
+  let action = `Minh họa ý tưởng: ${clean.substring(0, 60)}...`;
+  let keyText = extractDynamicKeyText(clean, sceneTitle);
 
-  // 1. Gym-specific beats
-  if (c.isGymEntrance) {
-    visualMethod = 'environment';
-    shotType = 'wide';
-    keyText = 'BƯỚC VÀO PHÒNG GYM';
-    action = 'Nhân vật mở cửa bước vào phòng gym lúc chập tối với biển hiệu rực sáng';
-  } else if (c.isGymRushHour) {
-    visualMethod = 'character_action';
-    shotType = 'medium';
-    keyText = 'GIỜ CAO ĐIỂM';
-    action = 'Máy chạy bộ kín chỗ và dòng người xếp hàng tại quầy lễ tân';
-  } else if (c.isCashMachineDelusion) {
-    visualMethod = 'object_metaphor';
-    shotType = 'medium';
-    keyText = 'CỖ MÁY IN TIỀN?';
-    action = 'Ảo tưởng cỗ máy in tiền béo bở mà người ngoài lầm tưởng';
-  } else if (c.isCapacityParadox) {
-    visualMethod = 'comparison';
-    shotType = 'wide';
-    keyText = '7.000 VS 200 CHỖ';
-    action = 'Nghịch lý sức chứa: 7 ngàn thẻ bán ra nhưng sàn chỉ chứa nổi 200 người';
-  } else if (c.isMachineWear) {
-    visualMethod = 'character_action';
-    shotType = 'medium';
-    keyText = 'HAO MÒN MÁY MÓC';
-    action = 'Người tập chăm chỉ làm hao mòn thiết bị và tăng chi phí bảo trì';
-  } else if (c.isGhostIntro) {
-    visualMethod = 'object_metaphor';
-    shotType = 'medium';
-    keyText = 'HỘI VIÊN VÔ HÌNH';
-    action = 'Bí mật lợi nhuận nằm ở nhóm hội viên vô hình đóng tiền nhưng không đi tập';
-  } else if (c.isGhostMemberSecret) {
-    visualMethod = 'infographic';
-    shotType = 'medium';
-    keyText = '100% LỢI NHUẬN RÒNG';
-    action = 'Người đóng tiền rồi lặn mất tăm mới mang lại 100% lợi nhuận ròng thuần túy';
-  } else if (c.isRealityQuestion) {
-    visualMethod = 'comparison';
-    shotType = 'wide';
-    keyText = 'BẢN CHẤT THỰC SỰ';
-    action = 'Lật mở góc khuất vận hành đằng sau ánh đèn lung linh';
-  } else if (c.isGymCost300k1M) {
-    visualMethod = 'infographic';
-    shotType = 'infographic';
-    keyText = '$300K - $1M';
-    action = 'Hoá đơn đầu tư ban đầu cực lớn cho thiết bị và cơ sở vật chất';
-  } else if (c.isCashDrain) {
-    visualMethod = 'numbers';
-    shotType = 'infographic';
-    keyText = 'CẠN KIỆT DÒNG TIỀN';
-    action = 'Mua đứt thiết bị ngốn sạch vốn lưu động và dòng tiền dự phòng';
-  } else if (c.isDebtLeasing) {
-    visualMethod = 'comparison';
-    shotType = 'wide';
-    keyText = 'NỢ & LÃI SUẤT THUÊ';
-    action = 'Gánh nặng nợ cố định và lãi suất thuê tài chính mỗi tháng';
-  } else if (c.isJanuaryWave) {
-    visualMethod = 'process';
-    shotType = 'diagram';
-    keyText = 'CÚ LỪA THÁNG 1';
-    action = 'Làn sóng đăng ký ồ ạt sau Tết theo quyết tâm năm mới';
-  } else if (c.isDropoff80) {
-    visualMethod = 'numbers';
-    shotType = 'infographic';
-    keyText = '80% BỎ CUỘC';
-    action = 'Phần lớn hội viên bỏ tập trước khi mùa hè bắt đầu';
-  } else if (c.isContractTrap) {
-    visualMethod = 'object_metaphor';
-    shotType = 'close-up';
-    keyText = 'RÀO CẢN HỦY THẺ';
-    action = 'Khóa chặt thành viên bằng các điều khoản hợp đồng và phí ẩn';
-  } else if (c.isAirConditioningBill) {
-    visualMethod = 'infographic';
-    shotType = 'infographic';
-    keyText = 'TIỀN ĐIỆN 24/7';
-    action = 'Hệ thống điều hòa máy lạnh 24/7 đốt sạch biên lợi nhuận';
-  } else if (c.isSmallGroupPT) {
-    visualMethod = 'character_action';
-    shotType = 'medium';
-    keyText = 'PT NHÓM 4 NGƯỜI';
-    action = 'Vũ khí tối ưu doanh thu trên từng mét vuông mặt bằng';
-  } else if (c.isSurvivalRule && beatIndex < totalBeats) {
-    visualMethod = 'comparison';
-    shotType = 'wide';
-    keyText = 'MÔ HÌNH SINH TỒN';
-    action = 'Mô hình kinh doanh phụ thuộc hoàn toàn vào những người không đến tập';
-  } else if (c.isSurvivalRule || beatIndex === totalBeats) {
-    visualMethod = 'typography';
-    shotType = 'medium';
-    keyText = 'BÀI HỌC CỐT LÕI';
-    action = 'Quy luật sinh tồn: Sống sót nhờ người trả tiền nhưng không bao giờ đến';
+  // 1. Gym-specific beats (ONLY when inside Gym domain)
+  if (c.isGymDomain) {
+    if (c.isGymEntrance) {
+      visualMethod = 'environment';
+      shotType = 'wide';
+      keyText = 'BƯỚC VÀO PHÒNG GYM';
+      action = 'Nhân vật mở cửa bước vào phòng gym lúc chập tối với biển hiệu rực sáng';
+    } else if (c.isGymRushHour) {
+      visualMethod = 'character_action';
+      shotType = 'medium';
+      keyText = 'GIỜ CAO ĐIỂM';
+      action = 'Máy chạy bộ kín chỗ và dòng người xếp hàng tại quầy lễ tân';
+    } else if (c.isCashMachineDelusion) {
+      visualMethod = 'object_metaphor';
+      shotType = 'medium';
+      keyText = 'CỖ MÁY IN TIỀN?';
+      action = 'Ảo tưởng cỗ máy in tiền béo bở mà người ngoài lầm tưởng';
+    } else if (c.isCapacityParadox) {
+      visualMethod = 'comparison';
+      shotType = 'wide';
+      keyText = '7.000 VS 200 CHỖ';
+      action = 'Nghịch lý sức chứa: 7 ngàn thẻ bán ra nhưng sàn chỉ chứa nổi 200 người';
+    } else if (c.isMachineWear) {
+      visualMethod = 'character_action';
+      shotType = 'medium';
+      keyText = 'HAO MÒN MÁY MÓC';
+      action = 'Người tập chăm chỉ làm hao mòn thiết bị và tăng chi phí bảo trì';
+    } else if (c.isGhostIntro) {
+      visualMethod = 'object_metaphor';
+      shotType = 'medium';
+      keyText = 'HỘI VIÊN VÔ HÌNH';
+      action = 'Bí mật lợi nhuận nằm ở nhóm hội viên vô hình đóng tiền nhưng không đi tập';
+    } else if (c.isGhostMemberSecret) {
+      visualMethod = 'infographic';
+      shotType = 'medium';
+      keyText = '100% LỢI NHUẬN RÒNG';
+      action = 'Người đóng tiền rồi lặn mất tăm mới mang lại 100% lợi nhuận ròng thuần túy';
+    } else if (c.isRealityQuestion) {
+      visualMethod = 'comparison';
+      shotType = 'wide';
+      keyText = 'BẢN CHẤT THỰC SỰ';
+      action = 'Lật mở góc khuất vận hành đằng sau ánh đèn lung linh';
+    } else if (c.isGymCost300k1M) {
+      visualMethod = 'infographic';
+      shotType = 'infographic';
+      keyText = '$300K - $1M';
+      action = 'Hoá đơn đầu tư ban đầu cực lớn cho thiết bị và cơ sở vật chất';
+    } else if (c.isCashDrain) {
+      visualMethod = 'numbers';
+      shotType = 'infographic';
+      keyText = 'CẠN KIỆT DÒNG TIỀN';
+      action = 'Mua đứt thiết bị ngốn sạch vốn lưu động và dòng tiền dự phòng';
+    } else if (c.isDebtLeasing) {
+      visualMethod = 'comparison';
+      shotType = 'wide';
+      keyText = 'NỢ & LÃI SUẤT THUÊ';
+      action = 'Gánh nặng nợ cố định và lãi suất thuê tài chính mỗi tháng';
+    } else if (c.isJanuaryWave) {
+      visualMethod = 'process';
+      shotType = 'diagram';
+      keyText = 'CÚ LỪA THÁNG 1';
+      action = 'Làn sóng đăng ký ồ ạt sau Tết theo quyết tâm năm mới';
+    } else if (c.isDropoff80) {
+      visualMethod = 'numbers';
+      shotType = 'infographic';
+      keyText = '80% BỎ CUỘC';
+      action = 'Phần lớn hội viên bỏ tập trước khi mùa hè bắt đầu';
+    } else if (c.isContractTrap) {
+      visualMethod = 'object_metaphor';
+      shotType = 'close-up';
+      keyText = 'RÀO CẢN HỦY THẺ';
+      action = 'Khóa chặt thành viên bằng các điều khoản hợp đồng và phí ẩn';
+    } else if (c.isAirConditioningBill) {
+      visualMethod = 'infographic';
+      shotType = 'infographic';
+      keyText = 'TIỀN ĐIỆN 24/7';
+      action = 'Hệ thống điều hòa máy lạnh 24/7 đốt sạch biên lợi nhuận';
+    } else if (c.isSmallGroupPT) {
+      visualMethod = 'character_action';
+      shotType = 'medium';
+      keyText = 'PT NHÓM 4 NGƯỜI';
+      action = 'Vũ khí tối ưu doanh thu trên từng mét vuông mặt bằng';
+    } else if (c.isSurvivalRule) {
+      visualMethod = 'typography';
+      shotType = 'medium';
+      keyText = 'QUY LUẬT SINH TỒN';
+      action = 'Mô hình kinh doanh phụ thuộc hoàn toàn vào những người không đến tập';
+    }
   }
-  // 2. Coffee-specific beats
-  else if (c.isCoffeePrice) {
-    visualMethod = 'comparison';
-    shotType = 'wide';
-    keyText = '50.000Đ VS 3.000Đ';
-    action = 'So sánh giá bán ly cà phê với chi phí nguyên liệu thực tế';
-  } else if (c.isCoffeeSpeed) {
-    visualMethod = 'process';
-    shotType = 'diagram';
-    keyText = '60 GIÂY';
-    action = 'Khách mua mang đi chớp nhoáng với tốc độ quay vòng lớn';
-  } else if (c.isLaptopSitting6h) {
-    visualMethod = 'character_action';
-    shotType = 'medium';
-    keyText = 'NGỒI SUỐT 6 TIẾNG';
-    action = 'Khách cắm sạc laptop làm việc chiếm chỗ và hao mòn điện';
-  } else if (c.isCoffeeStorefront) {
-    visualMethod = 'infographic';
-    shotType = 'infographic';
-    keyText = 'TIỀN MẶT BẰNG';
-    action = 'Chi phí mặt bằng đắc địa và máy pha espresso đè nặng lợi nhuận';
+  // 2. Coffee-specific beats (ONLY when inside Coffee domain)
+  else if (c.isCoffeeDomain) {
+    if (c.isCoffeePrice) {
+      visualMethod = 'comparison';
+      shotType = 'wide';
+      keyText = '50.000Đ VS 3.000Đ';
+      action = 'So sánh giá bán ly cà phê với chi phí nguyên liệu thực tế';
+    } else if (c.isCoffeeSpeed) {
+      visualMethod = 'process';
+      shotType = 'diagram';
+      keyText = '60 GIÂY';
+      action = 'Khách mua mang đi chớp nhoáng với tốc độ quay vòng lớn';
+    } else if (c.isLaptopSitting6h) {
+      visualMethod = 'character_action';
+      shotType = 'medium';
+      keyText = 'NGỒI SUỐT 6 TIẾNG';
+      action = 'Khách cắm sạc laptop làm việc chiếm chỗ và hao mòn điện';
+    } else if (c.isCoffeeStorefront) {
+      visualMethod = 'infographic';
+      shotType = 'infographic';
+      keyText = 'TIỀN MẶT BẰNG';
+      action = 'Chi phí mặt bằng đắc địa và máy pha espresso đè nặng lợi nhuận';
+    }
   }
-  // 3. Dopamine / Shopping
+  // 3. Cooking / Culinary Domain
+  else if (c.isCookingDomain) {
+    if (/nước dùng|ninh|hầm|12 tiếng|10 tiếng|xương/i.test(clean)) {
+      visualMethod = 'process';
+      shotType = 'diagram';
+      keyText = c.time ? c.time.toUpperCase() : 'NƯỚC DÙNG NINH';
+      action = 'Nồi nước dùng ninh từ xương ống sôi sùng sục bốc khói nghi ngút';
+    } else if (/gia vị|quế|hồi|thảo mộc|thảo quả|nêm nếm/i.test(clean)) {
+      visualMethod = 'object_metaphor';
+      shotType = 'close-up';
+      keyText = 'GIA VỊ THẢO MỘC';
+      action = 'Hoa hồi, thanh quế và thảo quả dậy mùi thơm phức';
+    } else if (/thịt|bò|cá|bánh phở|tô|bát/i.test(clean)) {
+      visualMethod = 'character_action';
+      shotType = 'medium';
+      keyText = 'THƯỞNG THỨC MÓN ĂN';
+      action = 'Bát phở thơm ngon với những lát thịt thái mỏng hấp dẫn';
+    } else {
+      visualMethod = 'process';
+      keyText = extractDynamicKeyText(clean, 'CÔNG THỨC');
+      action = `Thực hiện công đoạn: ${clean.substring(0, 50)}...`;
+    }
+  }
+  // 4. Tech / AI / Programming Domain
+  else if (c.isTechOrCode) {
+    if (/thuật toán|mô hình|neural|mạng nơ-ron|transformer|deep learning/i.test(clean)) {
+      visualMethod = 'diagram';
+      shotType = 'diagram';
+      keyText = 'THUẬT TOÁN AI';
+      action = 'Mạng nơ-ron nhân tạo kết nối và xử lý thông tin thông minh';
+    } else if (/viết code|lập trình|developer|phần mềm|mã nguồn/i.test(clean)) {
+      visualMethod = 'process';
+      shotType = 'medium';
+      keyText = 'LẬP TRÌNH PHẦN MỀM';
+      action = 'Lập trình viên viết code và xây dựng ứng dụng số';
+    } else {
+      visualMethod = 'character_action';
+      keyText = extractDynamicKeyText(clean, 'CÔNG NGHỆ SỐ');
+      action = `Áp dụng công nghệ: ${clean.substring(0, 50)}...`;
+    }
+  }
+  // 5. Dopamine / Shopping
   else if (c.isDopamineOrShopping) {
     visualMethod = 'object_metaphor';
     shotType = 'close-up';
     keyText = 'DOPAMINE HIT';
     action = 'Kích hoạt cơn hưng phấn thần kinh khi bấm nút mua hàng';
   }
-  // 4. Wealth / Compounding
+  // 6. Wealth / Compounding
   else if (c.isCompoundingOrWealth) {
     visualMethod = 'numbers';
     shotType = 'infographic';
-    keyText = c.percentage || 'LÃI KÉP';
+    keyText = c.percentage || c.money || 'LÃI KÉP';
     action = 'Sự bùng nổ của tài sản theo hàm số mũ theo thời gian';
   } else if (c.isAllocationRule) {
     visualMethod = 'infographic';
     shotType = 'infographic';
     keyText = c.percentage ? `QUY TẮC ${c.percentage}` : '50 / 30 / 20';
     action = 'Phân bổ tỷ lệ ngân sách vào các mục tiêu tài chính';
-  } else if (c.isTechOrCode) {
-    visualMethod = 'process';
-    shotType = 'medium';
-    keyText = 'THUẬT TOÁN AI';
-    action = 'Xử lý logic và vận hành hệ thống phần mềm thông minh';
-  } else if (c.isComparison) {
-    visualMethod = 'comparison';
-    shotType = 'wide';
-    keyText = 'SO SÁNH';
-    action = 'Đối chiếu hai mặt của vấn đề';
-  } else if (c.percentage) {
+  }
+  // 7. General Dynamic Concepts
+  else if (c.percentage) {
     visualMethod = 'numbers';
     shotType = 'infographic';
     keyText = c.percentage;
-    action = 'Làm nổi bật con số phần trăm trọng yếu';
-  } else if (c.isConclusionOrWisdom || beatIndex === totalBeats) {
+    action = `Làm nổi bật chỉ số tỷ lệ: ${c.percentage}`;
+  } else if (c.money) {
+    visualMethod = 'numbers';
+    shotType = 'infographic';
+    keyText = c.money.toUpperCase();
+    action = `Nhấn mạnh giá trị tài chính: ${c.money}`;
+  } else if (c.isComparison) {
+    visualMethod = 'comparison';
+    shotType = 'wide';
+    keyText = 'SO SÁNH ĐỐI LẬP';
+    action = 'Đối chiếu hai mặt của vấn đề';
+  } else if (c.isConclusionOrWisdom) {
     visualMethod = 'typography';
     shotType = 'medium';
-    keyText = 'BÀI HỌC CỐT LÕI';
+    keyText = extractDynamicKeyText(clean, 'BÀI HỌC CỐT LÕI');
     action = 'Đúc kết nguyên tắc vàng quan trọng nhất';
   } else {
-    visualMethod = 'character_action';
-    shotType = 'medium';
-    keyText = sceneTitle ? sceneTitle.split(/\s+/).slice(0, 3).join(' ').toUpperCase() : 'Ý CHÍNH';
-    action = 'Nhân vật thuyết minh trực diện luận điểm';
+    // Alternating visual styles based on beat position
+    const methodsPool = ['character_action', 'process', 'object_metaphor', 'comparison'];
+    visualMethod = methodsPool[(beatIndex - 1) % methodsPool.length];
+    keyText = extractDynamicKeyText(clean, sceneTitle);
+    action = `Diễn đạt trực quan: ${clean.substring(0, 50)}...`;
   }
 
   // Prevent consecutive identical layouts
   if (prevMethod && visualMethod === prevMethod) {
-    const pool = ['comparison', 'object_metaphor', 'character_action', 'infographic', 'numbers', 'process', 'typography'];
-    visualMethod = pool.find((m) => m !== prevMethod) || 'typography';
+    const pool = ['comparison', 'object_metaphor', 'character_action', 'numbers', 'process', 'typography'];
+    visualMethod = pool.find((m) => m !== prevMethod) || 'character_action';
   }
 
   return {
@@ -426,6 +514,7 @@ function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, scen
     keyText: keyText.substring(0, 24).toUpperCase(),
     mustNotInclude: [],
     transitionIntent: 'Nối tiếp mạch diễn giải',
+    imageGenerationPrompt: `2D minimalist stickman explainer illustration, ${subject}: ${action}. Clean vector comic style, warm paper texture background, 1080p high resolution.`,
   };
 }
 
@@ -433,7 +522,7 @@ function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, scen
  * AI Visual Planner with Smart Fallback
  */
 async function planVisualBeatsWithAI({ scene, beats, styleGuide, geminiApiKey, previousMethod }) {
-  const apiKey = geminiApiKey || process.env.GEMINI_API_KEY;
+  const apiKey = geminiApiKey || process.env.GEMINI_API_KEY || '';
   if (!apiKey) return null;
 
   try {
@@ -468,7 +557,7 @@ Return JSON array with ${beats.length} items:
   }
 ]`;
 
-    const candidateModels = ['gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-3.5-flash'];
+    const candidateModels = ['gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-1.5-flash'];
     for (const model of candidateModels) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -499,6 +588,7 @@ Return JSON array with ${beats.length} items:
                 keyText: (p.keyText || '').toUpperCase(),
                 mustNotInclude: [],
                 transitionIntent: '',
+                imageGenerationPrompt: p.imageGenerationPrompt || `2D minimalist stickman explainer illustration, ${p.subject || 'stickman'}: ${p.action || 'explaining concept'}. Clean vector comic style, warm paper background, 1080p high resolution.`,
               }));
             }
           }
@@ -612,7 +702,15 @@ function generateSemanticSvgForBeat({ beat, scene, styleGuide }) {
   } else if (c.isTechOrCode) {
     contentSvg = renderTechCode(p, sw);
   }
-  // 5. Dynamic Fallbacks
+  // 5. Cooking / Culinary Domain
+  else if (c.isCookingDomain) {
+    if (/nước dùng|ninh|hầm|12 tiếng|10 tiếng|xương/i.test(text)) {
+      contentSvg = renderCookingBrothPot(p, sw, keyText);
+    } else {
+      contentSvg = renderCookingChefStickman(p, sw, plan, text);
+    }
+  }
+  // 6. Dynamic Fallbacks
   else {
     switch (method) {
       case 'comparison':
@@ -1395,6 +1493,10 @@ function renderGenericNumbers(c, text, plan, p, sw) {
 }
 
 function renderGenericProcess(c, text, plan, p, sw) {
+  const label1 = escapeXml(c.time || '01 BẮT ĐẦU');
+  const label2 = escapeXml(plan.keyText || '02 TRIỂN KHAI');
+  const label3 = '03 KẾT QUẢ';
+
   return `
     <g transform="translate(960, 560)">
       <line x1="-500" y1="0" x2="500" y2="0" stroke="${p.outline}" stroke-width="${sw}" stroke-dasharray="16 12"/>
@@ -1402,25 +1504,26 @@ function renderGenericProcess(c, text, plan, p, sw) {
         <rect x="0" y="0" width="320" height="360" rx="28" fill="${p.card}" stroke="${p.outline}" stroke-width="${sw}" filter="url(#cardShadow)"/>
         <circle cx="160" cy="-20" r="40" fill="${p.primary}" stroke="${p.outline}" stroke-width="5"/>
         <text x="160" y="-8" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">01</text>
-        <text x="160" y="100" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="26" fill="${p.outline}" text-anchor="middle">KHỞI ĐỘNG</text>
+        <text x="160" y="100" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="24" fill="${p.outline}" text-anchor="middle">${label1}</text>
       </g>
       <g transform="translate(-160, -210)">
         <rect x="0" y="0" width="320" height="390" rx="28" fill="${p.card}" stroke="${p.secondary}" stroke-width="${sw + 2}" filter="url(#softShadow)"/>
         <circle cx="160" cy="-20" r="45" fill="${p.secondary}" stroke="${p.outline}" stroke-width="5"/>
         <text x="160" y="-6" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="32" fill="#FFFFFF" text-anchor="middle">02</text>
-        <text x="160" y="110" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="28" fill="${p.secondary}" text-anchor="middle">TĂNG TRƯỞNG</text>
+        <text x="160" y="110" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="24" fill="${p.secondary}" text-anchor="middle">${label2}</text>
       </g>
       <g transform="translate(240, -180)">
         <rect x="0" y="0" width="320" height="360" rx="28" fill="${p.card}" stroke="${p.outline}" stroke-width="${sw}" filter="url(#cardShadow)"/>
         <circle cx="160" cy="-20" r="40" fill="${p.accent}" stroke="${p.outline}" stroke-width="5"/>
         <text x="160" y="-8" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">03</text>
-        <text x="160" y="100" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="26" fill="${p.outline}" text-anchor="middle">KẾT QUẢ</text>
+        <text x="160" y="100" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="24" fill="${p.outline}" text-anchor="middle">${label3}</text>
       </g>
     </g>
   `;
 }
 
 function renderGenericTypography(c, text, plan, p, sw) {
+  const badgeLabel = escapeXml(plan.keyText || 'ĐIỂM CỐT LÕI');
   return `
     <g transform="translate(960, 550)">
       <rect x="-580" y="-240" width="1160" height="480" rx="40" fill="${p.card}" stroke="${p.outline}" stroke-width="${sw}" filter="url(#softShadow)"/>
@@ -1429,9 +1532,9 @@ function renderGenericTypography(c, text, plan, p, sw) {
         ${escapeXml(text.length > 60 ? text.substring(0, 57) + '...' : text)}
       </text>
       <g transform="translate(0, 140)">
-        <rect x="-180" y="-28" width="360" height="56" rx="28" fill="${p.secondary}" stroke="${p.outline}" stroke-width="4"/>
-        <text x="0" y="9" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="24" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
-          BÀI HỌC CỐT LÕI
+        <rect x="-200" y="-28" width="400" height="56" rx="28" fill="${p.secondary}" stroke="${p.outline}" stroke-width="4"/>
+        <text x="0" y="9" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+          ${badgeLabel}
         </text>
       </g>
     </g>
@@ -1455,6 +1558,9 @@ function renderGenericMetaphor(c, text, plan, p, sw) {
 }
 
 function renderGenericCharacter(c, text, plan, p, sw) {
+  const mainTitle = escapeXml(plan.keyText || 'TRỌNG TÂM LUẬN ĐIỂM');
+  const subAction = escapeXml(plan.action ? plan.action.substring(0, 55) : 'Khám phá và diễn giải chi tiết vấn đề');
+
   return `
     <g transform="translate(620, 540)">
       <ellipse cx="0" cy="280" rx="160" ry="24" fill="${p.outline}" opacity="0.08" />
@@ -1470,15 +1576,76 @@ function renderGenericCharacter(c, text, plan, p, sw) {
     <g transform="translate(1300, 480)">
       <rect x="-300" y="-200" width="600" height="400" rx="36" fill="${p.card}" stroke="${p.outline}" stroke-width="${sw}" filter="url(#softShadow)"/>
       <rect x="-260" y="-160" width="520" height="80" rx="16" fill="${p.background}" stroke="${p.outline}" stroke-width="4"/>
-      <text x="0" y="-110" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="34" fill="${p.primary}" text-anchor="middle">
-        ${escapeXml(plan.keyText || 'PHÂN TÍCH CHUYÊN SÂU')}
+      <text x="0" y="-110" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="32" fill="${p.primary}" text-anchor="middle">
+        ${mainTitle}
       </text>
       <line x1="-220" y1="-30" x2="220" y2="-30" stroke="${p.outline}" stroke-width="4" stroke-dasharray="8 8"/>
-      <text x="0" y="40" font-family="'Be Vietnam Pro', sans-serif" font-weight="800" font-size="26" fill="${p.outline}" text-anchor="middle">
-        ${escapeXml(text.substring(0, 45))}
+      <text x="0" y="35" font-family="'Be Vietnam Pro', sans-serif" font-weight="800" font-size="24" fill="${p.outline}" text-anchor="middle">
+        ${escapeXml(text.length > 55 ? text.substring(0, 52) + '...' : text)}
       </text>
-      <text x="0" y="100" font-family="'Be Vietnam Pro', sans-serif" font-weight="700" font-size="20" fill="${p.muted}" text-anchor="middle">
-        Nguyên tắc cốt lõi được làm sáng tỏ
+      <text x="0" y="95" font-family="'Be Vietnam Pro', sans-serif" font-weight="700" font-size="18" fill="${p.muted}" text-anchor="middle">
+        ${subAction}
+      </text>
+    </g>
+  `;
+}
+
+// ==================== CULINARY / FOOD VECTOR RENDERERS ====================
+
+function renderCookingBrothPot(p, sw, keyText) {
+  return `
+    <g transform="translate(960, 560)">
+      <rect x="-600" y="-280" width="1200" height="560" rx="44" fill="${p.card}" stroke="${p.outline}" stroke-width="${sw}" filter="url(#softShadow)"/>
+      <!-- Steaming Stockpot -->
+      <g transform="translate(0, 40)">
+        <ellipse cx="0" cy="180" rx="200" ry="25" fill="${p.outline}" opacity="0.1"/>
+        <path d="M -160 30 L -140 180 Q 0 210 140 180 L 160 30 Z" fill="#334155" stroke="${p.outline}" stroke-width="${sw}"/>
+        <ellipse cx="0" cy="30" rx="160" ry="30" fill="#F59E0B" stroke="${p.outline}" stroke-width="${sw}"/>
+        <path d="M -180 60 L -160 60 M 160 60 L 180 60" stroke="${p.outline}" stroke-width="12" stroke-linecap="round"/>
+        <!-- Rising Steam -->
+        <path d="M -60 -10 Q -90 -60 -50 -110 Q -20 -150 -60 -190" fill="none" stroke="#CBD5E1" stroke-width="8" stroke-linecap="round"/>
+        <path d="M 0 -20 Q 30 -70 0 -120 Q -30 -160 10 -200" fill="none" stroke="#CBD5E1" stroke-width="10" stroke-linecap="round"/>
+        <path d="M 60 -10 Q 90 -60 50 -110 Q 20 -150 70 -190" fill="none" stroke="#CBD5E1" stroke-width="8" stroke-linecap="round"/>
+      </g>
+      <!-- Hero Badge -->
+      <g transform="translate(0, -180)">
+        <rect x="-180" y="-35" width="360" height="70" rx="20" fill="${p.accent}" stroke="${p.outline}" stroke-width="5"/>
+        <text x="0" y="10" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="32" fill="${p.outline}" text-anchor="middle">
+          ${escapeXml(keyText || 'NƯỚC DÙNG NINH')}
+        </text>
+      </g>
+    </g>
+  `;
+}
+
+function renderCookingChefStickman(p, sw, plan, text) {
+  return `
+    <g transform="translate(640, 540)">
+      <ellipse cx="0" cy="280" rx="150" ry="24" fill="${p.outline}" opacity="0.08"/>
+      <!-- Chef Hat -->
+      <path d="M -30 -115 L 30 -115 Q 45 -145 20 -165 Q 0 -180 -20 -165 Q -45 -145 -30 -115 Z" fill="#FFFFFF" stroke="${p.outline}" stroke-width="5"/>
+      <circle cx="0" cy="-60" r="55" fill="${p.card}" stroke="${p.outline}" stroke-width="${sw}"/>
+      <circle cx="15" cy="-65" r="6" fill="${p.outline}"/>
+      <path d="M 5 -45 Q 20 -35 30 -50" fill="none" stroke="${p.outline}" stroke-width="4" stroke-linecap="round"/>
+      <line x1="0" y1="-5" x2="0" y2="180" stroke="${p.outline}" stroke-width="${sw + 2}" stroke-linecap="round"/>
+      <path d="M 0 180 L -60 280 M 0 180 L 60 280" stroke="${p.outline}" stroke-width="${sw}" stroke-linecap="round"/>
+      <!-- Chef Hands holding ladle -->
+      <path d="M 0 40 L 80 80 L 140 40" fill="none" stroke="${p.outline}" stroke-width="${sw}" stroke-linecap="round"/>
+      <circle cx="150" cy="35" r="18" fill="#F59E0B" stroke="${p.outline}" stroke-width="4"/>
+    </g>
+
+    <g transform="translate(1320, 500)">
+      <rect x="-300" y="-200" width="600" height="400" rx="36" fill="${p.card}" stroke="${p.outline}" stroke-width="${sw}" filter="url(#softShadow)"/>
+      <rect x="-260" y="-160" width="520" height="75" rx="16" fill="#FEF3C7" stroke="${p.accent}" stroke-width="4"/>
+      <text x="0" y="-112" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="30" fill="${p.outline}" text-anchor="middle">
+        ${escapeXml(plan?.keyText || 'CÔNG THỨC MÓN ĂN')}
+      </text>
+      <line x1="-220" y1="-35" x2="220" y2="-35" stroke="${p.outline}" stroke-width="4" stroke-dasharray="8 8"/>
+      <text x="0" y="30" font-family="'Be Vietnam Pro', sans-serif" font-weight="800" font-size="24" fill="${p.outline}" text-anchor="middle">
+        ${escapeXml(text.length > 55 ? text.substring(0, 52) + '...' : text)}
+      </text>
+      <text x="0" y="90" font-family="'Be Vietnam Pro', sans-serif" font-weight="700" font-size="18" fill="${p.secondary}" text-anchor="middle">
+        Tỉ mỉ trong từng hương vị truyền thống
       </text>
     </g>
   `;

@@ -1297,19 +1297,19 @@ function createCartoonSceneSvg({ clauseText, sceneTitle, sceneIndex, subIndex, f
  */
 async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', speed = 1.0) {
   const safeSpeed = Math.min(Math.max(Number(speed) || 1.0, 0.5), 2.0);
+  const cleanText = (text || '').trim();
 
-  // If audio file already exists with valid length, reuse it
-  if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 2000) {
-    try {
-      const probe = execSync(`/opt/homebrew/bin/ffprobe -i "${outputPath}" -show_entries format=duration -v quiet -of csv="p=0"`).toString().trim();
-      const dur = parseFloat(probe);
-      if (dur > 0.5) {
-        return dur;
-      }
-    } catch (_) {}
-  }
+  // CRITICAL FIX: NEVER reuse stale audio from a previous script!
+  // Always delete any existing audio at outputPath to guarantee fresh audio matching the new script.
+  try {
+    if (fs.existsSync(outputPath)) {
+      fs.unlinkSync(outputPath);
+    }
+  } catch (_) {}
 
+  const tempTxt = outputPath.replace('.mp3', '_script.txt');
   const tempRaw = outputPath.replace('.mp3', '_raw.mp3');
+  const tempAiff = outputPath.replace('.mp3', '_say.aiff');
 
   const VOICE_MAP = {
     'vi-VN-Standard-A': { voice: 'vi-VN-HoaiMyNeural', pitch: '+0Hz' },
@@ -1330,7 +1330,10 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
   };
 
   let success = false;
+
+  // 1. Try Microsoft Edge TTS (natural neural voices) via temp text file to avoid escaping issues
   try {
+    fs.writeFileSync(tempTxt, cleanText, 'utf8');
     const ratePercent = Math.round((safeSpeed - 1.0) * 100);
     const rateStr = ratePercent >= 0 ? `+${ratePercent}%` : `${ratePercent}%`;
     const cfg = VOICE_MAP[voice] || (voice.includes('Nam') ? { voice: 'vi-VN-NamMinhNeural', pitch: '+0Hz' } : { voice: 'vi-VN-HoaiMyNeural', pitch: '+0Hz' });
@@ -1338,36 +1341,69 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
     const pitchStr = cfg.pitch || '+0Hz';
 
     execSync(
-      `edge-tts --voice "${edgeVoice}" --pitch="${pitchStr}" --rate="${rateStr}" --text "${text.replace(/"/g, '\\"')}" --write-media "${outputPath}" 2>/dev/null`
+      `edge-tts --voice "${edgeVoice}" --pitch="${pitchStr}" --rate="${rateStr}" -f "${tempTxt}" --write-media "${outputPath}" 2>/dev/null`,
+      { timeout: 30000 }
     );
     if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
       success = true;
     }
   } catch (_) {
     success = false;
+  } finally {
+    try { if (fs.existsSync(tempTxt)) fs.unlinkSync(tempTxt); } catch (_) {}
   }
 
+  // 2. Fallback to Google TTS (supports long text chunking via getAllAudioBase64)
   if (!success) {
     try {
-      const base64Audio = await googleTTS.getAudioBase64(text, {
-        lang: 'vi',
+      const isEnglish = voice.startsWith('en-');
+      const lang = isEnglish ? 'en' : 'vi';
+      const parts = await googleTTS.getAllAudioBase64(cleanText, {
+        lang,
         slow: false,
-        host: 'https://translate.google.com',
-        timeout: 10000,
+        timeout: 15000,
       });
-      const buffer = Buffer.from(base64Audio, 'base64');
-      fs.writeFileSync(tempRaw, buffer);
-    } catch (err) {
-      execSync(`/opt/homebrew/bin/ffmpeg -y -f lavfi -i anullsrc=r=24000:cl=mono -t 3.5 -q:a 9 -acodec libmp3lame "${tempRaw}" 2>/dev/null`);
-    }
+      if (parts && parts.length > 0) {
+        const buffer = Buffer.concat(parts.map((p) => Buffer.from(p.base64, 'base64')));
+        fs.writeFileSync(tempRaw, buffer);
+        if (safeSpeed !== 1.0) {
+          execSync(`/opt/homebrew/bin/ffmpeg -y -i "${tempRaw}" -filter:a "atempo=${safeSpeed}" -vn "${outputPath}" 2>/dev/null`);
+          try { fs.unlinkSync(tempRaw); } catch (_) {}
+        } else {
+          fs.copyFileSync(tempRaw, outputPath);
+          try { fs.unlinkSync(tempRaw); } catch (_) {}
+        }
+        if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
+          success = true;
+        }
+      }
+    } catch (_) {}
+  }
 
-    if (safeSpeed !== 1.0 && fs.existsSync(tempRaw)) {
-      execSync(`/opt/homebrew/bin/ffmpeg -y -i "${tempRaw}" -filter:a "atempo=${safeSpeed}" -vn "${outputPath}" 2>/dev/null`);
-      try { fs.unlinkSync(tempRaw); } catch (_) {}
-    } else if (fs.existsSync(tempRaw)) {
-      fs.copyFileSync(tempRaw, outputPath);
-      try { fs.unlinkSync(tempRaw); } catch (_) {}
+  // 3. Fallback to macOS native high-quality speech (offline Linh / Samantha)
+  if (!success) {
+    try {
+      const isEnglish = voice.startsWith('en-');
+      const macVoice = isEnglish ? 'Samantha' : 'Linh';
+      fs.writeFileSync(tempTxt, cleanText, 'utf8');
+      execSync(`say -v "${macVoice}" -f "${tempTxt}" -o "${tempAiff}" 2>/dev/null`);
+      if (fs.existsSync(tempAiff) && fs.statSync(tempAiff).size > 1000) {
+        const filter = safeSpeed !== 1.0 ? `-filter:a "atempo=${safeSpeed}"` : '';
+        execSync(`/opt/homebrew/bin/ffmpeg -y -i "${tempAiff}" ${filter} -q:a 2 -vn "${outputPath}" 2>/dev/null`);
+        if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
+          success = true;
+        }
+      }
+    } catch (_) {} finally {
+      try { if (fs.existsSync(tempTxt)) fs.unlinkSync(tempTxt); } catch (_) {}
+      try { if (fs.existsSync(tempAiff)) fs.unlinkSync(tempAiff); } catch (_) {}
     }
+  }
+
+  // 4. Absolute emergency silence fallback so pipeline never crashes
+  if (!success || !fs.existsSync(outputPath) || fs.statSync(outputPath).size < 500) {
+    const fallbackDur = Math.max(3.0, (cleanText.split(/\s+/).length / 2.8) / safeSpeed);
+    execSync(`/opt/homebrew/bin/ffmpeg -y -f lavfi -i anullsrc=r=24000:cl=mono -t ${fallbackDur.toFixed(2)} -q:a 9 -acodec libmp3lame "${outputPath}" 2>/dev/null`);
   }
 
   let durationInSeconds = 4.0;
@@ -1375,7 +1411,7 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
     const probe = execSync(`/opt/homebrew/bin/ffprobe -i "${outputPath}" -show_entries format=duration -v quiet -of csv="p=0"`).toString().trim();
     durationInSeconds = parseFloat(probe) || 4.0;
   } catch (err) {
-    durationInSeconds = Math.max(3.0, (text.split(/\s+/).length / 3.0) / safeSpeed);
+    durationInSeconds = Math.max(3.0, (cleanText.split(/\s+/).length / 3.0) / safeSpeed);
   }
 
   return durationInSeconds;
@@ -1384,7 +1420,18 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
 /**
  * Main Video Generator Pipeline
  */
-async function generateVideo({ title, subtitle, voice, speed, scenes, script, content, geminiApiKey, openaiApiKey }) {
+async function generateVideo({
+  title,
+  subtitle,
+  voice,
+  speed,
+  scenes,
+  script,
+  content,
+  geminiApiKey,
+  openaiApiKey,
+  onProgress,
+}) {
   const { generateStoryboardFromContent } = require('./storyboardGenerator.cjs');
   const {
     createVideoStyleGuide,
@@ -1397,12 +1444,51 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
   } = require('./visualBeatPlanner.cjs');
   const { generateFluxImage } = require('./fluxImageGenerator.cjs');
 
+  const notify = (stepKey, percent, message, details = {}) => {
+    if (typeof onProgress === 'function') {
+      try {
+        onProgress({
+          type: 'progress',
+          stepKey,
+          percent: Math.min(100, Math.max(0, Math.round(percent))),
+          message,
+          timestamp: new Date().toLocaleTimeString(),
+          ...details,
+        });
+      } catch (err) {
+        // silent
+      }
+    }
+  };
+
   // Store full data reference for downstream DALL-E 3 access
   const data = { openaiApiKey };
 
   const selectedVoice = voice || 'vi-VN-Standard-A';
   const playbackSpeed = Number(speed) || 1.0;
   const styleGuide = createVideoStyleGuide(title);
+  const generationRunId = Date.now();
+
+  // Clean up all existing scene images and audio so no stale assets from previous runs remain
+  try {
+    const existingImages = fs.readdirSync(IMAGES_DIR);
+    for (const f of existingImages) {
+      if (f.startsWith('scene_') && f.endsWith('.png')) {
+        try { fs.unlinkSync(path.join(IMAGES_DIR, f)); } catch (_) {}
+      }
+    }
+  } catch (_) {}
+
+  try {
+    const existingAudio = fs.readdirSync(AUDIO_DIR);
+    for (const f of existingAudio) {
+      if (f.startsWith('scene_') && f.endsWith('.mp3')) {
+        try { fs.unlinkSync(path.join(AUDIO_DIR, f)); } catch (_) {}
+      }
+    }
+  } catch (_) {}
+
+  notify('storyboard', 5, 'Khởi động Studio Pipeline: Dọn dẹp cache & nạp kịch bản mới...');
 
   console.log(`\n======================================================`);
   console.log(`🎨 [TẠO VIDEO THEO PHONG CÁCH STICKMAN CARTOON EXPLAINER V2]`);
@@ -1411,6 +1497,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
   console.log(`======================================================\n`);
 
   // 1. Run AI Storyboard Generator to split content & plan diverse scenes
+  notify('storyboard', 10, 'Đang phân tích kịch bản, xác định nhịp điệu và cấu trúc phân cảnh...');
   console.log(`[Bước 1/5] Chạy Storyboard Generator để phân tích và tạo kịch bản phân cảnh...`);
   const plannedScenes = await generateStoryboardFromContent({
     content: content || script,
@@ -1418,9 +1505,15 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
     geminiApiKey,
   });
 
-  console.log(`✓ Kế hoạch Storyboard gồm ${plannedScenes.length} phân cảnh:`);
+  const totalScenes = plannedScenes.length;
+  console.log(`✓ Kế hoạch Storyboard gồm ${totalScenes} phân cảnh:`);
   plannedScenes.forEach((sc, i) => {
     console.log(`   [${i + 1}] Loại: [${(sc.visual_type || 'character').toUpperCase()}] | Tiêu đề: "${sc.title}"`);
+  });
+
+  notify('storyboard', 18, `✓ Hoàn thành cấu trúc kịch bản gồm ${totalScenes} phân cảnh chi tiết`, {
+    totalScenes,
+    scenes: plannedScenes.map((s, idx) => ({ id: idx + 1, title: s.title, type: s.visual_type })),
   });
 
   let totalFrames = 0;
@@ -1428,25 +1521,47 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
   const sceneClipPaths = [];
   let previousMethod = null;
 
-  for (let i = 0; i < plannedScenes.length; i++) {
+  for (let i = 0; i < totalScenes; i++) {
     const rawScene = plannedScenes[i];
     const sceneId = i + 1;
     const sceneTitle = rawScene.title || `Cảnh ${sceneId}`;
     const sceneText = (rawScene.narration || rawScene.text || '').trim();
 
-    console.log(`\n--- Phân cảnh ${sceneId}/${plannedScenes.length}: "${sceneTitle}" ---`);
+    console.log(`\n--- Phân cảnh ${sceneId}/${totalScenes}: "${sceneTitle}" ---`);
     console.log(`Nội dung: ${sceneText.substring(0, 80)}...`);
 
-    // 1. Generate Voice Audio via TTS
+    // 1. Generate Voice Audio via TTS (Stage 2: 18% -> 35%)
     const audioFileName = `scene_${sceneId}.mp3`;
     const audioPath = path.join(AUDIO_DIR, audioFileName);
+
+    const ttsStartPct = 18 + ((i + 0.2) / totalScenes) * 17;
+    notify('tts', ttsStartPct, `[Cảnh ${sceneId}/${totalScenes}] Đang tổng hợp giọng nói AI (${selectedVoice})...`, {
+      sceneIndex: sceneId,
+      totalScenes,
+      sceneTitle,
+    });
 
     console.log(`[Bước 2/5] Đang tổng hợp giọng nói AI cho cảnh ${sceneId}...`);
     const durationInSeconds = await generateTTSAudio(sceneText, audioPath, selectedVoice, playbackSpeed);
     const durationInFrames = Math.round(durationInSeconds * 30);
     console.log(`✓ Audio cảnh ${sceneId} hoàn tất: ${durationInSeconds.toFixed(2)}s (${durationInFrames} frames)`);
 
-    // 2. Segment into 2 - 4 beats (1.5s - 3.5s per beat)
+    const ttsDonePct = 18 + ((i + 1) / totalScenes) * 17;
+    notify('tts', ttsDonePct, `✓ Cảnh ${sceneId}/${totalScenes}: Thu âm giọng đọc thành công (${durationInSeconds.toFixed(1)}s)`, {
+      sceneIndex: sceneId,
+      totalScenes,
+      sceneTitle,
+      duration: durationInSeconds,
+    });
+
+    // 2. Segment into 2 - 4 beats (1.5s - 3.5s per beat) & Visual Planner (Stage 3: 35% -> 50%)
+    const planStartPct = 35 + ((i + 0.3) / totalScenes) * 15;
+    notify('beat_plan', planStartPct, `[Cảnh ${sceneId}/${totalScenes}] Đang phân tích nhịp thị giác & chuyển động câu chuyện...`, {
+      sceneIndex: sceneId,
+      totalScenes,
+      sceneTitle,
+    });
+
     console.log(`[Bước 3/5] Phân chia thành các Visual Beats theo diễn tiến câu chuyện...`);
     const segmentedBeats = segmentSceneIntoBeats(
       { id: sceneId, title: sceneTitle, text: sceneText },
@@ -1479,11 +1594,20 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
       );
     }
 
+    const planDonePct = 35 + ((i + 1) / totalScenes) * 15;
+    notify('beat_plan', planDonePct, `✓ Cảnh ${sceneId}/${totalScenes}: Đã lên kế hoạch ${segmentedBeats.length} nhịp thị giác`, {
+      sceneIndex: sceneId,
+      totalScenes,
+      sceneTitle,
+      totalBeatsInScene: segmentedBeats.length,
+    });
+
     const tempSceneDir = path.join(PUBLIC_DIR, `temp_scene_${sceneId}`);
     if (!fs.existsSync(tempSceneDir)) fs.mkdirSync(tempSceneDir, { recursive: true });
     const beatClipPaths = [];
     const beats = [];
 
+    // Stage 4: Generate Images for each beat (50% -> 80%)
     for (let bIdx = 0; bIdx < segmentedBeats.length; bIdx++) {
       const beat = segmentedBeats[bIdx];
       let plan = beatPlans[bIdx];
@@ -1508,19 +1632,62 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
       beat.validation = validation;
       previousMethod = plan.visualMethod;
 
-      // Generate Image: Prefer DALL-E 3 (Hand-drawn style) → Fallback to SVG
+      // Notify Image Generation Started
+      const beatProgressFraction = (i + bIdx / segmentedBeats.length) / totalScenes;
+      const imgStartPct = 50 + beatProgressFraction * 30;
+      const keyLabel = plan.diegeticText || plan.keyText || sceneTitle;
+
+      notify('images', imgStartPct, `[Cảnh ${sceneId}/${totalScenes} • Nhịp ${bIdx + 1}/${segmentedBeats.length}] Đang tạo hình ảnh: "${keyLabel}"...`, {
+        sceneIndex: sceneId,
+        totalScenes,
+        beatIndex: bIdx + 1,
+        totalBeatsInScene: segmentedBeats.length,
+        sceneTitle,
+        label: keyLabel,
+        method: plan.visualMethod,
+      });
+
+      // Generate Image: Prioritize FLUX.1 as Top Priority Visual Engine (Apple Silicon Metal / Free FLUX)
       const beatImageFile = `scene_${sceneId}_beat_${beat.sub_index}.png`;
       const beatPngPath = path.join(IMAGES_DIR, beatImageFile);
       let imageMethod = 'svg_fallback';
       let svgContent = null;
 
-      const openaiApiKey = data?.openaiApiKey || process.env.OPENAI_API_KEY;
-      const imgPrompt = plan.imageGenerationPrompt;
+      // Always clear any stale image file
+      try {
+        if (fs.existsSync(beatPngPath)) fs.unlinkSync(beatPngPath);
+      } catch (_) {}
 
-      if (openaiApiKey && imgPrompt) {
+      const openaiApiKey = data?.openaiApiKey || process.env.OPENAI_API_KEY;
+      const diegeticLabel = plan.diegeticText || plan.keyText || '';
+      const subjectDesc = plan.subject || 'stickman character';
+      const actionDesc = plan.action || plan.meaning || beat.text;
+      const contextDesc = sceneTitle ? `related to ${sceneTitle}` : '';
+
+      // High-quality comic explainer prompt for AI generation
+      const fallbackPrompt = `2D minimalist stickman explainer illustration, ${subjectDesc}: ${actionDesc}. ${contextDesc}. Minimalist line art, clean vector comic style, warm paper texture background, 1080p high resolution.`;
+      const imgPrompt = plan.imageGenerationPrompt || fallbackPrompt;
+
+      // STEP 1: PRIORITIZE FLUX.1 AS TOP ENGINE (Apple Silicon MLX Metal GPU / Draw Things / Free FLUX)
+      try {
+        console.log(`   🎨 [FLUX.1] Đang tạo hình ảnh AI ưu tiên hàng đầu cho beat ${beat.sub_index}: "${diegeticLabel || actionDesc.substring(0, 40)}"...`);
+        const fluxRes = await generateFluxImage({
+          prompt: imgPrompt,
+          diegeticLabel,
+          outputPath: beatPngPath,
+        });
+        if (fluxRes.success && fs.existsSync(beatPngPath) && fs.statSync(beatPngPath).size > 5000) {
+          imageMethod = fluxRes.method || 'flux';
+          console.log(`   ✓ FLUX.1 thành công (${imageMethod}): ${beatImageFile}`);
+        }
+      } catch (fluxErr) {
+        console.warn(`   ⚠️ FLUX.1 tạm thời không phản hồi:`, fluxErr.message);
+      }
+
+      // STEP 2: SECONDARY AI FALLBACK (DALL-E 3 if FLUX failed and user provided OpenAI API key)
+      if (imageMethod === 'svg_fallback' && openaiApiKey && imgPrompt) {
         try {
-          console.log(`   🎨 [DALL-E 3] Đang tạo ảnh hand-drawn cho beat ${beat.sub_index}...`);
-          const diegeticLabel = plan.diegeticText || plan.keyText || '';
+          console.log(`   🎨 [DALL-E 3] Fallback tạo ảnh AI qua OpenAI cho beat ${beat.sub_index}...`);
           const fullPrompt = diegeticLabel
             ? `${imgPrompt}. Ensure exact text "${diegeticLabel}" is written clearly in the scene on a sign, chalkboard, or label.`
             : imgPrompt;
@@ -1562,30 +1729,13 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
             console.warn(`   ⚠️ DALL-E 3 HTTP ${dalleRes.status}: ${errBody.substring(0, 200)}`);
           }
         } catch (dallErr) {
-          console.warn(`   ⚠️ Lỗi DALL-E 3, chuyển fallback FLUX / SVG: ${dallErr.message}`);
+          console.warn(`   ⚠️ Lỗi DALL-E 3: ${dallErr.message}`);
         }
       }
 
-      // Step 2: Try FLUX.1 (Local Apple Silicon MLX / Draw Things / Free FLUX)
-      if (imageMethod === 'svg_fallback' && imgPrompt) {
-        try {
-          const diegeticLabel = plan.diegeticText || plan.keyText || '';
-          const fluxRes = await generateFluxImage({
-            prompt: imgPrompt,
-            diegeticLabel,
-            outputPath: beatPngPath,
-          });
-          if (fluxRes.success) {
-            imageMethod = fluxRes.method || 'flux';
-            console.log(`   ✓ FLUX.1 thành công (${imageMethod}): ${beatImageFile}`);
-          }
-        } catch (fluxErr) {
-          // If FLUX not ready or offline, smooth fallback to SVG
-        }
-      }
-
-      // Step 3: Fallback: Generate SVG if DALL-E 3 & FLUX were not used or failed
+      // STEP 3: FALLBACK TO SEMANTIC SVG ONLY IF ALL AI METHODS FAILED
       if (imageMethod === 'svg_fallback') {
+        console.log(`   🎨 [SVG Fallback] Dựng hình đồ họa vector cho beat ${beat.sub_index}...`);
         svgContent = generateSemanticSvgForBeat({
           beat,
           scene: { id: sceneId, title: sceneTitle, text: sceneText, videoTitle: title },
@@ -1595,6 +1745,16 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
       }
 
       console.log(`   • Beat ${beat.sub_index} [${plan.visualMethod.toUpperCase()}] (${imageMethod}): "${plan.diegeticText || plan.keyText || ''}" (${beat.duration_in_seconds}s) -> ${(plan.stickmanAction || plan.action || '').substring(0, 50)}...`);
+
+      const imgDonePct = 50 + ((i + (bIdx + 1) / segmentedBeats.length) / totalScenes) * 30;
+      notify('images', imgDonePct, `✓ Cảnh ${sceneId}.${beat.sub_index} [${imageMethod.toUpperCase()}]: "${keyLabel}"`, {
+        sceneIndex: sceneId,
+        totalScenes,
+        beatIndex: bIdx + 1,
+        totalBeatsInScene: segmentedBeats.length,
+        imageMethod,
+        keyLabel,
+      });
 
       if (beat.sub_index === 1) {
         fs.copyFileSync(beatPngPath, path.join(IMAGES_DIR, `scene_${sceneId}.png`));
@@ -1621,6 +1781,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
         prompt: `2D cartoon explainer, ${plan.visualMethod}, ${plan.keyText}, clean vector art, 1080p.`,
         caption: beat.caption,
         image_file: beatImageFile,
+        image_version: generationRunId,
         svg_data: svgContent,
         duration_in_seconds: beat.duration_in_seconds,
         duration_in_frames: beat.duration_in_frames,
@@ -1634,7 +1795,14 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
       });
     }
 
-    // 4. Combine beat clips with scene audio
+    // 4. Combine beat clips with scene audio (Stage 5: 80% -> 92%)
+    const renderScenePct = 80 + ((i + 0.8) / totalScenes) * 12;
+    notify('render', renderScenePct, `[Cảnh ${sceneId}/${totalScenes}] Đang kết hợp clip Ken-Burns với giọng đọc audio...`, {
+      sceneIndex: sceneId,
+      totalScenes,
+      sceneTitle,
+    });
+
     console.log(`[Bước 5/5] Ghép nối các beat clips với giọng đọc audio của cảnh ${sceneId}...`);
     const sceneClipOut = path.join(PUBLIC_DIR, `clip_${sceneId}.mp4`);
 
@@ -1661,7 +1829,9 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
       narration: sceneText,
       prompt: beats[0]?.prompt || `2D cartoon explainer, ${sceneTitle}`,
       audio_file: audioFileName,
+      audio_version: generationRunId,
       image_file: `scene_${sceneId}_beat_1.png`,
+      image_version: generationRunId,
       visual_type: beats[0]?.visual_type || 'character',
       visual_description: beats[0]?.plan?.meaning || '',
       subject: beats[0]?.plan?.subject || '',
@@ -1684,6 +1854,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
   }
 
   // Quality Gate Check before export
+  notify('render', 93, 'Đang kiểm định chất lượng phân cảnh (Quality Gate Check)...');
   const qualityReport = runProjectQualityGate(finalizedScenes);
   console.log(`\n🛡️ [QUALITY GATE CHECK]: Passed=${qualityReport.validation_passed} | Total Beats=${qualityReport.total_beats} | Avg Beat Dur=${qualityReport.avg_beat_duration_sec}s`);
   if (qualityReport.issues.length > 0) {
@@ -1691,6 +1862,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
   }
 
   // Concatenate all scene clips into final-video.mp4
+  notify('render', 95, 'Đang xuất và ghép nối file video tổng hợp final-video.mp4...');
   const finalVideoPath = path.join(PUBLIC_DIR, 'final-video.mp4');
   if (sceneClipPaths.length > 0) {
     const listFile = path.join(PUBLIC_DIR, 'clips_list.txt');
@@ -1703,6 +1875,8 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
       console.warn('ffmpeg concat error:', concatErr);
     }
   }
+
+  notify('render', 99, 'Đang đồng bộ hóa metadata & danh sách phân cảnh vào Remotion Player...');
 
   const metadata = {
     title: title || 'Video Giải Thích Đa Dạng',
@@ -1735,6 +1909,12 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
   });
   console.log(`- Tổng thời lượng: ${(totalFrames / 30).toFixed(1)}s (${totalFrames} frames)`);
 
+  notify('done', 100, `🎉 Hoàn tất 100%! Đã tạo xong ${finalizedScenes.length} cảnh với ${qualityReport.total_beats} visual beats.`, {
+    totalScenes: finalizedScenes.length,
+    totalBeats: qualityReport.total_beats,
+    durationSeconds: (totalFrames / 30).toFixed(1),
+  });
+
   return {
     success: true,
     metadata,
@@ -1749,9 +1929,11 @@ if (require.main === module) {
     try {
       const args = process.argv.slice(2);
       let content = null;
+      let cliTitle = 'Video Giải Thích Mới';
       if (args[0]) {
         if (fs.existsSync(args[0])) {
           content = fs.readFileSync(args[0], 'utf8');
+          cliTitle = path.basename(args[0], path.extname(args[0])).replace(/[_-]+/g, ' ');
         } else {
           content = args.join(' ');
         }
@@ -1771,9 +1953,13 @@ Các chuỗi cà phê thành công nhất tối ưu 80% doanh thu từ khách mu
 CẢNH 5: Bí Quyết Kinh Doanh Bền Vững
 Lợi nhuận thực sự đến từ tốc độ quay vòng ly cà phê mỗi sáng, chứ không phụ thuộc vào việc trang trí quán đẹp để khách check-in sống ảo.`;
 
+      if (!content && testContent.includes('Cà Phê')) {
+        cliTitle = 'Kinh Tế Học Quán Cà Phê';
+      }
+
       await generateVideo({
-        title: 'Kinh Tế Học Quán Cà Phê',
-        subtitle: 'The Coffee Economics',
+        title: cliTitle,
+        subtitle: 'Cartoon Explainer',
         content: testContent,
       });
     } catch (err) {

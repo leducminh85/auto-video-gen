@@ -73,18 +73,28 @@ async function generateViaLocalServer({ prompt, outputPath, width = 1024, height
   return { success: false };
 }
 
+// Serialize local GPU execution to avoid Metal memory contention
+let mfluxLock = Promise.resolve();
+
 /**
  * Generate image via local Apple Silicon mflux on Mac M4 Metal GPU
  */
 async function generateViaMflux({ prompt, outputPath }) {
+  const prevLock = mfluxLock;
+  let releaseLock;
+  mfluxLock = new Promise((resolve) => { releaseLock = resolve; });
+  await prevLock;
+
+  const tempPromptFile = outputPath.replace('.png', '_prompt.txt');
+  const tempMfluxOut = outputPath.replace('.png', '_mflux.png');
   try {
-    const tempMfluxOut = outputPath.replace('.png', '_mflux.png');
-    const safePrompt = prompt.replace(/"/g, '\\"').substring(0, 500);
+    const cleanPrompt = prompt.replace(/\r?\n/g, ' ').trim().substring(0, 600);
+    fs.writeFileSync(tempPromptFile, cleanPrompt, 'utf8');
 
     console.log(`   🎨 [FLUX.1 MLX] Đang render cục bộ bằng mflux trên GPU Metal Apple M4...`);
     execSync(
-      `mflux-generate --model dhairyashil/FLUX.1-schnell-mflux-4bit --base-model schnell --steps 4 --width 1024 --height 576 --prompt "${safePrompt}" --output "${tempMfluxOut}"`,
-      { stdio: 'pipe', timeout: 120000 }
+      `mflux-generate --model dhairyashil/FLUX.1-schnell-mflux-4bit --base-model schnell --steps 4 --width 1024 --height 576 --prompt-file "${tempPromptFile}" --output "${tempMfluxOut}"`,
+      { stdio: 'pipe', timeout: 180000 }
     );
 
     if (fs.existsSync(tempMfluxOut) && fs.statSync(tempMfluxOut).size > 5000) {
@@ -93,10 +103,15 @@ async function generateViaMflux({ prompt, outputPath }) {
         .png({ quality: 95 })
         .toFile(outputPath);
       try { fs.unlinkSync(tempMfluxOut); } catch (_) {}
+      try { fs.unlinkSync(tempPromptFile); } catch (_) {}
       return { success: true, method: 'local_mflux' };
     }
   } catch (err) {
     console.warn(`   ⚠️ FLUX.1 MLX chưa sẵn sàng:`, err.message);
+  } finally {
+    try { if (fs.existsSync(tempPromptFile)) fs.unlinkSync(tempPromptFile); } catch (_) {}
+    try { if (fs.existsSync(tempMfluxOut)) fs.unlinkSync(tempMfluxOut); } catch (_) {}
+    if (typeof releaseLock === 'function') releaseLock();
   }
   return { success: false };
 }
@@ -106,69 +121,82 @@ async function generateViaMflux({ prompt, outputPath }) {
  * 100% Free, NO API Key needed, high aesthetic quality
  */
 async function generateViaFreeFlux({ prompt, outputPath }) {
-  try {
-    console.log(`   🎨 [FLUX.1 Cloud Free] Đang tạo ảnh FLUX.1 chất lượng cao (miễn phí, không cần key)...`);
-    const cleanPrompt = prompt
-      .replace(/[^\w\s.,$%-]/g, ' ')
-      .trim()
-      .substring(0, 300);
+  const cleanPrompt = prompt
+    .replace(/[^\p{L}\p{N}\s.,$%-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .substring(0, 300);
 
-    const encodedPrompt = encodeURIComponent(
-      `${cleanPrompt}, 2D cartoon explainer, minimalist stickman style, warm paper background, clear vector line art, 1080p`
-    );
-    const seed = Math.floor(Math.random() * 999999);
-    const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?model=flux&width=1280&height=720&nologo=true&seed=${seed}`;
+  const encodedPrompt = encodeURIComponent(
+    `${cleanPrompt}, 2D cartoon explainer, minimalist stickman style, warm paper background, clear vector line art, 1080p`
+  );
+  const seed = Math.floor(Math.random() * 999999);
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+  const candidateUrls = [
+    `https://image.pollinations.ai/prompt/${encodedPrompt}?model=flux&width=1280&height=720&nologo=true&seed=${seed}`,
+    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=720&nologo=true&seed=${seed}`,
+    `https://image.pollinations.ai/prompt/${encodedPrompt}?model=turbo&width=1280&height=720&nologo=true&seed=${seed}`,
+  ];
 
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Apple Silicon)' },
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
+  for (const url of candidateUrls) {
+    try {
+      console.log(`   🎨 [FLUX.1 Cloud Free] Đang tạo ảnh AI chất lượng cao (miễn phí)...`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s per candidate
 
-    if (res.ok) {
-      const arrayBuffer = await res.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      if (buffer.length > 5000) {
-        await sharp(buffer)
-          .resize(1920, 1080, { fit: 'cover', position: 'centre' })
-          .png({ quality: 95 })
-          .toFile(outputPath);
-        return { success: true, method: 'flux_free' };
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Apple Silicon)' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const arrayBuffer = await res.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        if (buffer.length > 5000) {
+          await sharp(buffer)
+            .resize(1920, 1080, { fit: 'cover', position: 'centre' })
+            .png({ quality: 95 })
+            .toFile(outputPath);
+          return { success: true, method: 'flux_free' };
+        }
       }
-    }
-  } catch (err) {
-    console.warn(`   ⚠️ FLUX Cloud Free:`, err.message);
+    } catch (_) {}
   }
   return { success: false };
 }
 
 /**
  * Comprehensive FLUX.1 Engine with Automatic Cascading Fallback
+ * Prioritizes FLUX.1 generation for video rendering
  */
 async function generateFluxImage({ prompt, diegeticLabel, outputPath }) {
   const fullPrompt = diegeticLabel
     ? `${prompt}. Hand-drawn stickman comic explainer style. The exact text "${diegeticLabel}" is legibly written on a sign, label, or chalkboard.`
     : `${prompt}. Hand-drawn stickman comic explainer style, clean line art.`;
 
-  // 1. Try Local Server on Mac M4 first (Draw Things / WebUI at 127.0.0.1:7860)
+  // 1. If explicit local mflux requested via env
+  if (process.env.USE_LOCAL_MFLUX === 'true') {
+    const mfluxRes = await generateViaMflux({ prompt: fullPrompt, outputPath });
+    if (mfluxRes.success) return mfluxRes;
+  }
+
+  // 2. Try Local Draw Things / SD WebUI Server on Mac M4 Metal (127.0.0.1:7860)
   const localRes = await generateViaLocalServer({ prompt: fullPrompt, outputPath });
   if (localRes.success) {
     return localRes;
   }
 
-  // 2. Try Local mflux CLI (if HF_TOKEN is present)
-  const mfluxRes = await generateViaMflux({ prompt: fullPrompt, outputPath });
-  if (mfluxRes.success) {
-    return mfluxRes;
-  }
-
-  // 3. Try Free Cloud FLUX.1 (Pollinations - Zero key needed)
+  // 3. Try Fast Cloud FLUX.1 (Pollinations - Zero key needed, instant 2-3s response)
   const freeRes = await generateViaFreeFlux({ prompt: fullPrompt, outputPath });
   if (freeRes.success) {
     return freeRes;
+  }
+
+  // 4. Try Local Apple Silicon Metal mflux on Mac M4
+  const mfluxRes = await generateViaMflux({ prompt: fullPrompt, outputPath });
+  if (mfluxRes.success) {
+    return mfluxRes;
   }
 
   return { success: false };

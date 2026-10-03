@@ -97,8 +97,41 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
 
   const visualType = getResolvedVisualType();
 
-  // If beat has bespoke SVG, render vector art directly
+  // Prioritize AI Generated image (FLUX.1 / DALL-E) over SVG fallback
   const renderBeatVisual = () => {
+    if (activeBeat.image_file) {
+      const baseImg = activeBeat.image_file.startsWith('http') || activeBeat.image_file.startsWith('/')
+        ? activeBeat.image_file
+        : staticFile(`images/${activeBeat.image_file}`);
+      const cacheBust = activeBeat.image_version || scene.audio_version || `${scene.id}_${activeBeat.sub_index}`;
+      const imgSrc = `${baseImg}?v=${cacheBust}`;
+
+      return (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            transform: `scale(${beatScale})`,
+            transformOrigin: 'center center',
+            opacity: beatOpacity,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <img
+            src={imgSrc}
+            alt={activeBeat.title}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+            }}
+          />
+        </div>
+      );
+    }
+
     if (activeBeat.svg_data) {
       const svgSrc = activeBeat.svg_data.startsWith('data:')
         ? activeBeat.svg_data
@@ -119,37 +152,6 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
         >
           <img
             src={svgSrc}
-            alt={activeBeat.title}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-            }}
-          />
-        </div>
-      );
-    }
-
-    if (activeBeat.image_file) {
-      const imgSrc = activeBeat.image_file.startsWith('http') || activeBeat.image_file.startsWith('/')
-        ? activeBeat.image_file
-        : staticFile(`images/${activeBeat.image_file}`);
-
-      return (
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            transform: `scale(${beatScale})`,
-            transformOrigin: 'center center',
-            opacity: beatOpacity,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <img
-            src={imgSrc}
             alt={activeBeat.title}
             style={{
               width: '100%',
@@ -190,7 +192,7 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
     }
   };
 
-  const audioSrc = scene.audio_file
+  const baseAudio = scene.audio_file
     ? scene.audio_file.startsWith('http') ||
       scene.audio_file.startsWith('data:') ||
       scene.audio_file.startsWith('blob:')
@@ -199,6 +201,8 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
       ? scene.audio_file
       : staticFile(`audio/${scene.audio_file}`)
     : null;
+  const audioCacheBust = scene.audio_version || scene.start_frame || '';
+  const audioSrc = baseAudio && audioCacheBust ? `${baseAudio}?v=${audioCacheBust}` : baseAudio;
 
   return (
     <div
