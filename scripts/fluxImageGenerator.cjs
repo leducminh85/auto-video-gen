@@ -167,33 +167,22 @@ async function generateViaFreeFlux({ prompt, outputPath }) {
 }
 
 /**
- * Comprehensive FLUX.1 Engine with Automatic Cascading Fallback
- * Prioritizes FLUX.1 generation for video rendering
+ * Comprehensive FLUX.1 Engine: 100% Local, Watermark-Free & High Aesthetic
+ * Priority 1: Local Draw Things / SD WebUI Metal Server (127.0.0.1:7860)
+ * Priority 2: Local Apple Silicon Metal mflux on Mac M4 (FLUX.1-schnell-mflux-4bit)
  */
 async function generateFluxImage({ prompt, diegeticLabel, outputPath }) {
   const fullPrompt = diegeticLabel
-    ? `${prompt}. Hand-drawn stickman comic explainer style. The exact text "${diegeticLabel}" is legibly written on a sign, label, or chalkboard.`
-    : `${prompt}. Hand-drawn stickman comic explainer style, clean line art.`;
+    ? `${prompt}. Hand-drawn stickman comic explainer style, minimalist line art, clean vector comic style, warm paper texture background. The exact text "${diegeticLabel}" is legibly written on a sign, label, or chalkboard.`
+    : `${prompt}. Hand-drawn stickman comic explainer style, minimalist line art, clean vector comic style, warm paper texture background.`;
 
-  // 1. If explicit local mflux requested via env
-  if (process.env.USE_LOCAL_MFLUX === 'true') {
-    const mfluxRes = await generateViaMflux({ prompt: fullPrompt, outputPath });
-    if (mfluxRes.success) return mfluxRes;
-  }
-
-  // 2. Try Local Draw Things / SD WebUI Server on Mac M4 Metal (127.0.0.1:7860)
+  // 1. Try Local Draw Things / SD WebUI Server on Mac M4 Metal (127.0.0.1:7860) if running
   const localRes = await generateViaLocalServer({ prompt: fullPrompt, outputPath });
   if (localRes.success) {
     return localRes;
   }
 
-  // 3. Try Fast Cloud FLUX.1 (Pollinations - Zero key needed, instant 2-3s response)
-  const freeRes = await generateViaFreeFlux({ prompt: fullPrompt, outputPath });
-  if (freeRes.success) {
-    return freeRes;
-  }
-
-  // 4. Try Local Apple Silicon Metal mflux on Mac M4
+  // 2. Local Apple Silicon Metal mflux on Mac M4 (100% local, watermark-free, authentic FLUX.1)
   const mfluxRes = await generateViaMflux({ prompt: fullPrompt, outputPath });
   if (mfluxRes.success) {
     return mfluxRes;

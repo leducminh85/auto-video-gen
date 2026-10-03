@@ -96,6 +96,7 @@ function extractSemanticConcepts(text, sceneContext = {}) {
   // General Concept Triggers (Work dynamically across any domain)
   const isDopamineOrShopping = /dopamine|mua hàng|bấm nút|giỏ hàng|sung sướng|phấn khích|tiêu sài|tiêu tiền|mua sắm/i.test(lower);
   const isCompoundingOrWealth = /lãi kép|tích lũy|warren buffett|đầu tư|tài sản|cấp số nhân|tự do tài chính|tuổi 50/i.test(lower);
+  const isAllocationRule = /50\s*\/\s*30\s*\/\s*20|quy tắc|phân bổ|hũ|ngân sách|chi tiêu|tiết kiệm/i.test(lower);
   const isTechOrCode = /\blập trình\b|\bviết code\b|\bthuật toán\b|\bmã nguồn\b|\bpython\b|\bjavascript\b|\bdeveloper\b|\bsoftware code\b/i.test(lower);
   const isComparison = /thay vì|so với|chênh lệch|khác biệt|chứ không|ngược lại|đối lập|nhầm lẫn/i.test(lower);
   const isConclusionOrWisdom = /nguyên tắc vàng|bài học cốt lõi|chìa khóa thành công|kết luận|tóm lại/i.test(lower);
