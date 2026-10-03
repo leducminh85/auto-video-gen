@@ -906,9 +906,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
                   2. Kịch bản Video
                 </span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                  (Nhập nội dung phân cảnh)
-                </span>
+             
               </div>
 
               {/* Action tools: File Upload & Clear */}
@@ -967,7 +965,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 border: '1px solid var(--border)',
                 outline: 'none',
               }}
-              placeholder="Nhập toàn bộ kịch bản phân cảnh tại đây (mỗi cảnh một đoạn hoặc bắt đầu bằng CẢNH 1, CẢNH 2...)..."
+              placeholder="Nhập toàn bộ kịch bản phân cảnh tại đây "
             />
 
             {/* Textarea Footer Stats */}
@@ -995,9 +993,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                   Dự kiến: <strong style={{ color: 'var(--text-primary)' }}>{parseContentToScenes(textContent).length}</strong> phân cảnh
                 </span>
               </div>
-              <span className="badge badge-muted" style={{ fontSize: 10, padding: '2px 8px' }}>
-                Pictionary Whiteboard Doodle (Flat 2D)
-              </span>
+       
             </div>
           </div>
 
@@ -1058,7 +1054,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             ) : (
               <>
                 <Zap style={{ width: 16, height: 16 }} />
-                <span>Bắt đầu Tạo Video Explainer</span>
+                <span>Bắt đầu Tạo Video</span>
               </>
             )}
           </button>
