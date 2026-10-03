@@ -76,125 +76,37 @@ const STEP_ORDER = ['storyboard', 'tts', 'beat_plan', 'images', 'render', 'done'
 export const VOICE_OPTIONS: VoiceOption[] = [
   // Tiếng Việt
   {
-    id: 'vi-VN-Standard-A',
-    name: 'Nữ Miền Bắc',
-    region: 'Bắc',
-    gender: 'female',
-    tag: 'Truyền Cảm',
-    description: 'Giọng đọc chuẩn phóng sự tài liệu, truyền cảm, rõ từng âm tiết.',
-  },
-  {
     id: 'vi-VN-Standard-B',
-    name: 'Nam Miền Bắc',
-    region: 'Bắc',
-    gender: 'male',
-    tag: 'Trầm Ấm',
-    description: 'Giọng đọc chuyên gia kinh tế, tự tin, độ vang tốt.',
-  },
-  {
-    id: 'vi-VN-Standard-C',
-    name: 'Nữ Miền Nam',
-    region: 'Nam',
-    gender: 'female',
-    tag: 'Năng Động',
-    description: 'Giọng đọc trẻ trung, hiện đại, thích hợp video giải thích nhanh.',
-  },
-  {
-    id: 'vi-VN-Standard-D',
-    name: 'Nam Miền Nam',
-    region: 'Nam',
-    gender: 'male',
-    tag: 'Uy Tín',
-    description: 'Giọng đọc doanh nhân chững chạc, lôi cuốn người nghe.',
-  },
-  {
-    id: 'vi-VN-Studio-AI',
-    name: 'AI Studio',
-    region: 'AI Studio',
-    gender: 'female',
-    tag: 'Điện Ảnh',
-    description: 'Tổng hợp giọng đọc AI chất lượng cao với ngữ điệu tự nhiên.',
-  },
-  {
-    id: 'vi-VN-Nam-Deep',
-    name: 'Nam Điện Ảnh',
+    name: 'Nam Minh',
     region: 'Toàn quốc',
     gender: 'male',
-    tag: 'Sâu Lắng',
-    description: 'Tông trầm điện ảnh, mang phong cách phim tài liệu sâu sắc.',
+    tag: 'Tiếng Việt',
+    description: 'Giọng đọc nam rõ ràng, chuẩn phổ thông.',
   },
   {
-    id: 'vi-VN-Nu-Warm',
-    name: 'Nữ Ấm Áp',
+    id: 'vi-VN-Standard-A',
+    name: 'Hoài My',
     region: 'Toàn quốc',
     gender: 'female',
-    tag: 'Tâm Sự',
-    description: 'Giọng nữ ấm áp, thích hợp cho chủ đề tài chính và bài học cuộc sống.',
+    tag: 'Tiếng Việt',
+    description: 'Giọng đọc nữ tự nhiên, chuẩn phổ thông.',
   },
-  {
-    id: 'vi-VN-Nam-Tech',
-    name: 'Nam Công Nghệ',
-    region: 'Toàn quốc',
-    gender: 'male',
-    tag: 'Dứt Khoát',
-    description: 'Giọng nam công nghệ dứt khoát, chuyên biệt cho video explainer.',
-  },
-  {
-    id: 'vi-VN-Nu-Energetic',
-    name: 'Nữ Sôi Nổi',
-    region: 'Toàn quốc',
-    gender: 'female',
-    tag: 'Viral Video',
-    description: 'Giọng nữ năng động, hào hứng, tạo năng lượng tích cực cho video ngắn.',
-  },
-  // English / Global Voices
+  // English
   {
     id: 'en-US-GuyNeural',
-    name: 'Guy (US Explainer)',
+    name: 'Guy',
     region: 'US',
     gender: 'male',
-    tag: 'Vox Style',
-    description: 'Giọng nam Mỹ chuẩn phóng sự giải thích khoa học và tài chính.',
+    tag: 'English',
+    description: 'Giọng nam tiếng Anh chuẩn phóng sự.',
   },
   {
     id: 'en-US-JennyNeural',
-    name: 'Jenny (US Story)',
+    name: 'Jenny',
     region: 'US',
     gender: 'female',
-    tag: 'Thân Thiện',
-    description: 'Giọng nữ Mỹ tự nhiên, thân thiện và gần gũi.',
-  },
-  {
-    id: 'en-US-AriaNeural',
-    name: 'Aria (US Doc)',
-    region: 'US',
-    gender: 'female',
-    tag: 'Tự Tin',
-    description: 'Giọng nữ Mỹ phong thái phim tài liệu National Geographic.',
-  },
-  {
-    id: 'en-US-ChristopherNeural',
-    name: 'Christopher (US)',
-    region: 'US',
-    gender: 'male',
-    tag: 'Kể Chuyện',
-    description: 'Giọng nam Mỹ tự sự giàu cảm xúc và lôi cuốn.',
-  },
-  {
-    id: 'en-GB-RyanNeural',
-    name: 'Ryan (British)',
-    region: 'UK',
-    gender: 'male',
-    tag: 'Quý Tộc',
-    description: 'Giọng Anh-Anh lịch lãm, phong thái học thuật và sang trọng.',
-  },
-  {
-    id: 'en-GB-SoniaNeural',
-    name: 'Sonia (British)',
-    region: 'UK',
-    gender: 'female',
-    tag: 'BBC Doc',
-    description: 'Giọng nữ Anh-Anh chuẩn đài BBC, rõ ràng và cuốn hút.',
+    tag: 'English',
+    description: 'Giọng nữ tiếng Anh tự nhiên.',
   },
 ];
 
@@ -305,13 +217,13 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   onGenerateNewVideo,
   onCancel,
 }) => {
-  const [selectedVoice, setSelectedVoice] = useState<string>('vi-VN-Standard-A');
+  const [selectedVoice, setSelectedVoice] = useState<string>('vi-VN-Standard-B');
   const [speed, setSpeed] = useState<number>(1.0);
   const [contentMode, setContentMode] = useState<'text' | 'file'>('text');
-  const [textContent, setTextContent] = useState<string>(SAMPLE_SCRIPTS[0].content);
-  const [scriptTitle, setScriptTitle] = useState<string>(SAMPLE_SCRIPTS[0].title);
-  const [scriptSubtitle, setScriptSubtitle] = useState<string>(SAMPLE_SCRIPTS[0].subtitle);
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>('gym');
+  const [textContent, setTextContent] = useState<string>('');
+  const [scriptTitle, setScriptTitle] = useState<string>('Kịch bản video mới');
+  const [scriptSubtitle, setScriptSubtitle] = useState<string>('');
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [isVoiceSectionOpen, setIsVoiceSectionOpen] = useState<boolean>(false);
   const [isAISettingsOpen, setIsAISettingsOpen] = useState<boolean>(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
@@ -840,7 +752,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                   1. Giọng đọc & Tốc độ phát
                 </span>
                 <span className="badge badge-accent" style={{ fontSize: 11, padding: '2px 8px' }}>
-                  {selectedVoiceObj.name} ({selectedVoiceObj.gender === 'female' ? 'Nữ' : 'Nam'} {selectedVoiceObj.region})
+                  {selectedVoiceObj.name} ({selectedVoiceObj.gender === 'female' ? 'Nữ' : 'Nam'} · {selectedVoiceObj.tag})
                 </span>
                 <span className="badge badge-secondary" style={{ fontSize: 11, padding: '2px 8px' }}>
                   {speed}×
@@ -863,7 +775,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
                     Chọn giọng đọc AI:
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 10 }}>
                     {VOICE_OPTIONS.map((voice) => {
                       const isSelected = selectedVoice === voice.id;
                       const isPlayingThis = playingVoiceId === voice.id;
@@ -873,33 +785,52 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                           onClick={() => setSelectedVoice(voice.id)}
                           className={`card ${isSelected ? 'card-active' : ''}`}
                           style={{
-                            padding: 10,
+                            padding: '12px 14px',
                             cursor: 'pointer',
                             border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
-                            background: isSelected ? 'rgba(59,130,246,0.06)' : 'var(--bg-elevated)',
+                            background: isSelected ? 'var(--accent-muted)' : 'var(--bg-elevated)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 12,
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
-                              {voice.gender === 'female' ? '♀' : '♂'} {voice.name}
-                            </span>
-                            <span className="badge badge-accent" style={{ fontSize: 9 }}>
-                              {voice.tag}
-                            </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 'var(--radius-sm)',
+                                background: isSelected ? 'var(--accent)' : 'var(--bg-surface)',
+                                color: isSelected ? 'var(--text-inverse)' : 'var(--text-secondary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 11,
+                                fontWeight: 700,
+                              }}
+                            >
+                              {voice.gender === 'female' ? 'Nữ' : 'Nam'}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                                {voice.name}
+                              </div>
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                                {voice.tag} · {voice.gender === 'female' ? 'Nữ' : 'Nam'}
+                              </div>
+                            </div>
                           </div>
-                          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 6px', lineHeight: 1.3 }}>
-                            {voice.description}
-                          </p>
+
                           <button
+                            type="button"
                             onClick={(e) => handleTogglePlayVoice(voice, e)}
                             className={`btn ${isPlayingThis ? 'btn-primary' : 'btn-secondary'}`}
-                            style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
+                            style={{ padding: '6px 12px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+                            title={isPlayingThis ? 'Dừng' : 'Phát'}
                           >
-                            {isPlayingThis ? (
-                              <><VolumeX style={{ width: 12, height: 12 }} /> Dừng</>
-                            ) : (
-                              <><Volume2 style={{ width: 12, height: 12 }} /> Nghe thử ({speed}×)</>
-                            )}
+                            {isPlayingThis ? <VolumeX style={{ width: 13, height: 13 }} /> : <Volume2 style={{ width: 13, height: 13 }} />}
+                            <span>{isPlayingThis ? 'Dừng' : 'Phát'}</span>
                           </button>
                         </div>
                       );
@@ -980,27 +911,16 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 </span>
               </div>
 
-              {/* Action tools: Presets & File Upload */}
+              {/* Action tools: File Upload & Clear */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 2 }}>Mẫu:</span>
-                {SAMPLE_SCRIPTS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    onClick={() => handleSelectPreset(preset)}
-                    className={`btn ${selectedPresetId === preset.id ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ fontSize: 11, padding: '4px 10px' }}
-                  >
-                    {preset.title.replace('Kinh Tế Học ', '').replace('Tâm Lý Học ', '')}
-                  </button>
-                ))}
-
                 <button
+                  type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="btn btn-secondary"
-                  style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
+                  style={{ fontSize: 11, padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 4 }}
                 >
                   <Upload style={{ width: 12, height: 12 }} />
-                  <span>{uploadedFileName ? `✓ File` : 'Tải file'}</span>
+                  <span>{uploadedFileName ? `✓ ${uploadedFileName}` : 'Tải file'}</span>
                 </button>
                 <input
                   ref={fileInputRef}
@@ -1012,10 +932,11 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
                 {textContent && (
                   <button
+                    type="button"
                     onClick={() => { setTextContent(''); setSelectedPresetId(null); setUploadedFileName(null); }}
                     className="btn btn-ghost"
-                    style={{ fontSize: 11, padding: '4px 8px', color: 'var(--text-muted)' }}
-                    title="Xóa kịch bản để nhập mới"
+                    style={{ fontSize: 11, padding: '5px 8px', color: 'var(--text-muted)' }}
+                    title="Xóa kịch bản"
                   >
                     Xóa
                   </button>
@@ -1023,7 +944,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               </div>
             </div>
 
-            {/* ONLY ONE CLEAN TEXTAREA - NO TITLE/SUBTITLE INPUTS */}
+            {/* ONLY ONE CLEAN TEXTAREA - NO PRESETS */}
             <textarea
               value={textContent}
               onChange={(e) => {
@@ -1046,17 +967,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 border: '1px solid var(--border)',
                 outline: 'none',
               }}
-              placeholder={`Nhập toàn bộ kịch bản phân cảnh tại đây...
-
-Ví dụ mẫu:
-CẢNH 1: Khởi đầu vấn đề
-Đến phòng gym vào giờ cao điểm, thấy máy chạy bộ kín người, ai cũng nghĩ đây là mỏ vàng in tiền.
-
-CẢNH 2: Bản chất kinh doanh
-Sự thật: Phòng gym là mô hình kinh doanh thuê bao (subscription) có chứa máy móc và tạ.
-
-CẢNH 3: Nghịch lý khách hàng
-80% người mua thẻ tập sẽ bỏ cuộc trước mùa hè. Lợi nhuận phòng gym đến từ những người không bao giờ đi tập.`}
+              placeholder="Nhập toàn bộ kịch bản phân cảnh tại đây (mỗi cảnh một đoạn hoặc bắt đầu bằng CẢNH 1, CẢNH 2...)..."
             />
 
             {/* Textarea Footer Stats */}
@@ -1084,243 +995,10 @@ CẢNH 3: Nghịch lý khách hàng
                   Dự kiến: <strong style={{ color: 'var(--text-primary)' }}>{parseContentToScenes(textContent).length}</strong> phân cảnh
                 </span>
               </div>
-              <span className="badge badge-secondary" style={{ fontSize: 10, padding: '2px 8px' }}>
-                Phong cách Pictionary Whiteboard Doodle (Flat 2D • No Shading)
+              <span className="badge badge-muted" style={{ fontSize: 10, padding: '2px 8px' }}>
+                Pictionary Whiteboard Doodle (Flat 2D)
               </span>
             </div>
-          </div>
-
-          {/* Section 3: AI Engine & Advanced Configuration (Collapsible) */}
-          <div
-            className="card"
-            style={{
-              padding: 0,
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Collapsible Header */}
-            <div
-              onClick={() => setIsAISettingsOpen(!isAISettingsOpen)}
-              style={{
-                padding: '14px 18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                background: isAISettingsOpen ? 'var(--bg-elevated)' : 'transparent',
-                borderBottom: isAISettingsOpen ? '1px solid var(--border)' : 'none',
-                transition: 'background 0.15s ease',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <Sparkles style={{ width: 16, height: 16, color: 'var(--accent)' }} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  3. Bộ tạo hình ảnh AI & Cài đặt nâng cao
-                </span>
-                <span className="badge badge-accent" style={{ fontSize: 11, padding: '2px 8px' }}>
-                  {selectedImageProvider === 'google_ai_studio' ? 'Google AI Studio (2 Tabs Chẵn/Lẻ)' : 'Flux Local (Metal M4)'}
-                </span>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: 10,
-                    color: aiStudioConnected ? 'var(--success)' : '#eab308',
-                    background: aiStudioConnected ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)',
-                  }}
-                >
-                  {aiStudioConnected ? '● Đã kết nối' : '○ Cần đăng nhập'}
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 12, fontWeight: 500 }}>
-                <span>{isAISettingsOpen ? 'Thu gọn' : 'Tùy chỉnh'}</span>
-                {isAISettingsOpen ? (
-                  <ChevronUp style={{ width: 16, height: 16 }} />
-                ) : (
-                  <ChevronDown style={{ width: 16, height: 16 }} />
-                )}
-              </div>
-            </div>
-
-            {/* Collapsible Body */}
-            {isAISettingsOpen && (
-              <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Image Provider Selection */}
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Chọn công cụ tạo ảnh ưu tiên:
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleTestAIStudio}
-                      disabled={isTestingProvider}
-                      className="btn btn-secondary"
-                      style={{
-                        fontSize: 11,
-                        padding: '4px 10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      {isTestingProvider ? '⏳ Đang kiểm tra...' : '⚡ Test Google AI Studio (2 Tabs)'}
-                    </button>
-                  </div>
-
-                  {providerTestMessage && (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        marginBottom: 10,
-                        padding: '6px 10px',
-                        borderRadius: 6,
-                        background: providerTestMessage.startsWith('✓') ? 'rgba(34,197,94,0.1)' : 'rgba(234,179,8,0.1)',
-                        color: providerTestMessage.startsWith('✓') ? 'var(--success)' : 'var(--warning, #eab308)',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                      }}
-                    >
-                      {providerTestMessage}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
-                    {/* Option 1: Google AI Studio */}
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 10,
-                        padding: '12px 14px',
-                        borderRadius: 'var(--radius-md)',
-                        cursor: 'pointer',
-                        background: selectedImageProvider === 'google_ai_studio' ? 'rgba(59,130,246,0.08)' : 'var(--bg-elevated)',
-                        border: selectedImageProvider === 'google_ai_studio' ? '1px solid var(--accent)' : '1px solid var(--border)',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="imageProvider"
-                        value="google_ai_studio"
-                        checked={selectedImageProvider === 'google_ai_studio'}
-                        onChange={() => handleSelectProvider('google_ai_studio')}
-                        style={{ marginTop: 2, accentColor: 'var(--accent)' }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                          <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>
-                            Google AI Studio (2 Tabs Song Song)
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 9,
-                              fontWeight: 700,
-                              padding: '1px 6px',
-                              borderRadius: 8,
-                              color: aiStudioConnected ? 'var(--success)' : '#eab308',
-                              background: aiStudioConnected ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)',
-                            }}
-                          >
-                            {aiStudioConnected ? 'Ready' : 'Login'}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                          Chạy song song 2 tab: Tab 1 sinh ảnh Chẵn, Tab 2 sinh ảnh Lẻ với Nano Banana 2 Lite.
-                        </div>
-                      </div>
-                    </label>
-
-                    {/* Option 2: Flux Local */}
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 10,
-                        padding: '12px 14px',
-                        borderRadius: 'var(--radius-md)',
-                        cursor: 'pointer',
-                        background: selectedImageProvider === 'flux_local' ? 'rgba(59,130,246,0.08)' : 'var(--bg-elevated)',
-                        border: selectedImageProvider === 'flux_local' ? '1px solid var(--accent)' : '1px solid var(--border)',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="imageProvider"
-                        value="flux_local"
-                        checked={selectedImageProvider === 'flux_local'}
-                        onChange={() => handleSelectProvider('flux_local')}
-                        style={{ marginTop: 2, accentColor: 'var(--accent)' }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                          <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>
-                            Flux Local (Apple Silicon M4)
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 9,
-                              fontWeight: 700,
-                              padding: '1px 6px',
-                              borderRadius: 8,
-                              color: fluxAvailable ? 'var(--success)' : 'var(--text-muted)',
-                              background: fluxAvailable ? 'rgba(34,197,94,0.12)' : 'rgba(100,100,100,0.12)',
-                            }}
-                          >
-                            {fluxAvailable ? 'Ready' : 'Standby'}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                          Render cục bộ ngoại tuyến qua Metal GPU Apple Silicon M4 không cần mạng.
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* API Keys (Optional) */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
-                  <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                      Gemini API Key (Tùy chọn)
-                    </div>
-                    <input
-                      type="password"
-                      value={geminiApiKey}
-                      onChange={(e) => {
-                        setGeminiApiKey(e.target.value);
-                        localStorage.setItem('gemini_api_key', e.target.value);
-                      }}
-                      className="input"
-                      placeholder="AIzaSy... (Tự động fallback nếu trống)"
-                      style={{ width: '100%', fontSize: 11, fontFamily: 'monospace' }}
-                    />
-                  </div>
-
-                  <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                      OpenAI API Key (DALL-E 3 Dự phòng)
-                    </div>
-                    <input
-                      type="password"
-                      value={openaiApiKey}
-                      onChange={(e) => {
-                        setOpenaiApiKey(e.target.value);
-                        localStorage.setItem('openai_api_key', e.target.value);
-                      }}
-                      className="input"
-                      placeholder="sk-... (Dự phòng cấp 2)"
-                      style={{ width: '100%', fontSize: 11, fontFamily: 'monospace' }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
         </div>
@@ -1348,7 +1026,7 @@ CẢNH 3: Nghịch lý khách hàng
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
             <span style={{ fontWeight: 600 }}>Cấu hình:</span>
             <span className="badge badge-accent">{selectedVoiceObj.name} ({speed}×)</span>
-            <span className="badge badge-secondary">{selectedImageProvider === 'google_ai_studio' ? 'Google AI Studio (2 Tabs)' : 'Flux Local'}</span>
+            <span className="badge badge-muted">Google AI Studio</span>
             <span style={{ color: 'var(--text-muted)' }}>| {wordCount} từ · ≈{estimatedSeconds.toFixed(0)}s</span>
           </div>
         </div>

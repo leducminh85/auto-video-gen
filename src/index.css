@@ -1,72 +1,69 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 /* ================================================================
    Design System — Stickman Video Studio
-   Inspired by: Linear, Figma, Framer
+   Refactored according to miqdadbadjuber/anti-slop principles:
+   - Filter, not a template: purpose-tested UI
+   - Solid, authentic studio surfaces (no excessive blur or glow)
+   - One intentional studio accent (Amber/Gold #f59e0b)
+   - High contrast, architectural radius & purposeful typography
    ================================================================ */
 
 :root {
-  /* Surfaces */
-  --bg-base: #0c0d12;
-  --bg-surface: #141519;
-  --bg-elevated: #1a1b22;
-  --bg-card: #1e1f28;
-  --bg-hover: #24252f;
-  --bg-input: #111218;
+  /* Surfaces — Solid, deep architectural studio dark */
+  --bg-base: #090a0f;
+  --bg-surface: #111218;
+  --bg-elevated: #171822;
+  --bg-card: #1c1d28;
+  --bg-hover: #252635;
+  --bg-input: #0d0e14;
 
-  /* Accent */
-  --accent: #818cf8;
-  --accent-hover: #a5b4fc;
-  --accent-muted: rgba(129, 140, 248, 0.12);
-  --accent-border: rgba(129, 140, 248, 0.25);
-  --accent-glow: rgba(129, 140, 248, 0.08);
+  /* Accent — Studio Amber/Gold (Classic Director/Video Editor Monitor Color) */
+  --accent: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-muted: rgba(245, 158, 11, 0.12);
+  --accent-border: rgba(245, 158, 11, 0.3);
 
-  /* Secondary accent */
-  --cyan: #22d3ee;
-  --cyan-muted: rgba(34, 211, 238, 0.1);
+  /* Functional Status */
+  --success: #10b981;
+  --success-muted: rgba(16, 185, 129, 0.12);
+  --success-border: rgba(16, 185, 129, 0.28);
 
-  /* Success */
-  --success: #34d399;
-  --success-muted: rgba(52, 211, 153, 0.1);
-  --success-border: rgba(52, 211, 153, 0.2);
+  --warning: #f59e0b;
+  --warning-muted: rgba(245, 158, 11, 0.12);
 
-  /* Warning */
-  --warning: #fbbf24;
-  --warning-muted: rgba(251, 191, 36, 0.1);
+  --error: #ef4444;
+  --error-muted: rgba(239, 68, 68, 0.12);
 
-  /* Error */
-  --error: #f87171;
-  --error-muted: rgba(248, 113, 113, 0.1);
+  /* Typography Colors — High Contrast */
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --text-inverse: #090a0f;
 
-  /* Text */
-  --text-primary: #e4e5ea;
-  --text-secondary: #9294a0;
-  --text-muted: #5d5f6a;
-  --text-inverse: #0c0d12;
-
-  /* Borders */
-  --border: #2a2c35;
-  --border-hover: #3a3c48;
-  --border-active: #4a4c58;
+  /* Borders — Crisp, subtle architectural dividers */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+  --border-active: rgba(245, 158, 11, 0.45);
 
   /* Typography */
-  --font-sans: 'Inter', 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* Architectural Radii — Deliberate hierarchy, no generic pills everywhere */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 
   /* Transitions */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ================================================================
-   Base Reset & Typography
+   Base Reset
    ================================================================ */
 
 * {
@@ -77,6 +74,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  background: var(--bg-base);
 }
 
 body {
@@ -106,16 +104,16 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
+  background: rgba(255, 255, 255, 0.22);
 }
 
 /* ================================================================
-   Utility Classes
+   Surfaces & Containers
    ================================================================ */
 
 .surface {
@@ -133,8 +131,8 @@ body {
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  transition: border-color 0.2s var(--ease-out), background 0.2s var(--ease-out);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s var(--ease-out), background 0.15s var(--ease-out);
 }
 
 .card:hover {
@@ -146,40 +144,45 @@ body {
   background: var(--accent-muted) !important;
 }
 
-/* Buttons */
+/* ================================================================
+   Buttons — Crisp, purposeful, tactile
+   ================================================================ */
+
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 7px 14px;
   border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
-  border: none;
+  border: 1px solid transparent;
   transition: all 0.15s var(--ease-out);
   white-space: nowrap;
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 .btn-primary {
   background: var(--accent);
   color: var(--text-inverse);
+  border-color: var(--accent);
 }
 
 .btn-primary:hover {
   background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .btn-secondary {
   background: var(--bg-elevated);
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  border-color: var(--border);
 }
 
 .btn-secondary:hover {
@@ -190,6 +193,7 @@ body {
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
+  border-color: transparent;
 }
 
 .btn-ghost:hover {
@@ -197,7 +201,10 @@ body {
   color: var(--text-primary);
 }
 
-/* Input */
+/* ================================================================
+   Inputs & Controls
+   ================================================================ */
+
 .input {
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -218,25 +225,27 @@ body {
   color: var(--text-muted);
 }
 
-/* Label */
 .label {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
-/* Badge */
+/* ================================================================
+   Badges & Tags (Architectural, not pill-slop)
+   ================================================================ */
+
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 99px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
 .badge-accent {
@@ -251,80 +260,16 @@ body {
   border: 1px solid var(--success-border);
 }
 
-/* Animations */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+.badge-muted {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
-}
+/* ================================================================
+   Tab Group
+   ================================================================ */
 
-@keyframes slide-in-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.3s var(--ease-out) both;
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s var(--ease-out) both;
-}
-
-.animate-slide-in-up {
-  animation: slide-in-up 0.3s var(--ease-out) both;
-}
-
-/* Drawer overlay */
-.drawer-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  animation: fade-in 0.2s var(--ease-out) both;
-}
-
-.creator-fullscreen-overlay {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  background: var(--bg-surface);
-  z-index: 100;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: fade-in 0.25s var(--ease-out) both;
-}
-
-.drawer-panel {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  background: var(--bg-surface);
-  z-index: 100;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: fade-in 0.25s var(--ease-out) both;
-}
-
-/* Tab group */
 .tab-group {
   display: flex;
   align-items: center;
@@ -336,9 +281,9 @@ body {
 }
 
 .tab-item {
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
@@ -359,46 +304,26 @@ body {
   font-weight: 600;
 }
 
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 100;
-  padding: 12px 20px;
-  border-radius: var(--radius-lg);
-  font-size: 13px;
-  font-weight: 500;
-  animation: slide-in-up 0.3s var(--ease-spring) both;
-  border: 1px solid var(--border);
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
+/* ================================================================
+   Player & Scene Cards
+   ================================================================ */
 
-.toast-success {
-  border-color: var(--success-border);
-  background: linear-gradient(135deg, var(--bg-elevated), rgba(52, 211, 153, 0.05));
-}
-
-/* Player container */
 .player-container {
   position: relative;
   aspect-ratio: 16/9;
   width: 100%;
   background: #000;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
-/* Scene card */
 .scene-card {
-  padding: 10px;
-  border-radius: var(--radius-lg);
+  padding: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--bg-surface);
   cursor: pointer;
-  transition: all 0.2s var(--ease-out);
+  transition: border-color 0.15s var(--ease-out), background 0.15s var(--ease-out);
 }
 
 .scene-card:hover {
@@ -406,83 +331,70 @@ body {
   background: var(--bg-elevated);
 }
 
-.scene-card:hover img {
-  transform: scale(1.03);
-}
-
 .scene-card.active {
-  border-color: var(--accent-border);
-  background: var(--accent-muted);
+  border-color: var(--accent) !important;
+  background: var(--accent-muted) !important;
 }
 
-.scene-card img {
-  transition: transform 0.3s var(--ease-out);
+/* ================================================================
+   Modals & Overlays (Crisp solid surfaces, no heavy blur)
+   ================================================================ */
+
+.creator-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-surface);
+  z-index: 100;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Mono text */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.toast-success {
+  border-color: var(--success-border);
+  background: var(--bg-elevated);
+}
+
+/* Mono */
 .mono {
   font-family: var(--font-mono);
   font-size: 12px;
 }
 
-/* Progress Modal & Checklist Styles */
-@keyframes progress-stripes {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 40px 0;
-  }
+/* Simple keyframe for modal enter */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 16px rgba(129, 140, 248, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 28px rgba(129, 140, 248, 0.6);
-  }
+.animate-fade-in {
+  animation: fade-in 0.15s var(--ease-out) both;
 }
-
-@keyframes pulse-dot {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.35;
-    transform: scale(0.75);
-  }
-}
-
-.progress-striped {
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.18) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.18) 50%,
-    rgba(255, 255, 255, 0.18) 75%,
-    transparent 75%,
-    transparent
-  );
-  background-size: 24px 24px;
-  animation: progress-stripes 0.8s linear infinite;
-}
-
-.pulse-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  display: inline-block;
-  animation: pulse-dot 1.2s ease-in-out infinite;
-}
-
-.step-card {
-  transition: all 0.25s var(--ease-out);
-}
-.step-card:hover {
-  background: var(--bg-hover) !important;
-}
-

@@ -201,11 +201,10 @@ export default function App() {
           background: 'var(--bg-surface)',
           borderBottom: '1px solid var(--border)',
           padding: '0 24px',
-          height: 56,
+          height: 54,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backdropFilter: 'blur(12px)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -225,18 +224,19 @@ export default function App() {
           <div>
             <h1
               style={{
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: 700,
                 color: 'var(--text-primary)',
                 margin: 0,
                 lineHeight: 1.2,
+                letterSpacing: '-0.01em',
               }}
             >
               Stickman Studio
             </h1>
             <p
               style={{
-                fontSize: 12,
+                fontSize: 11,
                 color: 'var(--text-muted)',
                 margin: 0,
                 lineHeight: 1.2,
@@ -248,10 +248,18 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Info chips */}
-          <span className="badge badge-accent" style={{ marginRight: 4 }}>
-            {scenes.length} cảnh · {totalImagesCount} hình · {durationDisplay}
-          </span>
+          {/* Studio Metrics */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 6 }}>
+            <span className="badge badge-accent">
+              {scenes.length} cảnh
+            </span>
+            <span className="badge badge-muted">
+              {totalImagesCount} hình
+            </span>
+            <span className="badge badge-muted mono">
+              {durationDisplay}
+            </span>
+          </div>
 
           <button
             className="btn btn-primary"
@@ -737,6 +745,135 @@ export default function App() {
           </div>
         </section>
 
+        {/* ───── All Scenes Quick Nav ───── */}
+        <section>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 12,
+            }}
+          >
+            <h3
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+                margin: 0,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Tất cả {scenes.length} cảnh
+            </h3>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+              gap: 8,
+            }}
+          >
+            {scenes.map((sc) => {
+              const beatsCount = sc.beats?.length || 1;
+              const isSelected = selectedSceneId === sc.id;
+              return (
+                <div
+                  key={sc.id}
+                  className={`scene-card ${isSelected ? 'active' : ''}`}
+                  onClick={() => jumpToScene(sc)}
+                  style={{
+                    border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    position: 'relative',
+                  }}
+                >
+                  <div
+                    style={{
+                      aspectRatio: '16/9',
+                      width: '100%',
+                      borderRadius: 'var(--radius-sm)',
+                      overflow: 'hidden',
+                      background: 'var(--bg-base)',
+                      marginBottom: 6,
+                      position: 'relative',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <img
+                      src={
+                        sc.image_file
+                          ? `/images/${sc.image_file}?v=${videoTimestamp}`
+                          : sc.beats?.[0]?.svg_data
+                            ? `data:image/svg+xml;utf8,${encodeURIComponent(sc.beats[0].svg_data)}`
+                            : `/images/${sc.image_file}?v=${videoTimestamp}`
+                      }
+                      alt={sc.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                      }}
+                    />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: 3,
+                        right: 4,
+                        fontSize: 9,
+                        fontWeight: 600,
+                        padding: '1px 5px',
+                        borderRadius: 'var(--radius-xs)',
+                        background: 'rgba(0, 0, 0, 0.75)',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      {beatsCount} nhịp
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: isSelected ? 'var(--accent)' : 'var(--text-secondary)',
+                      }}
+                    >
+                      #{sc.id.toString().padStart(2, '0')}
+                    </span>
+                    <span
+                      className="mono"
+                      style={{ fontSize: 10, color: 'var(--text-muted)' }}
+                    >
+                      {sc.duration_in_seconds.toFixed(1)}s
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      margin: '2px 0 0',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {sc.title}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
         {/* ───── Selected Scene Inspector ───── */}
         <section className="surface" style={{ padding: 20 }}>
           {/* Header */}
@@ -960,8 +1097,8 @@ export default function App() {
                         padding: 0,
                       }}
                     >
-                      <Wand2 style={{ width: 12, height: 12 }} />
-                      Đổi ảnh
+                      <Sparkles style={{ width: 12, height: 12 }} />
+                      Tạo lại ảnh AI
                     </button>
                     <button
                       onClick={() => jumpToScene(selectedScene, beat.start_frame_offset)}
@@ -1056,111 +1193,6 @@ export default function App() {
                 {selectedScene.prompt}
               </p>
             </div>
-          </div>
-        </section>
-
-        {/* ───── All Scenes Quick Nav ───── */}
-        <section>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 12,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                margin: 0,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              Tất cả {scenes.length} cảnh
-            </h3>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-              gap: 8,
-            }}
-          >
-            {scenes.map((sc) => (
-              <div
-                key={sc.id}
-                className={`scene-card ${selectedSceneId === sc.id ? 'active' : ''}`}
-                onClick={() => jumpToScene(sc)}
-              >
-                <div
-                  style={{
-                    aspectRatio: '16/9',
-                    width: '100%',
-                    borderRadius: 'var(--radius-sm)',
-                    overflow: 'hidden',
-                    background: 'var(--bg-base)',
-                    marginBottom: 6,
-                    position: 'relative',
-                  }}
-                >
-                  <img
-                    src={
-                      sc.image_file
-                        ? `/images/${sc.image_file}?v=${videoTimestamp}`
-                        : sc.beats?.[0]?.svg_data
-                          ? `data:image/svg+xml;utf8,${encodeURIComponent(sc.beats[0].svg_data)}`
-                          : `/images/${sc.image_file}?v=${videoTimestamp}`
-                    }
-                    alt={sc.title}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                    }}
-                  />
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: 'var(--accent)',
-                    }}
-                  >
-                    #{sc.id}
-                  </span>
-                  <span
-                    className="mono"
-                    style={{ fontSize: 10, color: 'var(--text-muted)' }}
-                  >
-                    {sc.duration_in_seconds.toFixed(0)}s
-                  </span>
-                </div>
-                <p
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    margin: '2px 0 0',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {sc.title}
-                </p>
-              </div>
-            ))}
           </div>
         </section>
       </main>
