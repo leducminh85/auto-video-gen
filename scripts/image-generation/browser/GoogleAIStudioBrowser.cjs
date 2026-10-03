@@ -41,54 +41,66 @@ class GoogleAIStudioBrowser extends EventEmitter {
       }
     }
 
-    if (!fs.existsSync(this.profileDir)) {
-      fs.mkdirSync(this.profileDir, { recursive: true });
+    if (this._launchingPromise) {
+      return this._launchingPromise;
     }
 
-    // Clean up stale Chromium lock files before launching
-    try {
-      const lockFiles = ['SingletonLock', 'SingletonSocket', 'SingletonCookie'];
-      for (const lf of lockFiles) {
-        const fullP = path.join(this.profileDir, lf);
-        if (fs.existsSync(fullP)) {
-          try { fs.unlinkSync(fullP); } catch (_) {}
-        }
+    this._launchingPromise = (async () => {
+      if (!fs.existsSync(this.profileDir)) {
+        fs.mkdirSync(this.profileDir, { recursive: true });
       }
-    } catch (_) {}
 
-    console.log(`[AI Studio] Initializing persistent browser profile: ${this.profileDir}`);
+      // Clean up stale Chromium lock files before launching
+      try {
+        const lockFiles = ['SingletonLock', 'SingletonSocket', 'SingletonCookie'];
+        for (const lf of lockFiles) {
+          const fullP = path.join(this.profileDir, lf);
+          if (fs.existsSync(fullP)) {
+            try { fs.unlinkSync(fullP); } catch (_) {}
+          }
+        }
+      } catch (_) {}
 
-    const launchArgs = [
-      '--disable-blink-features=AutomationControlled',
-      '--no-first-run',
-      '--no-default-browser-check',
-      '--start-maximized',
-    ];
+      console.log(`[AI Studio] Initializing persistent browser profile: ${this.profileDir}`);
 
-    const contextOptions = {
-      headless: false,
-      viewport: null,
-      args: launchArgs,
-      ignoreDefaultArgs: ['--enable-automation'],
-      ...options,
-    };
+      const launchArgs = [
+        '--disable-blink-features=AutomationControlled',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--start-maximized',
+      ];
+
+      const contextOptions = {
+        headless: false,
+        viewport: null,
+        args: launchArgs,
+        ignoreDefaultArgs: ['--enable-automation'],
+        ...options,
+      };
+
+      try {
+        this.context = await chromium.launchPersistentContext(this.profileDir, contextOptions);
+        console.log(`[AI Studio] Browser persistent worker started successfully`);
+      } catch (err) {
+        console.error(`[AI Studio] Error launching persistent browser:`, err.message);
+        throw err;
+      }
+
+      this.context.on('close', () => {
+        console.log(`[AI Studio] Browser context closed`);
+        this.context = null;
+        this.page = null;
+        this.tabPool = [];
+      });
+
+      return this.context;
+    })();
 
     try {
-      this.context = await chromium.launchPersistentContext(this.profileDir, contextOptions);
-      console.log(`[AI Studio] Browser persistent worker started successfully`);
-    } catch (err) {
-      console.error(`[AI Studio] Error launching persistent browser:`, err.message);
-      throw err;
+      return await this._launchingPromise;
+    } finally {
+      this._launchingPromise = null;
     }
-
-    this.context.on('close', () => {
-      console.log(`[AI Studio] Browser context closed`);
-      this.context = null;
-      this.page = null;
-      this.tabPool = [];
-    });
-
-    return this.context;
   }
 
   /**
@@ -117,42 +129,54 @@ class GoogleAIStudioBrowser extends EventEmitter {
    * @param {number} poolSize - Number of parallel tabs (default 3)
    */
   async ensureTabPool(poolSize = 3) {
-    const context = await this.ensureContext();
-    this.maxTabs = poolSize;
+    if (this._ensuringPoolPromise) {
+      return this._ensuringPoolPromise;
+    }
 
-    // Prune closed tabs
-    this.tabPool = this.tabPool.filter(t => t.page && !t.page.isClosed());
+    this._ensuringPoolPromise = (async () => {
+      const context = await this.ensureContext();
+      this.maxTabs = poolSize;
 
-    const existingPages = context.pages().filter(p => !p.isClosed());
+      // Prune closed tabs
+      this.tabPool = this.tabPool.filter(t => t.page && !t.page.isClosed());
 
-    // Map existing pages to tab pool
-    for (let i = 0; i < existingPages.length && this.tabPool.length < poolSize; i++) {
-      const p = existingPages[i];
-      if (!this.tabPool.some(t => t.page === p)) {
+      const existingPages = context.pages().filter(p => !p.isClosed());
+
+      // Map existing pages to tab pool
+      for (let i = 0; i < existingPages.length && this.tabPool.length < poolSize; i++) {
+        const p = existingPages[i];
+        if (!this.tabPool.some(t => t.page === p)) {
+          this.tabPool.push({
+            id: this.tabPool.length + 1,
+            page: p,
+            isBusy: false,
+            turnCount: 0,
+            isInitialized: false,
+          });
+        }
+      }
+
+      // Open new pages up to poolSize
+      while (this.tabPool.length < poolSize) {
+        const newP = await context.newPage();
+        newP.setDefaultTimeout(60000);
         this.tabPool.push({
           id: this.tabPool.length + 1,
-          page: p,
+          page: newP,
           isBusy: false,
           turnCount: 0,
           isInitialized: false,
         });
       }
-    }
 
-    // Open new pages up to poolSize
-    while (this.tabPool.length < poolSize) {
-      const newP = await context.newPage();
-      newP.setDefaultTimeout(60000);
-      this.tabPool.push({
-        id: this.tabPool.length + 1,
-        page: newP,
-        isBusy: false,
-        turnCount: 0,
-        isInitialized: false,
-      });
-    }
+      return this.tabPool;
+    })();
 
-    return this.tabPool;
+    try {
+      return await this._ensuringPoolPromise;
+    } finally {
+      this._ensuringPoolPromise = null;
+    }
   }
 
   /**

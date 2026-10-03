@@ -126,7 +126,10 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       console.log(`[AI Studio Tab ${tab.id}] Prompt entered: "${fullPrompt.substring(0, 60)}..."`);
       await page.waitForTimeout(300);
 
-      // 6. Submit generation on this tab
+      // 6. Record existing images count on this tab to ensure strict prompt-to-image matching
+      const preImagesCount = await page.locator('img[alt*="Generated Image" i], img[src*="blob:https://aistudio.google.com"]').count();
+
+      // 7. Submit generation on this tab
       let submitted = false;
       for (const sel of AI_STUDIO_SELECTORS.runButton) {
         const runBtn = page.locator(sel).first();
@@ -143,7 +146,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
 
       console.log(`[AI Studio Tab ${tab.id}] Submitted, awaiting generation...`);
 
-      // 7. Await generation output on this tab
+      // 8. Await generation output on this tab
       const startTime = Date.now();
       const maxTimeoutMs = 90000;
       let rawImageBuffer = null;
@@ -195,9 +198,15 @@ class GoogleAIStudioProvider extends BaseImageProvider {
           });
         }
 
-        // DOM Fallback
-        const generatedImg = page.locator('img[alt*="Generated Image" i], img[src*="blob:https://aistudio.google.com"]').last();
-        if (await generatedImg.isVisible().catch(() => false)) {
+        await page.waitForTimeout(500);
+      }
+
+      // 9. Fallback if network intercept didn't capture: only inspect newly appeared images
+      if (!rawImageBuffer) {
+        const currentImages = page.locator('img[alt*="Generated Image" i], img[src*="blob:https://aistudio.google.com"]');
+        const currentCount = await currentImages.count();
+        if (currentCount > preImagesCount) {
+          const generatedImg = currentImages.last();
           try {
             const b64 = await generatedImg.evaluate(async (img) => {
               if (!img || !img.src) return null;
@@ -214,12 +223,10 @@ class GoogleAIStudioProvider extends BaseImageProvider {
             });
             if (b64 && b64.length > 5000) {
               rawImageBuffer = Buffer.from(b64, 'base64');
-              break;
+              console.log(`[AI Studio Tab ${tab.id}] Extracted image from DOM fallback (${rawImageBuffer.length} bytes)`);
             }
           } catch (_) {}
         }
-
-        await page.waitForTimeout(800);
       }
 
       if (!rawImageBuffer || rawImageBuffer.length < 5000) {
