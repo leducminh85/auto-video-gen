@@ -311,6 +311,9 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [textContent, setTextContent] = useState<string>(SAMPLE_SCRIPTS[0].content);
   const [scriptTitle, setScriptTitle] = useState<string>(SAMPLE_SCRIPTS[0].title);
   const [scriptSubtitle, setScriptSubtitle] = useState<string>(SAMPLE_SCRIPTS[0].subtitle);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>('gym');
+  const [isVoiceSectionOpen, setIsVoiceSectionOpen] = useState<boolean>(false);
+  const [isAISettingsOpen, setIsAISettingsOpen] = useState<boolean>(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
@@ -418,6 +421,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   };
 
   const handleSelectPreset = (preset: typeof SAMPLE_SCRIPTS[0]) => {
+    setSelectedPresetId(preset.id);
     setTextContent(preset.content);
     setScriptTitle(preset.title);
     setScriptSubtitle(preset.subtitle);
@@ -716,65 +720,75 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const selectedVoiceObj = VOICE_OPTIONS.find((v) => v.id === selectedVoice) || VOICE_OPTIONS[0];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Drawer Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: 'var(--bg-base)', position: 'relative', overflow: 'hidden' }}>
+      {/* Top Navbar */}
       <div
         style={{
-          padding: '16px 20px',
+          padding: '12px 24px',
           borderBottom: '1px solid var(--border)',
+          background: 'var(--bg-surface)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexShrink: 0,
+          zIndex: 10,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div
             style={{
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               borderRadius: 'var(--radius-md)',
-              background: 'var(--accent)',
+              background: 'linear-gradient(135deg, var(--accent) 0%, #6366f1 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              boxShadow: '0 2px 10px rgba(99, 102, 241, 0.3)',
             }}
           >
-            <Sparkles style={{ width: 16, height: 16, color: 'var(--text-inverse)' }} />
+            <Sparkles style={{ width: 18, height: 18, color: '#fff' }} />
           </div>
           <div>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              Tạo Video Mới
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                Studio Tạo Video Mới
+              </h2>
+              <span className="badge badge-accent" style={{ fontSize: 10, padding: '2px 8px' }}>
+                Toàn màn hình
+              </span>
+            </div>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-              Chọn giọng, tốc độ, nhập kịch bản
+              Doodle Stickman Explainer Video Studio (Pictionary Whiteboard Drawing)
             </p>
           </div>
         </div>
-        <button
-          onClick={onCancel}
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--bg-hover)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <X style={{ width: 16, height: 16 }} />
-        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={onCancel}
+            className="btn btn-secondary"
+            style={{
+              fontSize: 12,
+              padding: '6px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <X style={{ width: 14, height: 14 }} />
+            <span>Đóng</span>
+          </button>
+        </div>
       </div>
 
       {/* Error banner */}
       {errorMessage && (
         <div
           style={{
-            margin: '12px 20px 0',
+            maxWidth: 1040,
+            margin: '12px auto 0',
+            width: 'calc(100% - 40px)',
             padding: '10px 14px',
             borderRadius: 'var(--radius-md)',
             background: 'var(--error-muted)',
@@ -791,501 +805,586 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
         </div>
       )}
 
-      {/* Scrollable Content */}
-      <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
-        {/* Section 1: Voice */}
-        <div style={{ marginBottom: 24 }}>
-          <label className="label" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <Mic style={{ width: 14, height: 14, color: 'var(--accent)' }} />
-            1. Giọng đọc
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {VOICE_OPTIONS.map((voice) => {
-              const isSelected = selectedVoice === voice.id;
-              const isPlayingThis = playingVoiceId === voice.id;
-              return (
-                <div
-                  key={voice.id}
-                  onClick={() => setSelectedVoice(voice.id)}
-                  className={`card ${isSelected ? 'card-active' : ''}`}
-                  style={{ padding: 12, cursor: 'pointer' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {voice.gender === 'female' ? '♀' : '♂'} {voice.name}
-                    </span>
-                    <span className="badge badge-accent" style={{ fontSize: 10 }}>
-                      {voice.tag}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 8px', lineHeight: 1.4 }}>
-                    {voice.description}
-                  </p>
-                  <button
-                    onClick={(e) => handleTogglePlayVoice(voice, e)}
-                    className={`btn ${isPlayingThis ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ width: '100%', fontSize: 11, padding: '6px 10px' }}
-                  >
-                    {isPlayingThis ? (
-                      <><VolumeX style={{ width: 12, height: 12 }} /> Dừng</>
-                    ) : (
-                      <><Volume2 style={{ width: 12, height: 12 }} /> Nghe thử ({speed}×)</>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      {/* Main Scrollable Content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 110px' }}>
+        <div style={{ maxWidth: 1040, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-        {/* Section 2: Speed */}
-        <div style={{ marginBottom: 24 }}>
-          <label className="label" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <Gauge style={{ width: 14, height: 14, color: 'var(--accent)' }} />
-            2. Tốc độ đọc
-            <span className="mono" style={{ marginLeft: 'auto', color: 'var(--accent)', fontWeight: 700 }}>
-              {speed}×
-            </span>
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
-            {SPEED_PRESETS.map((preset) => {
-              const isActive = speed === preset.value;
-              return (
-                <button
-                  key={preset.value}
-                  onClick={() => {
-                    setSpeed(preset.value);
-                    if (playingVoiceId) {
-                      const v = VOICE_OPTIONS.find((vo) => vo.id === playingVoiceId);
-                      if (v) {
-                        audioPreviewManager.playVoicePreview(v, preset.value, () => setPlayingVoiceId(null), () => setPlayingVoiceId(null));
-                      }
-                    }
-                  }}
-                  style={{
-                    padding: '10px 4px',
-                    borderRadius: 'var(--radius-md)',
-                    border: `1px solid ${isActive ? 'var(--accent-border)' : 'var(--border)'}`,
-                    background: isActive ? 'var(--accent)' : 'var(--bg-elevated)',
-                    color: isActive ? 'var(--text-inverse)' : 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    transition: 'all 0.15s',
-                    fontSize: 12,
-                    fontWeight: isActive ? 700 : 500,
-                  }}
-                >
-                  <div>{preset.label}</div>
-                  <div style={{ fontSize: 10, opacity: 0.7, marginTop: 2 }}>{preset.desc}</div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Section 3: Content */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <label className="label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FileText style={{ width: 14, height: 14, color: 'var(--accent)' }} />
-              3. Kịch bản
-            </label>
-            <div className="tab-group" style={{ padding: 2 }}>
-              <button
-                className={`tab-item ${contentMode === 'text' ? 'tab-item-active' : ''}`}
-                onClick={() => setContentMode('text')}
-                style={{ padding: '4px 10px', fontSize: 11 }}
-              >
-                Văn bản
-              </button>
-              <button
-                className={`tab-item ${contentMode === 'file' ? 'tab-item-active' : ''}`}
-                onClick={() => setContentMode('file')}
-                style={{ padding: '4px 10px', fontSize: 11 }}
-              >
-                Tải file
-              </button>
-            </div>
-          </div>
-
-          {/* Presets */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-            {SAMPLE_SCRIPTS.map((preset) => (
-              <button
-                key={preset.id}
-                onClick={() => handleSelectPreset(preset)}
-                className={`btn ${scriptTitle === preset.title ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ fontSize: 11, padding: '5px 10px' }}
-              >
-                {preset.title}
-              </button>
-            ))}
-          </div>
-
-          {/* File upload */}
-          {contentMode === 'file' && (
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                padding: 24,
-                border: '2px dashed var(--border-hover)',
-                borderRadius: 'var(--radius-lg)',
-                background: 'var(--bg-base)',
-                textAlign: 'center',
-                cursor: 'pointer',
-                marginBottom: 10,
-                transition: 'border-color 0.2s',
-              }}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.md,.json,.srt"
-                onChange={handleFileUpload}
-                style={{ display: 'none' }}
-              />
-              <Upload style={{ width: 24, height: 24, color: 'var(--accent)', margin: '0 auto 8px' }} />
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-                {uploadedFileName ? `✓ ${uploadedFileName}` : 'Nhấp để chọn file'}
-              </p>
-              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                .txt, .md, .json, .srt
-              </p>
-            </div>
-          )}
-
-          {/* Title & Subtitle */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-            <input
-              type="text"
-              value={scriptTitle}
-              onChange={(e) => { setScriptTitle(e.target.value); setErrorMessage(null); }}
-              className="input"
-              placeholder="Tiêu đề video"
-              style={{ fontWeight: 600 }}
-            />
-            <input
-              type="text"
-              value={scriptSubtitle}
-              onChange={(e) => setScriptSubtitle(e.target.value)}
-              className="input"
-              placeholder="Phụ đề"
-            />
-          </div>
-
-          {/* Textarea */}
-          <textarea
-            value={textContent}
-            onChange={(e) => { setTextContent(e.target.value); setErrorMessage(null); }}
-            rows={10}
-            className="input"
-            style={{
-              width: '100%',
-              resize: 'vertical',
-              lineHeight: 1.6,
-              minHeight: 200,
-            }}
-            placeholder="Nhập kịch bản theo từng CẢNH 1, CẢNH 2..."
-          />
-
+          {/* Section 1: Voice & Speed (Collapsible) */}
           <div
+            className="card"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: 6,
-              fontSize: 11,
-              color: 'var(--text-muted)',
+              padding: 0,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
             }}
           >
-            <span>
-              {wordCount} từ · ≈{estimatedSeconds.toFixed(0)}s
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+            {/* Collapsible Header */}
+            <div
+              onClick={() => setIsVoiceSectionOpen(!isVoiceSectionOpen)}
               style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--accent)',
+                padding: '14px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 cursor: 'pointer',
-                fontSize: 11,
-                fontWeight: 600,
-                padding: '2px 6px',
-                borderRadius: 4,
+                background: isVoiceSectionOpen ? 'var(--bg-elevated)' : 'transparent',
+                borderBottom: isVoiceSectionOpen ? '1px solid var(--border)' : 'none',
+                transition: 'background 0.15s ease',
               }}
             >
-              {showAdvancedSettings ? 'Ẩn cài đặt AI ▲' : '🤖 Tùy chọn Gemini AI ▼'}
-            </button>
-          </div>
-
-          {/* Advanced Gemini API Key Setting */}
-          {showAdvancedSettings && (
-            <>
-            {/* Image Provider Selection */}
-            <div
-              style={{
-                marginTop: 10,
-                padding: 14,
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-base)',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                    🎨 Bộ tạo hình ảnh (Image Provider)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleTestAIStudio}
-                  disabled={isTestingProvider}
-                  style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                    cursor: isTestingProvider ? 'wait' : 'pointer',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: '4px 10px',
-                    borderRadius: 6,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  {isTestingProvider ? '⏳ Đang kiểm tra...' : '⚡ Test Google AI Studio'}
-                </button>
-              </div>
-
-              {providerTestMessage && (
-                <div
-                  style={{
-                    fontSize: 11,
-                    marginBottom: 10,
-                    padding: '6px 10px',
-                    borderRadius: 6,
-                    background: providerTestMessage.startsWith('✓') ? 'rgba(34,197,94,0.1)' : 'rgba(234,179,8,0.1)',
-                    color: providerTestMessage.startsWith('✓') ? 'var(--success)' : 'var(--warning, #eab308)',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                  }}
-                >
-                  {providerTestMessage}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {/* Option 1: Google AI Studio */}
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 10,
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    background: selectedImageProvider === 'google_ai_studio' ? 'rgba(59,130,246,0.08)' : 'var(--bg-card)',
-                    border: selectedImageProvider === 'google_ai_studio' ? '1px solid var(--accent, #3b82f6)' : '1px solid var(--border)',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="imageProvider"
-                    value="google_ai_studio"
-                    checked={selectedImageProvider === 'google_ai_studio'}
-                    onChange={() => handleSelectProvider('google_ai_studio')}
-                    style={{ marginTop: 2, accentColor: 'var(--accent)' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                      <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--text-primary)' }}>
-                        Google AI Studio (Ưu tiên số 1 - Khuyên dùng)
-                      </span>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          padding: '1px 8px',
-                          borderRadius: 10,
-                          color: aiStudioConnected ? 'var(--success, #22c55e)' : '#eab308',
-                          background: aiStudioConnected ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)',
-                        }}
-                      >
-                        {aiStudioConnected ? '● Connected' : '○ Login required'}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                      Tạo ảnh chất lượng cao qua Google AI Studio (Playwright Chrome persistent worker). Tự động fallback sang Flux Local nếu lỗi.
-                    </div>
-                  </div>
-                </label>
-
-                {/* Option 2: Flux Local */}
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 10,
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    background: selectedImageProvider === 'flux_local' ? 'rgba(59,130,246,0.08)' : 'var(--bg-card)',
-                    border: selectedImageProvider === 'flux_local' ? '1px solid var(--accent, #3b82f6)' : '1px solid var(--border)',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="imageProvider"
-                    value="flux_local"
-                    checked={selectedImageProvider === 'flux_local'}
-                    onChange={() => handleSelectProvider('flux_local')}
-                    style={{ marginTop: 2, accentColor: 'var(--accent)' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                      <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--text-primary)' }}>
-                        Flux Local (Dự phòng / Chạy ngoại tuyến)
-                      </span>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          padding: '1px 8px',
-                          borderRadius: 10,
-                          color: fluxAvailable ? 'var(--success, #22c55e)' : 'var(--text-muted)',
-                          background: fluxAvailable ? 'rgba(34,197,94,0.12)' : 'rgba(100,100,100,0.12)',
-                        }}
-                      >
-                        {fluxAvailable ? '● Ready (Metal M4)' : '○ Standby'}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                      Render cục bộ bằng mflux trên GPU Metal Apple M4 không cần mạng. Luôn là phương án dự phòng tin cậy.
-                    </div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: 10,
-                padding: 12,
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-base)',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Gemini API Key (Tùy chọn)
-                </label>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                  Hệ thống tự động tạo ảnh từ nội dung; nhập key nếu muốn AI làm giàu ngữ nghĩa
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <Mic style={{ width: 16, height: 16, color: 'var(--accent)' }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  1. Giọng đọc & Tốc độ phát
+                </span>
+                <span className="badge badge-accent" style={{ fontSize: 11, padding: '2px 8px' }}>
+                  {selectedVoiceObj.name} ({selectedVoiceObj.gender === 'female' ? 'Nữ' : 'Nam'} {selectedVoiceObj.region})
+                </span>
+                <span className="badge badge-secondary" style={{ fontSize: 11, padding: '2px 8px' }}>
+                  {speed}×
                 </span>
               </div>
-              <input
-                type="password"
-                value={geminiApiKey}
-                onChange={(e) => {
-                  setGeminiApiKey(e.target.value);
-                  localStorage.setItem('gemini_api_key', e.target.value);
-                }}
-                className="input"
-                placeholder="AIzaSy..."
-                style={{ width: '100%', fontSize: 12, fontFamily: 'monospace' }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 12, fontWeight: 500 }}>
+                <span>{isVoiceSectionOpen ? 'Thu gọn' : 'Tùy chỉnh'}</span>
+                {isVoiceSectionOpen ? (
+                  <ChevronUp style={{ width: 16, height: 16 }} />
+                ) : (
+                  <ChevronDown style={{ width: 16, height: 16 }} />
+                )}
+              </div>
             </div>
-            <div
+
+            {/* Collapsible Body */}
+            {isVoiceSectionOpen && (
+              <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                    Chọn giọng đọc AI:
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
+                    {VOICE_OPTIONS.map((voice) => {
+                      const isSelected = selectedVoice === voice.id;
+                      const isPlayingThis = playingVoiceId === voice.id;
+                      return (
+                        <div
+                          key={voice.id}
+                          onClick={() => setSelectedVoice(voice.id)}
+                          className={`card ${isSelected ? 'card-active' : ''}`}
+                          style={{
+                            padding: 10,
+                            cursor: 'pointer',
+                            border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                            background: isSelected ? 'rgba(59,130,246,0.06)' : 'var(--bg-elevated)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
+                              {voice.gender === 'female' ? '♀' : '♂'} {voice.name}
+                            </span>
+                            <span className="badge badge-accent" style={{ fontSize: 9 }}>
+                              {voice.tag}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 6px', lineHeight: 1.3 }}>
+                            {voice.description}
+                          </p>
+                          <button
+                            onClick={(e) => handleTogglePlayVoice(voice, e)}
+                            className={`btn ${isPlayingThis ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
+                          >
+                            {isPlayingThis ? (
+                              <><VolumeX style={{ width: 12, height: 12 }} /> Dừng</>
+                            ) : (
+                              <><Volume2 style={{ width: 12, height: 12 }} /> Nghe thử ({speed}×)</>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                      Tốc độ phát âm:
+                    </span>
+                    <span className="mono" style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 12 }}>
+                      {speed}×
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
+                    {SPEED_PRESETS.map((preset) => {
+                      const isActive = speed === preset.value;
+                      return (
+                        <button
+                          key={preset.value}
+                          onClick={() => {
+                            setSpeed(preset.value);
+                            if (playingVoiceId) {
+                              const v = VOICE_OPTIONS.find((vo) => vo.id === playingVoiceId);
+                              if (v) {
+                                audioPreviewManager.playVoicePreview(v, preset.value, () => setPlayingVoiceId(null), () => setPlayingVoiceId(null));
+                              }
+                            }
+                          }}
+                          style={{
+                            padding: '8px 4px',
+                            borderRadius: 'var(--radius-md)',
+                            border: `1px solid ${isActive ? 'var(--accent-border)' : 'var(--border)'}`,
+                            background: isActive ? 'var(--accent)' : 'var(--bg-elevated)',
+                            color: isActive ? 'var(--text-inverse)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            transition: 'all 0.15s',
+                            fontSize: 11,
+                            fontWeight: isActive ? 700 : 500,
+                          }}
+                        >
+                          <div>{preset.label}</div>
+                          <div style={{ fontSize: 9, opacity: 0.7, marginTop: 1 }}>{preset.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Script Content (Hero section - Only 1 Textarea) */}
+          <div
+            className="card"
+            style={{
+              padding: 18,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            {/* Header with Presets & Upload */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FileText style={{ width: 16, height: 16, color: 'var(--accent)' }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  2. Kịch bản Video
+                </span>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  (Nhập nội dung phân cảnh)
+                </span>
+              </div>
+
+              {/* Action tools: Presets & File Upload */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 2 }}>Mẫu:</span>
+                {SAMPLE_SCRIPTS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => handleSelectPreset(preset)}
+                    className={`btn ${selectedPresetId === preset.id ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ fontSize: 11, padding: '4px 10px' }}
+                  >
+                    {preset.title.replace('Kinh Tế Học ', '').replace('Tâm Lý Học ', '')}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="btn btn-secondary"
+                  style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  <Upload style={{ width: 12, height: 12 }} />
+                  <span>{uploadedFileName ? `✓ File` : 'Tải file'}</span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".txt,.md,.json,.srt"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+
+                {textContent && (
+                  <button
+                    onClick={() => { setTextContent(''); setSelectedPresetId(null); setUploadedFileName(null); }}
+                    className="btn btn-ghost"
+                    style={{ fontSize: 11, padding: '4px 8px', color: 'var(--text-muted)' }}
+                    title="Xóa kịch bản để nhập mới"
+                  >
+                    Xóa
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* ONLY ONE CLEAN TEXTAREA - NO TITLE/SUBTITLE INPUTS */}
+            <textarea
+              value={textContent}
+              onChange={(e) => {
+                setTextContent(e.target.value);
+                setSelectedPresetId(null);
+                setErrorMessage(null);
+              }}
+              rows={14}
+              className="input"
               style={{
-                marginTop: 10,
-                padding: 12,
+                width: '100%',
+                resize: 'vertical',
+                lineHeight: 1.65,
+                fontSize: 13.5,
+                fontFamily: 'inherit',
+                minHeight: 280,
+                padding: '14px 16px',
                 borderRadius: 'var(--radius-md)',
                 background: 'var(--bg-base)',
                 border: '1px solid var(--border)',
+                outline: 'none',
+              }}
+              placeholder={`Nhập toàn bộ kịch bản phân cảnh tại đây...
+
+Ví dụ mẫu:
+CẢNH 1: Khởi đầu vấn đề
+Đến phòng gym vào giờ cao điểm, thấy máy chạy bộ kín người, ai cũng nghĩ đây là mỏ vàng in tiền.
+
+CẢNH 2: Bản chất kinh doanh
+Sự thật: Phòng gym là mô hình kinh doanh thuê bao (subscription) có chứa máy móc và tạ.
+
+CẢNH 3: Nghịch lý khách hàng
+80% người mua thẻ tập sẽ bỏ cuộc trước mùa hè. Lợi nhuận phòng gym đến từ những người không bao giờ đi tập.`}
+            />
+
+            {/* Textarea Footer Stats */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: 11,
+                color: 'var(--text-muted)',
+                flexWrap: 'wrap',
+                gap: 8,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>🎨 OpenAI API Key (DALL-E 3)</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span>
+                  <strong style={{ color: 'var(--text-primary)' }}>{wordCount}</strong> từ
+                </span>
+                <span>•</span>
+                <span>
+                  Thời lượng dự kiến: <strong style={{ color: 'var(--accent)' }}>≈{estimatedSeconds.toFixed(0)}s</strong> ({Math.ceil(estimatedSeconds / 60)} phút)
+                </span>
+                <span>•</span>
+                <span>
+                  Dự kiến: <strong style={{ color: 'var(--text-primary)' }}>{parseContentToScenes(textContent).length}</strong> phân cảnh
+                </span>
+              </div>
+              <span className="badge badge-secondary" style={{ fontSize: 10, padding: '2px 8px' }}>
+                Phong cách Pictionary Whiteboard Doodle (Flat 2D • No Shading)
+              </span>
+            </div>
+          </div>
+
+          {/* Section 3: AI Engine & Advanced Configuration (Collapsible) */}
+          <div
+            className="card"
+            style={{
+              padding: 0,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Collapsible Header */}
+            <div
+              onClick={() => setIsAISettingsOpen(!isAISettingsOpen)}
+              style={{
+                padding: '14px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                background: isAISettingsOpen ? 'var(--bg-elevated)' : 'transparent',
+                borderBottom: isAISettingsOpen ? '1px solid var(--border)' : 'none',
+                transition: 'background 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <Sparkles style={{ width: 16, height: 16, color: 'var(--accent)' }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  3. Bộ tạo hình ảnh AI & Cài đặt nâng cao
+                </span>
+                <span className="badge badge-accent" style={{ fontSize: 11, padding: '2px 8px' }}>
+                  {selectedImageProvider === 'google_ai_studio' ? 'Google AI Studio (2 Tabs Chẵn/Lẻ)' : 'Flux Local (Metal M4)'}
+                </span>
                 <span
                   style={{
                     fontSize: 10,
-                    color: openaiApiKey ? 'var(--success)' : 'var(--text-muted)',
-                    background: openaiApiKey ? 'rgba(34,197,94,0.1)' : 'rgba(100,100,100,0.1)',
+                    fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: 10,
-                    fontWeight: 600,
+                    color: aiStudioConnected ? 'var(--success)' : '#eab308',
+                    background: aiStudioConnected ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)',
                   }}
                 >
-                  {openaiApiKey ? '✓ Active — Hand-drawn mode' : 'Không có → SVG fallback'}
+                  {aiStudioConnected ? '● Đã kết nối' : '○ Cần đăng nhập'}
                 </span>
               </div>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-                Nhập key để sinh ảnh Hand-drawn Detailed bằng DALL-E 3. Nếu bỏ trống, hệ thống dùng SVG vector.
-              </span>
-              <input
-                type="password"
-                value={openaiApiKey}
-                onChange={(e) => {
-                  setOpenaiApiKey(e.target.value);
-                  localStorage.setItem('openai_api_key', e.target.value);
-                }}
-                className="input"
-                placeholder="sk-..."
-                style={{ width: '100%', fontSize: 12, fontFamily: 'monospace' }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 12, fontWeight: 500 }}>
+                <span>{isAISettingsOpen ? 'Thu gọn' : 'Tùy chỉnh'}</span>
+                {isAISettingsOpen ? (
+                  <ChevronUp style={{ width: 16, height: 16 }} />
+                ) : (
+                  <ChevronDown style={{ width: 16, height: 16 }} />
+                )}
+              </div>
             </div>
-            </>
-          )}
+
+            {/* Collapsible Body */}
+            {isAISettingsOpen && (
+              <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Image Provider Selection */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Chọn công cụ tạo ảnh ưu tiên:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleTestAIStudio}
+                      disabled={isTestingProvider}
+                      className="btn btn-secondary"
+                      style={{
+                        fontSize: 11,
+                        padding: '4px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      {isTestingProvider ? '⏳ Đang kiểm tra...' : '⚡ Test Google AI Studio (2 Tabs)'}
+                    </button>
+                  </div>
+
+                  {providerTestMessage && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        marginBottom: 10,
+                        padding: '6px 10px',
+                        borderRadius: 6,
+                        background: providerTestMessage.startsWith('✓') ? 'rgba(34,197,94,0.1)' : 'rgba(234,179,8,0.1)',
+                        color: providerTestMessage.startsWith('✓') ? 'var(--success)' : 'var(--warning, #eab308)',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      {providerTestMessage}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
+                    {/* Option 1: Google AI Studio */}
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 10,
+                        padding: '12px 14px',
+                        borderRadius: 'var(--radius-md)',
+                        cursor: 'pointer',
+                        background: selectedImageProvider === 'google_ai_studio' ? 'rgba(59,130,246,0.08)' : 'var(--bg-elevated)',
+                        border: selectedImageProvider === 'google_ai_studio' ? '1px solid var(--accent)' : '1px solid var(--border)',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="imageProvider"
+                        value="google_ai_studio"
+                        checked={selectedImageProvider === 'google_ai_studio'}
+                        onChange={() => handleSelectProvider('google_ai_studio')}
+                        style={{ marginTop: 2, accentColor: 'var(--accent)' }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                          <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>
+                            Google AI Studio (2 Tabs Song Song)
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: 8,
+                              color: aiStudioConnected ? 'var(--success)' : '#eab308',
+                              background: aiStudioConnected ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)',
+                            }}
+                          >
+                            {aiStudioConnected ? 'Ready' : 'Login'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                          Chạy song song 2 tab: Tab 1 sinh ảnh Chẵn, Tab 2 sinh ảnh Lẻ với Nano Banana 2 Lite.
+                        </div>
+                      </div>
+                    </label>
+
+                    {/* Option 2: Flux Local */}
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 10,
+                        padding: '12px 14px',
+                        borderRadius: 'var(--radius-md)',
+                        cursor: 'pointer',
+                        background: selectedImageProvider === 'flux_local' ? 'rgba(59,130,246,0.08)' : 'var(--bg-elevated)',
+                        border: selectedImageProvider === 'flux_local' ? '1px solid var(--accent)' : '1px solid var(--border)',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="imageProvider"
+                        value="flux_local"
+                        checked={selectedImageProvider === 'flux_local'}
+                        onChange={() => handleSelectProvider('flux_local')}
+                        style={{ marginTop: 2, accentColor: 'var(--accent)' }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                          <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>
+                            Flux Local (Apple Silicon M4)
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: 8,
+                              color: fluxAvailable ? 'var(--success)' : 'var(--text-muted)',
+                              background: fluxAvailable ? 'rgba(34,197,94,0.12)' : 'rgba(100,100,100,0.12)',
+                            }}
+                          >
+                            {fluxAvailable ? 'Ready' : 'Standby'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                          Render cục bộ ngoại tuyến qua Metal GPU Apple Silicon M4 không cần mạng.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* API Keys (Optional) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
+                  <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+                      Gemini API Key (Tùy chọn)
+                    </div>
+                    <input
+                      type="password"
+                      value={geminiApiKey}
+                      onChange={(e) => {
+                        setGeminiApiKey(e.target.value);
+                        localStorage.setItem('gemini_api_key', e.target.value);
+                      }}
+                      className="input"
+                      placeholder="AIzaSy... (Tự động fallback nếu trống)"
+                      style={{ width: '100%', fontSize: 11, fontFamily: 'monospace' }}
+                    />
+                  </div>
+
+                  <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+                      OpenAI API Key (DALL-E 3 Dự phòng)
+                    </div>
+                    <input
+                      type="password"
+                      value={openaiApiKey}
+                      onChange={(e) => {
+                        setOpenaiApiKey(e.target.value);
+                        localStorage.setItem('openai_api_key', e.target.value);
+                      }}
+                      className="input"
+                      placeholder="sk-... (Dự phòng cấp 2)"
+                      style={{ width: '100%', fontSize: 11, fontFamily: 'monospace' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
 
-      {/* Footer with Create button */}
+      {/* Sticky Bottom Action Bar */}
       <div
         style={{
-          padding: '16px 20px',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 68,
+          background: 'var(--bg-surface)',
           borderTop: '1px solid var(--border)',
+          padding: '0 24px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end',
-          gap: 8,
-          flexShrink: 0,
-          background: 'var(--bg-surface)',
+          justifyContent: 'space-between',
+          zIndex: 40,
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.25)',
         }}
       >
-        <button className="btn btn-ghost" onClick={onCancel}>
-          Hủy
-        </button>
-        <button
-          className="btn btn-primary"
-          onClick={handleCreateVideo}
-          disabled={isCreating}
-          style={{
-            padding: '10px 24px',
-            fontSize: 14,
-            fontWeight: 700,
-            opacity: isCreating ? 0.7 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          {isCreating ? (
-            <>
-              <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
-              <span>Đang tạo video ({progressPercent}%)...</span>
-            </>
-          ) : (
-            <>
-              <Zap style={{ width: 16, height: 16 }} />
-              <span>Tạo Video</span>
-            </>
-          )}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
+            <span style={{ fontWeight: 600 }}>Cấu hình:</span>
+            <span className="badge badge-accent">{selectedVoiceObj.name} ({speed}×)</span>
+            <span className="badge badge-secondary">{selectedImageProvider === 'google_ai_studio' ? 'Google AI Studio (2 Tabs)' : 'Flux Local'}</span>
+            <span style={{ color: 'var(--text-muted)' }}>| {wordCount} từ · ≈{estimatedSeconds.toFixed(0)}s</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button className="btn btn-secondary" onClick={onCancel} style={{ fontSize: 13, padding: '8px 16px' }}>
+            Hủy
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={handleCreateVideo}
+            disabled={isCreating}
+            style={{
+              padding: '10px 24px',
+              fontSize: 14,
+              fontWeight: 700,
+              opacity: isCreating ? 0.7 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 2px 14px rgba(99, 102, 241, 0.4)',
+            }}
+          >
+            {isCreating ? (
+              <>
+                <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+                <span>Đang tạo video ({progressPercent}%)...</span>
+              </>
+            ) : (
+              <>
+                <Zap style={{ width: 16, height: 16 }} />
+                <span>Bắt đầu Tạo Video Explainer</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Creation Progress Modal & Real-Time Pipeline Checklist */}

@@ -45,7 +45,7 @@ async function generateViaLocalServer({ prompt, outputPath, width = 1024, height
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt,
-        negative_prompt: 'blurry, distorted, low quality, photorealistic, ugly',
+        negative_prompt: '3d, cgi, render, shading, gradients, realistic proportions, human skin, detailed faces, clothing details, complex backgrounds, messy lines, photography, anime, colorful, shadows, depth of field',
         steps,
         width,
         height,
@@ -171,13 +171,15 @@ async function generateViaFreeFlux({ prompt, outputPath }) {
  * Priority 1: Google AI Studio (Playwright Persistent Worker)
  * Priority 2: Local FLUX.1 (Apple Silicon Metal M4 via mflux / Draw Things)
  */
-async function generateFluxImage({ prompt, diegeticLabel, outputPath }) {
+async function generateFluxImage({ prompt, diegeticLabel, outputPath, imageIndex, tabId }) {
   const ImageGenerationManager = require('./image-generation/ImageGenerationManager.cjs');
   const manager = ImageGenerationManager.getInstance();
   const res = await manager.generateImage({
     prompt,
     diegeticLabel,
     outputPath,
+    imageIndex,
+    tabId,
   });
 
   return {

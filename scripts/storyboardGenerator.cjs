@@ -285,17 +285,15 @@ function enforceVisualVariationRules(scenes) {
  * AI Storyboard Generator using Gemini Flash
  * Receives raw text/script and generates the complete storyboard.
  */
-async function generateStoryboardFromContent({ content, scenesInput, geminiApiKey }) {
-  console.log(`\n🎬 [STORYBOARD GENERATOR] Đang phân tích content để tạo kịch bản hình ảnh đa dạng...`);
+async function generateStoryboardFromContent({ content, scenesInput, geminiApiKey, openaiApiKey }) {
+  console.log(`\n🎬 [STORYBOARD GENERATOR] Đang phân tích kịch bản bằng AI để tạo kịch bản hình ảnh đa dạng...`);
 
   const apiKey = geminiApiKey || process.env.GEMINI_API_KEY || '';
+  const oaiKey = openaiApiKey || process.env.OPENAI_API_KEY || '';
   const rawText = content || (scenesInput || []).map((s) => `${s.title}: ${s.text}`).join('\n\n');
 
-  if (apiKey && rawText.length > 20) {
-    const candidateModels = ['gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-1.5-flash'];
-    for (const model of candidateModels) {
-      try {
-        const prompt = `You are a World-Class Storyboard Director for YouTube 2D Animated Explainer Videos (similar to Vox, Casually Explained, PolyMatter).
+  if ((apiKey || oaiKey) && rawText.length > 20) {
+    const prompt = `You are a World-Class Storyboard Director for YouTube 2D Animated Explainer Videos (similar to Vox, Casually Explained, PolyMatter).
 Given the following raw content/script:
 """
 ${rawText.substring(0, 4000)}
@@ -340,51 +338,104 @@ CRITICAL RULES:
   }
 ]`;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
+    const normalizeStoryboard = (parsed) => {
+      if (!Array.isArray(parsed) || parsed.length === 0) return null;
+      const normalized = parsed.map((sc, idx) => ({
+        id: idx + 1,
+        scene_id: sc.scene_id || `scene_0${idx + 1}`,
+        title: sc.title || `Cảnh ${idx + 1}`,
+        text: sc.narration || sc.text || '',
+        narration: sc.narration || sc.text || '',
+        visual_type: VALID_VISUAL_TYPES.includes(sc.visual_type) ? sc.visual_type : 'character',
+        visual_description: sc.visual_description || '',
+        subject: sc.subject || '',
+        environment: sc.environment || '',
+        objects: Array.isArray(sc.objects) ? sc.objects : [],
+        composition: sc.composition || '',
+        action: sc.action || '',
+        main_text: (sc.main_text || sc.title || '').toUpperCase(),
+        sub_text: sc.sub_text || '',
+        motion: VALID_MOTIONS.includes(sc.motion) ? sc.motion : 'slide',
+        camera: VALID_CAMERAS.includes(sc.camera) ? sc.camera : 'static',
+        metric: sc.metric || null,
+        percentage: sc.percentage || null,
+      }));
+      return enforceVisualVariationRules(normalized);
+    };
+
+    // Tier 1: Try Gemini API
+    if (apiKey) {
+      const candidateModels = [
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-8b',
+        'gemini-2.5-flash',
+      ];
+      for (const model of candidateModels) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: 'application/json' },
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawJson) {
+              const parsed = JSON.parse(rawJson);
+              const result = normalizeStoryboard(parsed);
+              if (result) {
+                console.log(`✓ Gemini AI (${model}) đã tạo thành công Storyboard gồm ${result.length} phân cảnh đa dạng!`);
+                return result;
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    // Tier 2: Try OpenAI API
+    if (oaiKey) {
+      try {
+        const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${oaiKey}`,
+          },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' },
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a World-Class Storyboard Director for YouTube 2D Animated Explainer Videos. Return ONLY a JSON object with a key "scenes" containing the array of scenes.',
+              },
+              { role: 'user', content: prompt + '\nIMPORTANT: Return a JSON object with a "scenes" array property.' },
+            ],
+            response_format: { type: 'json_object' },
           }),
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawJson) {
-            const parsed = JSON.parse(rawJson);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              console.log(`✓ Gemini AI (${model}) đã tạo thành công Storyboard gồm ${parsed.length} phân cảnh đa dạng!`);
-              const normalized = parsed.map((sc, idx) => ({
-                id: idx + 1,
-                scene_id: sc.scene_id || `scene_0${idx + 1}`,
-                title: sc.title || `Cảnh ${idx + 1}`,
-                text: sc.narration || sc.text || '',
-                narration: sc.narration || sc.text || '',
-                visual_type: VALID_VISUAL_TYPES.includes(sc.visual_type) ? sc.visual_type : 'character',
-                visual_description: sc.visual_description || '',
-                subject: sc.subject || '',
-                environment: sc.environment || '',
-                objects: Array.isArray(sc.objects) ? sc.objects : [],
-                composition: sc.composition || '',
-                action: sc.action || '',
-                main_text: (sc.main_text || sc.title || '').toUpperCase(),
-                sub_text: sc.sub_text || '',
-                motion: VALID_MOTIONS.includes(sc.motion) ? sc.motion : 'slide',
-                camera: VALID_CAMERAS.includes(sc.camera) ? sc.camera : 'static',
-                metric: sc.metric || null,
-                percentage: sc.percentage || null,
-              }));
-
-              return enforceVisualVariationRules(normalized);
+        if (oaiRes.ok) {
+          const data = await oaiRes.json();
+          const contentStr = data.choices?.[0]?.message?.content;
+          if (contentStr) {
+            const parsed = JSON.parse(contentStr);
+            const arrayCandidate = Array.isArray(parsed) ? parsed : parsed.scenes || parsed.items;
+            const result = normalizeStoryboard(arrayCandidate);
+            if (result) {
+              console.log(`✓ OpenAI (gpt-4o-mini) đã tạo thành công Storyboard gồm ${result.length} phân cảnh!`);
+              return result;
             }
           }
         }
-      } catch (err) {
-        console.warn(`Gemini AI Storyboard call failed on ${model}:`, err.message);
-      }
+      } catch (_) {}
     }
   }
 

@@ -38,7 +38,7 @@ async function generateViaLocalServer({ prompt, outputPath, width = 1024, height
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt,
-        negative_prompt: 'blurry, distorted, low quality, photorealistic, ugly',
+        negative_prompt: '3d, cgi, render, shading, gradients, realistic proportions, human skin, detailed faces, clothing details, complex backgrounds, messy lines, photography, anime, colorful, shadows, depth of field',
         steps,
         width,
         height,

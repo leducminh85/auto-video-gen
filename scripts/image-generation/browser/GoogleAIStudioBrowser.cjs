@@ -15,7 +15,7 @@ class GoogleAIStudioBrowser extends EventEmitter {
     this.context = null;
     this.page = null;
     this.tabPool = [];
-    this.maxTabs = 3;
+    this.maxTabs = 2;
     this.isInitializing = false;
   }
 
@@ -125,10 +125,10 @@ class GoogleAIStudioBrowser extends EventEmitter {
   }
 
   /**
-   * Initialize or retrieve the pool of 3 concurrent browser tabs
-   * @param {number} poolSize - Number of parallel tabs (default 3)
+   * Initialize or retrieve the pool of 2 concurrent browser tabs (Tab 1: Even index, Tab 2: Odd index)
+   * @param {number} poolSize - Number of parallel tabs (default 2)
    */
-  async ensureTabPool(poolSize = 3) {
+  async ensureTabPool(poolSize = 2) {
     if (this._ensuringPoolPromise) {
       return this._ensuringPoolPromise;
     }
@@ -142,7 +142,16 @@ class GoogleAIStudioBrowser extends EventEmitter {
 
       const existingPages = context.pages().filter(p => !p.isClosed());
 
-      // Map existing pages to tab pool
+      // If there are more existing pages than poolSize, close the extra blank/unused pages
+      while (existingPages.length > poolSize) {
+        const extraPage = existingPages.pop();
+        try {
+          console.log(`[AI Studio] Closing extra unused browser page to maintain strict 2-tab pool.`);
+          await extraPage.close();
+        } catch (_) {}
+      }
+
+      // Map existing pages to tab pool with deterministic IDs (1, 2)
       for (let i = 0; i < existingPages.length && this.tabPool.length < poolSize; i++) {
         const p = existingPages[i];
         if (!this.tabPool.some(t => t.page === p)) {
@@ -169,6 +178,11 @@ class GoogleAIStudioBrowser extends EventEmitter {
         });
       }
 
+      // Re-index IDs so Tab 1 and Tab 2 are strictly 1 and 2
+      this.tabPool.forEach((t, idx) => {
+        t.id = idx + 1;
+      });
+
       return this.tabPool;
     })();
 
@@ -180,22 +194,35 @@ class GoogleAIStudioBrowser extends EventEmitter {
   }
 
   /**
-   * Acquire an available tab from the pool (blocks if all are busy)
+   * Acquire a dedicated tab from the pool.
+   * If preferredTabId is provided (e.g. Tab 1 for even index, Tab 2 for odd index),
+   * waits strictly until that specific tab is available.
+   * @param {number|null} preferredTabId - Target tab ID (1 or 2)
    * @returns {Promise<{ id: number, page: import('playwright').Page, isBusy: boolean, turnCount: number, isInitialized: boolean }>}
    */
-  async acquireTab() {
+  async acquireTab(preferredTabId = null) {
     await this.ensureTabPool(this.maxTabs);
 
-    const availableTab = this.tabPool.find(t => !t.isBusy && !t.page.isClosed());
+    const findAvailable = () => {
+      if (preferredTabId != null) {
+        return this.tabPool.find(t => t.id === preferredTabId && !t.isBusy && !t.page.isClosed());
+      }
+      return this.tabPool.find(t => !t.isBusy && !t.page.isClosed());
+    };
+
+    const availableTab = findAvailable();
     if (availableTab) {
       availableTab.isBusy = true;
       return availableTab;
     }
 
-    // Wait until a tab is released
+    // Wait until matching tab is released
     return new Promise((resolve) => {
-      const onReleased = () => {
-        const tab = this.tabPool.find(t => !t.isBusy && !t.page.isClosed());
+      const onReleased = (releasedTab) => {
+        if (preferredTabId != null && releasedTab && releasedTab.id !== preferredTabId) {
+          return; // Ignore release of a different tab
+        }
+        const tab = findAvailable();
         if (tab) {
           this.off('tab_released', onReleased);
           tab.isBusy = true;

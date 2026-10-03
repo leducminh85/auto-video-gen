@@ -298,17 +298,30 @@ body {
   animation: fade-in 0.2s var(--ease-out) both;
 }
 
+.creator-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-surface);
+  z-index: 100;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: fade-in 0.25s var(--ease-out) both;
+}
+
 .drawer-panel {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(680px, 100vw);
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   background: var(--bg-surface);
-  border-left: 1px solid var(--border);
-  z-index: 51;
-  overflow-y: auto;
-  animation: slide-in-right 0.35s var(--ease-out) both;
+  z-index: 100;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: fade-in 0.25s var(--ease-out) both;
 }
 
 /* Tab group */

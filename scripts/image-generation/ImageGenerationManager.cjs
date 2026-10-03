@@ -100,7 +100,7 @@ class ImageGenerationManager {
    * Main image generation entry point with fallback routing
    * Priority: Google AI Studio -> Flux Local (or custom user preference)
    */
-  async generateImage({ prompt, diegeticLabel, outputPath, requestId, preferredProvider = null }) {
+  async generateImage({ prompt, diegeticLabel, outputPath, requestId, preferredProvider = null, imageIndex = null, tabId = null }) {
     const activePref = preferredProvider || this.preferredProvider;
     const reqId = requestId || `img_${Date.now()}`;
 
@@ -115,6 +115,7 @@ class ImageGenerationManager {
     console.log(`\n🎨 [ImageManager] Generation Request (${reqId})`);
     console.log(`   Primary Provider: ${primaryProviderName}`);
     console.log(`   Fallback Provider: ${fallbackProviderName}`);
+    if (imageIndex !== null) console.log(`   Image Index: ${imageIndex} (Assigned Tab: ${(imageIndex % 2 === 0 ? 1 : 2)})`);
 
     // Attempt Primary Provider
     try {
@@ -123,6 +124,8 @@ class ImageGenerationManager {
         diegeticLabel,
         outputPath,
         requestId: reqId,
+        imageIndex,
+        tabId,
       });
 
       if (primaryRes.success && fs.existsSync(outputPath) && fs.statSync(outputPath).size > 5000) {

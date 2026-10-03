@@ -15,7 +15,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
   constructor() {
     super(PROVIDERS.GOOGLE_AI_STUDIO);
     this.browserWorker = GoogleAIStudioBrowser.getInstance();
-    this.queue = new ImageGenerationQueue(3); // 3 parallel tab workers
+    this.queue = new ImageGenerationQueue(2); // 2 parallel tab workers (Tab 1: Even, Tab 2: Odd)
   }
 
   /**
@@ -37,37 +37,43 @@ class GoogleAIStudioProvider extends BaseImageProvider {
     const { diegeticLabel } = options;
     let clean = (prompt || '').trim();
     if (diegeticLabel && !clean.includes(diegeticLabel)) {
-      clean += `. Include legible text: "${diegeticLabel}".`;
+      clean += `. There is a clear, flat text that explicitly says "${diegeticLabel}" written neatly on a signboard, paper, screen, or chalkboard within the scene. The text must be bold, readable, and integrate naturally into the illustration.`;
     }
     return clean;
   }
 
   /**
-   * Public generate entry point - Enqueues task into the 3-tab worker queue
+   * Public generate entry point - Enqueues task into the 2-tab worker queue
+   * Routes even index -> Tab 1, odd index -> Tab 2
    */
   async generate(input) {
     const requestId = input.requestId || `ai_studio_${Date.now()}`;
+    let tabId = input.tabId;
+    if (tabId == null && typeof input.imageIndex === 'number') {
+      tabId = (input.imageIndex % 2 === 0) ? 1 : 2;
+    }
     return this.queue.enqueue(
-      () => this._executeGeneration({ ...input, requestId }),
-      `Request ${requestId}`
+      () => this._executeGeneration({ ...input, requestId, tabId }),
+      `Request ${requestId} (Tab ${tabId || 'auto'})`
     );
   }
 
   /**
-   * Internal generation execution on an acquired tab from the 3-tab pool
+   * Internal generation execution on an acquired tab from the 2-tab pool
    */
-  async _executeGeneration({ prompt, diegeticLabel, outputPath, requestId, aspectRatio = '16:9' }) {
-    console.log(`[AI Studio] Request queued: ${requestId}`);
+  async _executeGeneration({ prompt, diegeticLabel, outputPath, requestId, aspectRatio = '16:9', imageIndex, tabId }) {
+    const parityLabel = typeof imageIndex === 'number' ? (imageIndex % 2 === 0 ? 'EVEN' : 'ODD') : 'AUTO';
+    console.log(`[AI Studio] Request queued: ${requestId} (Assigned Tab: ${tabId || 'auto'}, Parity: ${parityLabel}, Index: ${imageIndex ?? 'N/A'})`);
     const fullPrompt = this.preparePrompt(prompt, { diegeticLabel, aspectRatio });
 
     let responseHandler = null;
     let tab = null;
 
     try {
-      // 1. Acquire dedicated tab from the 3-tab pool
-      tab = await this.browserWorker.acquireTab();
+      // 1. Acquire dedicated tab from the 2-tab pool (Tab 1 for even, Tab 2 for odd)
+      tab = await this.browserWorker.acquireTab(tabId);
       const page = tab.page;
-      console.log(`[AI Studio Tab ${tab.id}] Acquired for request: ${requestId}`);
+      console.log(`[AI Studio Tab ${tab.id}] Acquired for request: ${requestId} [Index ${imageIndex ?? 'N/A'} - ${parityLabel}]`);
 
       // 2. Chat reuse check: If tab is not initialized or chat is too long (> 15 turns), reset it
       if (!tab.isInitialized || tab.turnCount >= 15 || tab.hasError) {

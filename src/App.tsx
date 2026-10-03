@@ -1147,21 +1147,15 @@ export default function App() {
         </section>
       </main>
 
-      {/* ───── Creator Drawer ───── */}
+      {/* ───── Creator Modal (Fullscreen) ───── */}
       {showCreatorDrawer && (
-        <>
-          <div
-            className="drawer-overlay"
-            onClick={() => setShowCreatorDrawer(false)}
+        <div className="creator-fullscreen-overlay">
+          <CreatorPanel
+            currentScenes={scenes}
+            onGenerateNewVideo={handleGenerateNewVideo}
+            onCancel={() => setShowCreatorDrawer(false)}
           />
-          <div className="drawer-panel">
-            <CreatorPanel
-              currentScenes={scenes}
-              onGenerateNewVideo={handleGenerateNewVideo}
-              onCancel={() => setShowCreatorDrawer(false)}
-            />
-          </div>
-        </>
+        </div>
       )}
 
       {/* ───── Regenerate Image Modal ───── */}
