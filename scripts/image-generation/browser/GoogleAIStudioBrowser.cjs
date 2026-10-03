@@ -1,17 +1,21 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
+const EventEmitter = require('events');
 const { AI_STUDIO_URLS, AI_STUDIO_SELECTORS } = require('../selectors/aiStudioSelectors.cjs');
 
 /**
  * Singleton Browser Worker for Google AI Studio
- * Manages persistent context, session reuse, manual login flow, and tab lifecycle.
+ * Manages persistent context, session reuse, manual login flow, and multi-tab pool.
  */
-class GoogleAIStudioBrowser {
+class GoogleAIStudioBrowser extends EventEmitter {
   constructor() {
+    super();
     this.profileDir = path.resolve(process.cwd(), 'data/google-ai-studio-profile');
     this.context = null;
     this.page = null;
+    this.tabPool = [];
+    this.maxTabs = 3;
     this.isInitializing = false;
   }
 
@@ -28,12 +32,12 @@ class GoogleAIStudioBrowser {
   async ensureContext(options = {}) {
     if (this.context) {
       try {
-        // Ping pages to check if browser is still responsive
         this.context.pages();
         return this.context;
       } catch (_) {
         this.context = null;
         this.page = null;
+        this.tabPool = [];
       }
     }
 
@@ -62,8 +66,8 @@ class GoogleAIStudioBrowser {
     ];
 
     const contextOptions = {
-      headless: false, // Always visible for user verification & manual login
-      viewport: null,  // Adaptive to window size
+      headless: false,
+      viewport: null,
       args: launchArgs,
       ignoreDefaultArgs: ['--enable-automation'],
       ...options,
@@ -81,13 +85,14 @@ class GoogleAIStudioBrowser {
       console.log(`[AI Studio] Browser context closed`);
       this.context = null;
       this.page = null;
+      this.tabPool = [];
     });
 
     return this.context;
   }
 
   /**
-   * Ensure a working page is open and ready
+   * Ensure a working page is open and ready (legacy single tab accessor)
    */
   async ensurePage() {
     const context = await this.ensureContext();
@@ -103,14 +108,156 @@ class GoogleAIStudioBrowser {
       this.page = await context.newPage();
     }
 
-    // Set standard viewport & timeout
     this.page.setDefaultTimeout(60000);
     return this.page;
   }
 
   /**
+   * Initialize or retrieve the pool of 3 concurrent browser tabs
+   * @param {number} poolSize - Number of parallel tabs (default 3)
+   */
+  async ensureTabPool(poolSize = 3) {
+    const context = await this.ensureContext();
+    this.maxTabs = poolSize;
+
+    // Prune closed tabs
+    this.tabPool = this.tabPool.filter(t => t.page && !t.page.isClosed());
+
+    const existingPages = context.pages().filter(p => !p.isClosed());
+
+    // Map existing pages to tab pool
+    for (let i = 0; i < existingPages.length && this.tabPool.length < poolSize; i++) {
+      const p = existingPages[i];
+      if (!this.tabPool.some(t => t.page === p)) {
+        this.tabPool.push({
+          id: this.tabPool.length + 1,
+          page: p,
+          isBusy: false,
+          turnCount: 0,
+          isInitialized: false,
+        });
+      }
+    }
+
+    // Open new pages up to poolSize
+    while (this.tabPool.length < poolSize) {
+      const newP = await context.newPage();
+      newP.setDefaultTimeout(60000);
+      this.tabPool.push({
+        id: this.tabPool.length + 1,
+        page: newP,
+        isBusy: false,
+        turnCount: 0,
+        isInitialized: false,
+      });
+    }
+
+    return this.tabPool;
+  }
+
+  /**
+   * Acquire an available tab from the pool (blocks if all are busy)
+   * @returns {Promise<{ id: number, page: import('playwright').Page, isBusy: boolean, turnCount: number, isInitialized: boolean }>}
+   */
+  async acquireTab() {
+    await this.ensureTabPool(this.maxTabs);
+
+    const availableTab = this.tabPool.find(t => !t.isBusy && !t.page.isClosed());
+    if (availableTab) {
+      availableTab.isBusy = true;
+      return availableTab;
+    }
+
+    // Wait until a tab is released
+    return new Promise((resolve) => {
+      const onReleased = () => {
+        const tab = this.tabPool.find(t => !t.isBusy && !t.page.isClosed());
+        if (tab) {
+          this.off('tab_released', onReleased);
+          tab.isBusy = true;
+          resolve(tab);
+        }
+      };
+      this.on('tab_released', onReleased);
+    });
+  }
+
+  /**
+   * Release a tab back to the pool
+   */
+  releaseTab(tab) {
+    if (tab) {
+      tab.isBusy = false;
+      this.emit('tab_released', tab);
+    }
+  }
+
+  /**
+   * Reset a tab to a fresh chat with verified image model and 16:9 ratio
+   */
+  async resetTab(tab) {
+    console.log(`[AI Studio Tab ${tab.id}] Resetting to fresh chat session...`);
+    const page = tab.page;
+    await page.goto(AI_STUDIO_URLS.NEW_CHAT, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await page.waitForTimeout(1500);
+
+    // Ensure model is Nano Banana 2 Lite
+    try {
+      const modelBtn = page.locator(AI_STUDIO_SELECTORS.modelSelectorButton.join(', ')).first();
+      const modelText = await modelBtn.innerText().catch(() => '');
+      if (!modelText.includes('Nano Banana') && !modelText.includes('image')) {
+        console.log(`[AI Studio Tab ${tab.id}] Switching to Nano Banana 2 Lite...`);
+        await modelBtn.click();
+        await page.waitForTimeout(800);
+        const imgTab = page.locator(AI_STUDIO_SELECTORS.modelImagesTab.join(', ')).first();
+        if (await imgTab.isVisible().catch(() => false)) {
+          await imgTab.click();
+          await page.waitForTimeout(500);
+        }
+        const nanoModel = page.locator(AI_STUDIO_SELECTORS.nanoBananaModelOption.join(', ')).first();
+        if (await nanoModel.isVisible().catch(() => false)) {
+          await nanoModel.click();
+          await page.waitForTimeout(800);
+        }
+      }
+    } catch (_) {}
+
+    // Ensure Images only
+    try {
+      const imagesOnlyBtn = page.locator(AI_STUDIO_SELECTORS.imagesOnlyButton.join(', ')).first();
+      if (await imagesOnlyBtn.isVisible().catch(() => false)) {
+        await imagesOnlyBtn.click();
+        await page.waitForTimeout(300);
+      }
+    } catch (_) {}
+
+    // Ensure 16:9 Aspect Ratio
+    try {
+      const aspectSelect = page.locator(AI_STUDIO_SELECTORS.aspectRatioSelect.join(', ')).first();
+      if (await aspectSelect.isVisible().catch(() => false)) {
+        const cur = await aspectSelect.innerText().catch(() => '');
+        if (!cur.includes('16:9')) {
+          await aspectSelect.click();
+          await page.waitForTimeout(400);
+          const opt169 = page.locator(AI_STUDIO_SELECTORS.aspectRatioOption169.join(', ')).first();
+          if (await opt169.isVisible().catch(() => false)) {
+            await opt169.click();
+            await page.waitForTimeout(300);
+          } else {
+            await page.keyboard.press('Escape');
+          }
+        }
+      }
+    } catch (_) {}
+
+    tab.isInitialized = true;
+    tab.turnCount = 0;
+    tab.hasError = false;
+    console.log(`[AI Studio Tab ${tab.id}] Ready for image generation.`);
+  }
+
+  /**
    * Check whether the user is currently authenticated in Google AI Studio
-   * @returns {Promise<{ sessionValid: boolean, currentUrl: string, reason?: string }>}
    */
   async checkSession() {
     try {
@@ -123,59 +270,43 @@ class GoogleAIStudioBrowser {
       }
 
       await page.waitForLoadState('domcontentloaded');
-
       const finalUrl = page.url();
 
-      // Check if redirected to Google Accounts login page
       if (finalUrl.includes('accounts.google.com') || finalUrl.includes('signin')) {
-        console.log(`[AI Studio] Session check: Redirected to login page (${finalUrl})`);
         return { sessionValid: false, currentUrl: finalUrl, reason: 'REDIRECTED_TO_SIGNIN' };
       }
 
-      // Check for Sign-in buttons on the page
       for (const selector of AI_STUDIO_SELECTORS.loginButton) {
-        const isVisible = await page.locator(selector).first().isVisible().catch(() => false);
-        if (isVisible) {
-          console.log(`[AI Studio] Session check: Sign in button detected`);
+        if (await page.locator(selector).first().isVisible().catch(() => false)) {
           return { sessionValid: false, currentUrl: finalUrl, reason: 'SIGNIN_BUTTON_VISIBLE' };
         }
       }
 
-      // Check for Authenticated indicators
       for (const selector of AI_STUDIO_SELECTORS.authenticatedIndicators) {
-        const isPresent = await page.locator(selector).first().isVisible().catch(() => false);
-        if (isPresent) {
-          console.log(`[AI Studio] Session valid (detected ${selector})`);
+        if (await page.locator(selector).first().isVisible().catch(() => false)) {
           return { sessionValid: true, currentUrl: finalUrl };
         }
       }
 
-      // If we are on aistudio.google.com and not redirected to accounts, assume valid
       if (finalUrl.includes('aistudio.google.com')) {
-        console.log(`[AI Studio] Session valid: on domain ${finalUrl}`);
         return { sessionValid: true, currentUrl: finalUrl };
       }
 
       return { sessionValid: false, currentUrl: finalUrl, reason: 'UNKNOWN_STATE' };
     } catch (err) {
-      console.warn(`[AI Studio] Error during session check:`, err.message);
       return { sessionValid: false, currentUrl: '', reason: err.message };
     }
   }
 
   /**
    * Launch browser window for user to manually log in
-   * User logs in with their own Google account manually.
    */
   async openForManualLogin() {
     console.log(`[AI Studio] Opening browser for manual Google login...`);
     const page = await this.ensurePage();
     await page.goto(AI_STUDIO_URLS.HOME, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.bringToFront();
-
-    // Check if already logged in
-    const check = await this.checkSession();
-    return check;
+    return this.checkSession();
   }
 
   /**
@@ -188,9 +319,11 @@ class GoogleAIStudioBrowser {
       } catch (_) {}
       this.context = null;
       this.page = null;
+      this.tabPool = [];
       console.log(`[AI Studio] Browser closed cleanly`);
     }
   }
 }
 
 module.exports = GoogleAIStudioBrowser;
+

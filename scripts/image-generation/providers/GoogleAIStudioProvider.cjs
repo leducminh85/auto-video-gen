@@ -15,7 +15,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
   constructor() {
     super(PROVIDERS.GOOGLE_AI_STUDIO);
     this.browserWorker = GoogleAIStudioBrowser.getInstance();
-    this.queue = new ImageGenerationQueue(1); // Single worker queue
+    this.queue = new ImageGenerationQueue(3); // 3 parallel tab workers
   }
 
   /**
@@ -43,7 +43,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
   }
 
   /**
-   * Public generate entry point - Enqueues task sequentially
+   * Public generate entry point - Enqueues task into the 3-tab worker queue
    */
   async generate(input) {
     const requestId = input.requestId || `ai_studio_${Date.now()}`;
@@ -54,110 +54,57 @@ class GoogleAIStudioProvider extends BaseImageProvider {
   }
 
   /**
-   * Internal generation execution on the persistent page
+   * Internal generation execution on an acquired tab from the 3-tab pool
    */
   async _executeGeneration({ prompt, diegeticLabel, outputPath, requestId, aspectRatio = '16:9' }) {
     console.log(`[AI Studio] Request queued: ${requestId}`);
     const fullPrompt = this.preparePrompt(prompt, { diegeticLabel, aspectRatio });
 
     let responseHandler = null;
-    let page = null;
+    let tab = null;
 
     try {
-      page = await this.browserWorker.ensurePage();
+      // 1. Acquire dedicated tab from the 3-tab pool
+      tab = await this.browserWorker.acquireTab();
+      const page = tab.page;
+      console.log(`[AI Studio Tab ${tab.id}] Acquired for request: ${requestId}`);
 
-      // 1. Verify session
-      const session = await this.browserWorker.checkSession();
-      if (!session.sessionValid) {
-        console.warn(`[AI Studio] Session invalid: user authentication required`);
-        return createErrorResult({
-          provider: this.name,
-          requestId,
-          code: ERROR_CODES.AUTH_REQUIRED,
-          message: 'Google AI Studio session expired or not logged in. Please sign in.',
-          details: session.reason,
-        });
+      // 2. Chat reuse check: If tab is not initialized or chat is too long (> 15 turns), reset it
+      if (!tab.isInitialized || tab.turnCount >= 15 || tab.hasError) {
+        await this.browserWorker.resetTab(tab);
+      } else {
+        console.log(`[AI Studio Tab ${tab.id}] ⚡ Reusing existing chat session (turn ${tab.turnCount + 1}) without reloading!`);
       }
 
-      // 2. Open fresh new prompt page
-      console.log(`[AI Studio] Opening fresh prompt editor: ${AI_STUDIO_URLS.NEW_CHAT}`);
-      await page.goto(AI_STUDIO_URLS.NEW_CHAT, { waitUntil: 'domcontentloaded', timeout: 45000 });
-      await page.waitForTimeout(1500);
-
-      // 3. Ensure image model (Nano Banana 2 Lite) is selected
-      try {
-        const modelBtn = page.locator(AI_STUDIO_SELECTORS.modelSelectorButton.join(', ')).first();
-        const modelText = await modelBtn.innerText().catch(() => '');
-        if (!modelText.includes('Nano Banana') && !modelText.includes('image')) {
-          console.log(`[AI Studio] Current model "${modelText.trim()}" is not image model. Switching...`);
-          await modelBtn.click();
-          await page.waitForTimeout(800);
-
-          const imgTab = page.locator(AI_STUDIO_SELECTORS.modelImagesTab.join(', ')).first();
-          if (await imgTab.isVisible().catch(() => false)) {
-            await imgTab.click();
-            await page.waitForTimeout(500);
-          }
-
-          const nanoModel = page.locator(AI_STUDIO_SELECTORS.nanoBananaModelOption.join(', ')).first();
-          if (await nanoModel.isVisible().catch(() => false)) {
-            await nanoModel.click();
-            await page.waitForTimeout(800);
-            console.log(`[AI Studio] Successfully switched to Nano Banana 2 Lite`);
-          }
-        }
-      } catch (err) {
-        console.warn(`[AI Studio] Model check warning:`, err.message);
-      }
-
-      // 4. Configure Output format ("Images only") & Aspect ratio ("16:9")
-      try {
-        const imagesOnlyBtn = page.locator(AI_STUDIO_SELECTORS.imagesOnlyButton.join(', ')).first();
-        if (await imagesOnlyBtn.isVisible().catch(() => false)) {
-          await imagesOnlyBtn.click();
-          await page.waitForTimeout(300);
-        }
-
-        if (aspectRatio === '16:9') {
-          const aspectSelect = page.locator(AI_STUDIO_SELECTORS.aspectRatioSelect.join(', ')).first();
-          if (await aspectSelect.isVisible().catch(() => false)) {
-            const currentAspect = await aspectSelect.innerText().catch(() => '');
-            if (!currentAspect.includes('16:9')) {
-              await aspectSelect.click();
-              await page.waitForTimeout(400);
-              const opt169 = page.locator(AI_STUDIO_SELECTORS.aspectRatioOption169.join(', ')).first();
-              if (await opt169.isVisible().catch(() => false)) {
-                await opt169.click();
-                await page.waitForTimeout(300);
-              } else {
-                await page.keyboard.press('Escape');
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.warn(`[AI Studio] Settings configuration warning:`, err.message);
-      }
-
-      // 5. Setup Network Interceptor for GenerateContent RPC (Primary, high-fidelity source)
+      // 3. Register Network Interceptor for GenerateContent RPC strictly on THIS tab
       let capturedBase64 = null;
+      let isQuotaExceeded = false;
+
       responseHandler = async (res) => {
         const url = res.url();
         if (url.includes('MakerSuiteService/GenerateContent')) {
+          if (res.status() === 429) {
+            console.warn(`[AI Studio Tab ${tab.id}] Rate limit / Quota exceeded (HTTP 429)`);
+            isQuotaExceeded = true;
+            return;
+          }
           try {
             const body = await res.text();
+            if (body.includes('user has exceeded quota') || body.includes('quota for the day') || body.includes('out of free generations')) {
+              isQuotaExceeded = true;
+              return;
+            }
             const match = body.match(/\["image\/(?:jpeg|png|webp)",\s*"([A-Za-z0-9+/=]{100,})"\]/);
             if (match && match[1]) {
               capturedBase64 = match[1];
-              console.log(`[AI Studio] Intercepted generated image via GenerateContent RPC (${capturedBase64.length} chars)`);
+              console.log(`[AI Studio Tab ${tab.id}] Intercepted generated image via GenerateContent RPC (${capturedBase64.length} chars)`);
             }
           } catch (_) {}
         }
       };
       page.on('response', responseHandler);
 
-      // 6. Locate and fill prompt textarea
-      console.log(`[AI Studio] Locating prompt input...`);
+      // 4. Locate prompt textarea on this tab
       let inputLocator = null;
       for (const sel of AI_STUDIO_SELECTORS.promptInput) {
         const loc = page.locator(sel).first();
@@ -168,21 +115,18 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       }
 
       if (!inputLocator) {
-        console.error(`[AI Studio] Failed: Prompt textarea not found on page`);
-        return createErrorResult({
-          provider: this.name,
-          requestId,
-          code: ERROR_CODES.UI_UNRECOGNIZED,
-          message: 'Could not find prompt input area in AI Studio UI',
-        });
+        console.log(`[AI Studio Tab ${tab.id}] Input not found, resetting tab...`);
+        await this.browserWorker.resetTab(tab);
+        inputLocator = page.locator('textarea').first();
       }
 
+      // 5. Input prompt into this tab
       await inputLocator.click();
       await inputLocator.fill(fullPrompt);
-      console.log(`[AI Studio] Prompt entered: "${fullPrompt.substring(0, 70)}..."`);
+      console.log(`[AI Studio Tab ${tab.id}] Prompt entered: "${fullPrompt.substring(0, 60)}..."`);
       await page.waitForTimeout(300);
 
-      // 7. Submit generation
+      // 6. Submit generation on this tab
       let submitted = false;
       for (const sel of AI_STUDIO_SELECTORS.runButton) {
         const runBtn = page.locator(sel).first();
@@ -197,26 +141,45 @@ class GoogleAIStudioProvider extends BaseImageProvider {
         await page.keyboard.press('ControlOrMeta+Enter');
       }
 
-      console.log(`[AI Studio] Prompt submitted, awaiting generation (timeout: 90s)...`);
+      console.log(`[AI Studio Tab ${tab.id}] Submitted, awaiting generation...`);
 
-      // 8. Wait for generation to complete (via network intercept or DOM)
+      // 7. Await generation output on this tab
       const startTime = Date.now();
       const maxTimeoutMs = 90000;
       let rawImageBuffer = null;
 
       while (Date.now() - startTime < maxTimeoutMs) {
-        // Priority 1: Network Intercept
+        if (isQuotaExceeded) {
+          tab.hasError = true;
+          return createErrorResult({
+            provider: this.name,
+            requestId,
+            code: ERROR_CODES.GENERATION_FAILED,
+            message: 'Google AI Studio daily quota exceeded: "You\'ve reached your quota for the day". Please wait for reset or use Flux Local.',
+          });
+        }
+
         if (capturedBase64) {
           rawImageBuffer = Buffer.from(capturedBase64, 'base64');
-          console.log(`[AI Studio] Extracted pristine image from RPC intercept (${rawImageBuffer.length} bytes)`);
+          console.log(`[AI Studio Tab ${tab.id}] Extracted pristine image (${rawImageBuffer.length} bytes)`);
           break;
         }
 
-        // Check for safety violation or system error
+        // Check for UI error text
         const bodyContent = await page.textContent('body').catch(() => '');
+        if (bodyContent.includes('user has exceeded quota') || bodyContent.includes('out of free generations') || bodyContent.includes('quota for the day')) {
+          tab.hasError = true;
+          return createErrorResult({
+            provider: this.name,
+            requestId,
+            code: ERROR_CODES.GENERATION_FAILED,
+            message: 'Google AI Studio daily quota exceeded: "You are out of free generations for the day".',
+          });
+        }
+
         if (AI_STUDIO_SELECTORS.safetyViolationText.test(bodyContent)) {
           if (/permission denied|internal error/i.test(bodyContent)) {
-            console.error(`[AI Studio] Google AI Studio service error detected`);
+            tab.hasError = true;
             return createErrorResult({
               provider: this.name,
               requestId,
@@ -224,7 +187,6 @@ class GoogleAIStudioProvider extends BaseImageProvider {
               message: 'Google AI Studio reported an internal or permission error',
             });
           }
-          console.warn(`[AI Studio] Safety guidelines triggered`);
           return createErrorResult({
             provider: this.name,
             requestId,
@@ -233,7 +195,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
           });
         }
 
-        // Check DOM for rendered image fallback
+        // DOM Fallback
         const generatedImg = page.locator('img[alt*="Generated Image" i], img[src*="blob:https://aistudio.google.com"]').last();
         if (await generatedImg.isVisible().catch(() => false)) {
           try {
@@ -252,37 +214,25 @@ class GoogleAIStudioProvider extends BaseImageProvider {
             });
             if (b64 && b64.length > 5000) {
               rawImageBuffer = Buffer.from(b64, 'base64');
-              console.log(`[AI Studio] Extracted image from DOM blob (${rawImageBuffer.length} bytes)`);
               break;
             }
           } catch (_) {}
         }
 
-        await page.waitForTimeout(1000);
-      }
-
-      // Final fallback: DOM element screenshot if buffer still null
-      if (!rawImageBuffer) {
-        const fallbackImg = page.locator('img[alt*="Generated Image" i], img[src*="blob:https://aistudio.google.com"]').last();
-        if (await fallbackImg.isVisible().catch(() => false)) {
-          try {
-            rawImageBuffer = await fallbackImg.screenshot();
-            console.log(`[AI Studio] Acquired image via element screenshot fallback (${rawImageBuffer.length} bytes)`);
-          } catch (_) {}
-        }
+        await page.waitForTimeout(800);
       }
 
       if (!rawImageBuffer || rawImageBuffer.length < 5000) {
-        console.warn(`[AI Studio] Failed: Generation timed out or image not received after ${maxTimeoutMs / 1000}s`);
+        tab.hasError = true;
         return createErrorResult({
           provider: this.name,
           requestId,
           code: ERROR_CODES.TIMEOUT,
-          message: 'Timed out waiting for generated image from Google AI Studio',
+          message: `Timed out waiting for generated image on Tab ${tab.id}`,
         });
       }
 
-      // 9. Process image with Sharp and write to outputPath (1920x1080 PNG)
+      // 8. Process and write to outputPath (1920x1080)
       const outputDir = path.dirname(outputPath);
       if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
@@ -292,7 +242,8 @@ class GoogleAIStudioProvider extends BaseImageProvider {
         .toFile(outputPath);
 
       if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 5000) {
-        console.log(`[AI Studio] Successfully saved 1920x1080 image to: ${outputPath}`);
+        tab.turnCount++;
+        console.log(`[AI Studio Tab ${tab.id}] ✓ Successfully saved 1920x1080 image to: ${outputPath}`);
         return createSuccessResult({
           provider: this.name,
           requestId,
@@ -307,6 +258,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
         message: 'Saved image file is missing or invalid',
       });
     } catch (err) {
+      if (tab) tab.hasError = true;
       console.error(`[AI Studio] Generation error:`, err.message);
       return createErrorResult({
         provider: this.name,
@@ -315,10 +267,13 @@ class GoogleAIStudioProvider extends BaseImageProvider {
         message: err.message,
       });
     } finally {
-      if (page && responseHandler) {
+      if (tab && tab.page && responseHandler) {
         try {
-          page.off('response', responseHandler);
+          tab.page.off('response', responseHandler);
         } catch (_) {}
+      }
+      if (tab) {
+        this.browserWorker.releaseTab(tab);
       }
     }
   }
