@@ -1873,6 +1873,16 @@ async function generateVideo({
       console.log(`✓ Đã ghép xong final-video.mp4 (${fs.statSync(finalVideoPath).size} bytes)`);
     } catch (concatErr) {
       console.warn('ffmpeg concat error:', concatErr);
+    } finally {
+      try {
+        if (fs.existsSync(listFile)) fs.unlinkSync(listFile);
+        for (let sId = 1; sId <= totalScenes; sId++) {
+          const d = path.join(PUBLIC_DIR, `temp_scene_${sId}`);
+          if (fs.existsSync(d)) {
+            fs.rmSync(d, { recursive: true, force: true });
+          }
+        }
+      } catch (_) {}
     }
   }
 
