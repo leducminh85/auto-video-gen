@@ -1430,8 +1430,16 @@ async function generateVideo({
   content,
   geminiApiKey,
   openaiApiKey,
+  preferredImageProvider,
   onProgress,
 }) {
+  if (preferredImageProvider) {
+    try {
+      const ImageGenerationManager = require('./image-generation/ImageGenerationManager.cjs');
+      ImageGenerationManager.getInstance().setPreferredProvider(preferredImageProvider);
+    } catch (_) {}
+  }
+
   const { generateStoryboardFromContent } = require('./storyboardGenerator.cjs');
   const {
     createVideoStyleGuide,

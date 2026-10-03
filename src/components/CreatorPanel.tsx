@@ -329,6 +329,64 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [openaiApiKey, setOpenaiApiKey] = useState<string>(() => {
     return localStorage.getItem('openai_api_key') || '';
   });
+  const [selectedImageProvider, setSelectedImageProvider] = useState<'google_ai_studio' | 'flux_local'>(() => {
+    return (localStorage.getItem('preferred_image_provider') as any) || 'google_ai_studio';
+  });
+  const [aiStudioConnected, setAiStudioConnected] = useState<boolean>(false);
+  const [fluxAvailable, setFluxAvailable] = useState<boolean>(true);
+  const [isTestingProvider, setIsTestingProvider] = useState<boolean>(false);
+  const [providerTestMessage, setProviderTestMessage] = useState<string>('');
+
+  const checkImageProviderStatus = async () => {
+    try {
+      const res = await fetch('/api/image-provider/status');
+      if (res.ok) {
+        const data = await res.json();
+        setAiStudioConnected(data.aiStudioSession?.sessionValid ?? false);
+        setFluxAvailable(data.fluxAvailable ?? true);
+        if (data.preferredProvider) {
+          setSelectedImageProvider(data.preferredProvider);
+        }
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    checkImageProviderStatus();
+  }, []);
+
+  const handleSelectProvider = async (provider: 'google_ai_studio' | 'flux_local') => {
+    setSelectedImageProvider(provider);
+    localStorage.setItem('preferred_image_provider', provider);
+    try {
+      await fetch('/api/image-provider/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preferredProvider: provider }),
+      });
+    } catch (_) {}
+  };
+
+  const handleTestAIStudio = async () => {
+    setIsTestingProvider(true);
+    setProviderTestMessage('Đang mở Chrome profile & kiểm tra kết nối Google AI Studio...');
+    try {
+      const res = await fetch('/api/image-provider/test-connection', { method: 'POST' });
+      const data = await res.json();
+      if (data.session?.sessionValid) {
+        setAiStudioConnected(true);
+        setProviderTestMessage('✓ Đã kết nối Google AI Studio thành công! Trình duyệt đã sẵn sàng.');
+      } else {
+        setAiStudioConnected(false);
+        setProviderTestMessage('Vui lòng đăng nhập tài khoản Google trên cửa sổ Chrome vừa mở, sau đó bấm Test lại.');
+      }
+    } catch (err: any) {
+      setProviderTestMessage(`Lỗi: ${err.message}`);
+    } finally {
+      setIsTestingProvider(false);
+      checkImageProviderStatus();
+    }
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -555,6 +613,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           scenes: rawParsedScenes,
           geminiApiKey: geminiApiKey.trim() || undefined,
           openaiApiKey: openaiApiKey.trim() || undefined,
+          preferredImageProvider: selectedImageProvider,
         }),
       });
 
@@ -963,6 +1022,155 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           {/* Advanced Gemini API Key Setting */}
           {showAdvancedSettings && (
             <>
+            {/* Image Provider Selection */}
+            <div
+              style={{
+                marginTop: 10,
+                padding: 14,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-base)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    🎨 Bộ tạo hình ảnh (Image Provider)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleTestAIStudio}
+                  disabled={isTestingProvider}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-primary)',
+                    cursor: isTestingProvider ? 'wait' : 'pointer',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  {isTestingProvider ? '⏳ Đang kiểm tra...' : '⚡ Test Google AI Studio'}
+                </button>
+              </div>
+
+              {providerTestMessage && (
+                <div
+                  style={{
+                    fontSize: 11,
+                    marginBottom: 10,
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    background: providerTestMessage.startsWith('✓') ? 'rgba(34,197,94,0.1)' : 'rgba(234,179,8,0.1)',
+                    color: providerTestMessage.startsWith('✓') ? 'var(--success)' : 'var(--warning, #eab308)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                  }}
+                >
+                  {providerTestMessage}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* Option 1: Google AI Studio */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 10,
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    background: selectedImageProvider === 'google_ai_studio' ? 'rgba(59,130,246,0.08)' : 'var(--bg-card)',
+                    border: selectedImageProvider === 'google_ai_studio' ? '1px solid var(--accent, #3b82f6)' : '1px solid var(--border)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="imageProvider"
+                    value="google_ai_studio"
+                    checked={selectedImageProvider === 'google_ai_studio'}
+                    onChange={() => handleSelectProvider('google_ai_studio')}
+                    style={{ marginTop: 2, accentColor: 'var(--accent)' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--text-primary)' }}>
+                        Google AI Studio (Ưu tiên số 1 - Khuyên dùng)
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: '1px 8px',
+                          borderRadius: 10,
+                          color: aiStudioConnected ? 'var(--success, #22c55e)' : '#eab308',
+                          background: aiStudioConnected ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)',
+                        }}
+                      >
+                        {aiStudioConnected ? '● Connected' : '○ Login required'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                      Tạo ảnh chất lượng cao qua Google AI Studio (Playwright Chrome persistent worker). Tự động fallback sang Flux Local nếu lỗi.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Option 2: Flux Local */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 10,
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    background: selectedImageProvider === 'flux_local' ? 'rgba(59,130,246,0.08)' : 'var(--bg-card)',
+                    border: selectedImageProvider === 'flux_local' ? '1px solid var(--accent, #3b82f6)' : '1px solid var(--border)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="imageProvider"
+                    value="flux_local"
+                    checked={selectedImageProvider === 'flux_local'}
+                    onChange={() => handleSelectProvider('flux_local')}
+                    style={{ marginTop: 2, accentColor: 'var(--accent)' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--text-primary)' }}>
+                        Flux Local (Dự phòng / Chạy ngoại tuyến)
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: '1px 8px',
+                          borderRadius: 10,
+                          color: fluxAvailable ? 'var(--success, #22c55e)' : 'var(--text-muted)',
+                          background: fluxAvailable ? 'rgba(34,197,94,0.12)' : 'rgba(100,100,100,0.12)',
+                        }}
+                      >
+                        {fluxAvailable ? '● Ready (Metal M4)' : '○ Standby'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                      Render cục bộ bằng mflux trên GPU Metal Apple M4 không cần mạng. Luôn là phương án dự phòng tin cậy.
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <div
               style={{
                 marginTop: 10,

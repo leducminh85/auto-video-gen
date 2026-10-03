@@ -57,6 +57,57 @@ function videoApiPlugin(): Plugin {
           });
           return;
         }
+
+        // Image Provider Status API
+        if (req.url === '/api/image-provider/status' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json');
+          try {
+            const ImageGenerationManager = require('./scripts/image-generation/ImageGenerationManager.cjs');
+            const manager = ImageGenerationManager.getInstance();
+            const status = await manager.getStatus();
+            res.end(JSON.stringify(status));
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: err.message }));
+          }
+          return;
+        }
+
+        // Image Provider Config API
+        if (req.url === '/api/image-provider/config' && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', () => {
+            res.setHeader('Content-Type', 'application/json');
+            try {
+              const { preferredProvider } = JSON.parse(body);
+              const ImageGenerationManager = require('./scripts/image-generation/ImageGenerationManager.cjs');
+              const manager = ImageGenerationManager.getInstance();
+              manager.setPreferredProvider(preferredProvider);
+              res.end(JSON.stringify({ success: true, preferredProvider }));
+            } catch (err: any) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // Test Google AI Studio Connection & Open Login Browser
+        if (req.url === '/api/image-provider/test-connection' && req.method === 'POST') {
+          res.setHeader('Content-Type', 'application/json');
+          try {
+            const GoogleAIStudioBrowser = require('./scripts/image-generation/browser/GoogleAIStudioBrowser.cjs');
+            const browser = GoogleAIStudioBrowser.getInstance();
+            const session = await browser.openForManualLogin();
+            res.end(JSON.stringify({ success: true, session }));
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: err.message }));
+          }
+          return;
+        }
+
         next();
       });
     },

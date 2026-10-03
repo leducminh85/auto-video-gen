@@ -125,7 +125,8 @@ export interface VisualBeat {
   title: string;
   prompt: string;
   image_file: string;
-  svg_data?: string;
+  image_version?: number;
+  svg_data?: string | null;
   duration_in_seconds: number;
   duration_in_frames: number;
   start_frame_offset: number; // Relative to scene.start_frame
@@ -147,7 +148,9 @@ export interface SceneData {
   narration?: string;
   prompt: string;
   audio_file: string;
+  audio_version?: number;
   image_file: string;
+  image_version?: number;
   beats?: VisualBeat[];
   duration_in_seconds: number;
   duration_in_frames: number;
@@ -202,7 +205,7 @@ export interface ProductionData {
 export interface VoiceOption {
   id: string;
   name: string;
-  region: 'Bắc' | 'Nam' | 'Trung' | 'AI Studio';
+  region: 'Bắc' | 'Nam' | 'Trung' | 'AI Studio' | 'Toàn quốc' | 'US' | 'UK';
   gender: 'female' | 'male';
   tag: string;
   description: string;

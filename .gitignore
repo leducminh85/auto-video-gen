@@ -16,3 +16,9 @@ public/clips_list.txt
 *.mp4
 *.mp3
 *.wav
+
+# Browser Automation & AI Studio persistent profile
+data/google-ai-studio-profile/
+data/
+playwright-auth/
+scratch/

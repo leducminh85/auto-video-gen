@@ -3,13 +3,6 @@ const path = require('path');
 const sharp = require('sharp');
 const { execSync } = require('child_process');
 
-/**
- * Multi-Tier FLUX.1 Image Generation Engine
- * Tier 1: Local Mac Metal Server (Draw Things / SD WebUI / ComfyUI on http://127.0.0.1:7860)
- * Tier 2: Local MLX Apple Silicon (mflux-generate if HF_TOKEN is configured)
- * Tier 3: Free Cloud FLUX.1 (Pollinations.ai - Zero API key, 100% free)
- */
-
 const LOCAL_SD_PORT = process.env.LOCAL_SD_PORT || '7860';
 const LOCAL_SD_API_URL = process.env.LOCAL_SD_API_URL || `http://127.0.0.1:${LOCAL_SD_PORT}/sdapi/v1/txt2img`;
 
@@ -116,80 +109,8 @@ async function generateViaMflux({ prompt, outputPath }) {
   return { success: false };
 }
 
-/**
- * Generate image via Free Cloud FLUX.1 (Pollinations.ai)
- * 100% Free, NO API Key needed, high aesthetic quality
- */
-async function generateViaFreeFlux({ prompt, outputPath }) {
-  const cleanPrompt = prompt
-    .replace(/[^\p{L}\p{N}\s.,$%-]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .substring(0, 300);
-
-  const encodedPrompt = encodeURIComponent(
-    `${cleanPrompt}, 2D cartoon explainer, minimalist stickman style, warm paper background, clear vector line art, 1080p`
-  );
-  const seed = Math.floor(Math.random() * 999999);
-
-  const candidateUrls = [
-    `https://image.pollinations.ai/prompt/${encodedPrompt}?model=flux&width=1280&height=720&nologo=true&seed=${seed}`,
-    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=720&nologo=true&seed=${seed}`,
-    `https://image.pollinations.ai/prompt/${encodedPrompt}?model=turbo&width=1280&height=720&nologo=true&seed=${seed}`,
-  ];
-
-  for (const url of candidateUrls) {
-    try {
-      console.log(`   🎨 [FLUX.1 Cloud Free] Đang tạo ảnh AI chất lượng cao (miễn phí)...`);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s per candidate
-
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Apple Silicon)' },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const arrayBuffer = await res.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        if (buffer.length > 5000) {
-          await sharp(buffer)
-            .resize(1920, 1080, { fit: 'cover', position: 'centre' })
-            .png({ quality: 95 })
-            .toFile(outputPath);
-          return { success: true, method: 'flux_free' };
-        }
-      }
-    } catch (_) {}
-  }
-  return { success: false };
-}
-
-/**
- * Unified Image Generation Engine with Priority Routing:
- * Priority 1: Google AI Studio (Playwright Persistent Worker)
- * Priority 2: Local FLUX.1 (Apple Silicon Metal M4 via mflux / Draw Things)
- */
-async function generateFluxImage({ prompt, diegeticLabel, outputPath }) {
-  const ImageGenerationManager = require('./image-generation/ImageGenerationManager.cjs');
-  const manager = ImageGenerationManager.getInstance();
-  const res = await manager.generateImage({
-    prompt,
-    diegeticLabel,
-    outputPath,
-  });
-
-  return {
-    success: res.success,
-    method: res.provider || (res.metadata && res.metadata.method) || 'flux',
-    error: res.error,
-  };
-}
-
 module.exports = {
-  generateFluxImage,
+  isLocalServerAlive,
   generateViaLocalServer,
   generateViaMflux,
-  generateViaFreeFlux,
 };
