@@ -14,9 +14,10 @@ import { ProcessScene } from './scenes/ProcessScene';
 
 interface SceneRendererProps {
   scene: SceneData;
+  isDebug?: boolean;
 }
 
-export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene }) => {
+export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = false }) => {
   const frame = useCurrentFrame();
   const totalDuration = scene.duration_in_frames;
 
@@ -28,35 +29,139 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene }) => {
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
 
-  // Infer visual_type if missing
-  const getResolvedVisualType = (): VisualType => {
-    if (scene.visual_type) return scene.visual_type;
+  // Multi-Beat Tracking (Synchronized with speech beats)
+  const beats = (scene.beats && scene.beats.length > 0)
+    ? scene.beats
+    : [
+        {
+          id: `scene_${scene.id}_beat_1`,
+          sub_index: 1,
+          title: scene.title,
+          prompt: scene.prompt,
+          image_file: scene.image_file,
+          duration_in_seconds: scene.duration_in_seconds,
+          duration_in_frames: scene.duration_in_frames,
+          start_frame_offset: 0,
+          caption: scene.text,
+          visual_type: scene.visual_type,
+        },
+      ];
 
-    // Check features from generator
-    const fType = scene.features?.sceneType;
-    if (fType) {
-      if (['pie_chart', 'profit_glass_jump'].includes(fType)) return 'chart';
-      if (['locked_door', 'beer_crate_price', 'beer_tap_hand', 'brewery_tank_machine'].includes(fType)) return 'object_metaphor';
-      if (['crowd_wave'].includes(fType)) return 'numbers';
-      if (['street_walk'].includes(fType)) return 'environment';
-      if (['cooking', 'tech_code'].includes(fType)) return 'character';
+  let activeBeatIndex = 0;
+  for (let i = 0; i < beats.length; i++) {
+    const b = beats[i];
+    const beatEnd = b.start_frame_offset + b.duration_in_frames;
+    if (frame >= b.start_frame_offset && (frame < beatEnd || i === beats.length - 1)) {
+      activeBeatIndex = i;
+      break;
     }
+  }
 
-    const text = `${scene.title} ${scene.text}`.toLowerCase();
-    if (/\d+%\s*|\d+\s*(?:triệu|tỷ|usd|đô|\$)/i.test(text)) return 'numbers';
-    if (/so với|thay vì|lựa chọn|khác biệt|đổi lại|ngược lại/i.test(text)) return 'comparison';
-    if (/bước|quy trình|chu kỳ|lộ trình|tiến trình/i.test(text)) return 'process';
-    if (/mô hình|dòng tiền|sơ đồ|hệ thống|kết nối/i.test(text)) return 'diagram';
-    if (/kết luận|tóm lại|chìa khóa|nguyên tắc|bài học/i.test(text)) return 'typography';
-    if (/phòng gym|cửa hàng|văn phòng|trên phố|quán/i.test(text)) return 'environment';
-    if (/thẻ|tiền|tài khoản|hợp đồng|máy móc/i.test(text)) return 'object_metaphor';
+  const activeBeat = beats[activeBeatIndex] || beats[0];
+  const beatLocalFrame = Math.max(0, frame - activeBeat.start_frame_offset);
+  const beatDuration = Math.max(1, activeBeat.duration_in_frames);
 
+  // Micro-motion Ken-Burns zoom on active beat
+  const beatScale = interpolate(
+    beatLocalFrame,
+    [0, beatDuration],
+    [1.0, 1.03],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  );
+
+  const beatOpacity = interpolate(
+    beatLocalFrame,
+    [0, 5],
+    [0.3, 1],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  );
+
+  // Resolve visual type from active beat or scene
+  const getResolvedVisualType = (): VisualType => {
+    if (activeBeat.visual_type) return activeBeat.visual_type;
+    if (activeBeat.plan?.visualMethod) {
+      const vm = activeBeat.plan.visualMethod;
+      if (vm === 'character_action') return 'character';
+      if (vm === 'object_metaphor') return 'object_metaphor';
+      if (vm === 'numbers') return 'numbers';
+      if (vm === 'comparison') return 'comparison';
+      if (vm === 'process') return 'process';
+      if (vm === 'diagram') return 'diagram';
+      if (vm === 'infographic') return 'chart';
+      if (vm === 'typography') return 'typography';
+      if (vm === 'environment') return 'environment';
+    }
+    if (scene.visual_type) return scene.visual_type;
     return 'character';
   };
 
   const visualType = getResolvedVisualType();
 
-  const renderComponentByVisualType = () => {
+  // If beat has bespoke SVG, render vector art directly
+  const renderBeatVisual = () => {
+    if (activeBeat.svg_data) {
+      const svgSrc = activeBeat.svg_data.startsWith('data:')
+        ? activeBeat.svg_data
+        : `data:image/svg+xml;utf8,${encodeURIComponent(activeBeat.svg_data)}`;
+
+      return (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            transform: `scale(${beatScale})`,
+            transformOrigin: 'center center',
+            opacity: beatOpacity,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <img
+            src={svgSrc}
+            alt={activeBeat.title}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+            }}
+          />
+        </div>
+      );
+    }
+
+    if (activeBeat.image_file) {
+      const imgSrc = activeBeat.image_file.startsWith('http') || activeBeat.image_file.startsWith('/')
+        ? activeBeat.image_file
+        : staticFile(`images/${activeBeat.image_file}`);
+
+      return (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            transform: `scale(${beatScale})`,
+            transformOrigin: 'center center',
+            opacity: beatOpacity,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <img
+            src={imgSrc}
+            alt={activeBeat.title}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Programmatic Scene Component Fallback
     switch (visualType) {
       case 'character':
         return <CharacterScene scene={scene} />;
@@ -76,7 +181,6 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene }) => {
         return <TypographyScene scene={scene} />;
       case 'object':
       case 'object_metaphor':
-      case 'metaphor' as any:
         return <ObjectMetaphorScene scene={scene} />;
       case 'timeline':
       case 'process':
@@ -102,102 +206,103 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene }) => {
         width: '100%',
         height: '100%',
         position: 'relative',
-        backgroundColor: '#F8FAFC',
+        backgroundColor: '#FDFBF7',
         overflow: 'hidden',
         fontFamily: "'Be Vietnam Pro', system-ui, -apple-system, sans-serif",
         opacity: sceneOpacity,
       }}
     >
-      {/* Dynamic Camera Animation */}
+      {/* Dynamic Camera Animation & Beat Content */}
       <CameraContainer camera={scene.camera || 'static'} durationInFrames={totalDuration}>
-        {renderComponentByVisualType()}
+        {renderBeatVisual()}
       </CameraContainer>
 
-      {/* Top Header Badge Overlay */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 24,
-          left: 36,
-          right: 36,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          pointerEvents: 'none',
-        }}
-      >
+      {/* Top Header Badge Overlay - ONLY SHOWN IN DEBUG MODE */}
+      {isDebug && (
         <div
           style={{
+            position: 'absolute',
+            top: 24,
+            left: 36,
+            right: 36,
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
-            backgroundColor: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(8px)',
-            padding: '8px 18px',
-            borderRadius: 14,
-            border: '1.5px solid rgba(245, 158, 11, 0.4)',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          }}
-        >
-          <span
-            style={{
-              backgroundColor: '#F59E0B',
-              color: '#0F172A',
-              fontWeight: 900,
-              fontSize: 14,
-              padding: '2px 8px',
-              borderRadius: 6,
-              letterSpacing: 0.5,
-            }}
-          >
-            CẢNH {scene.id}
-          </span>
-          <span
-            style={{
-              color: '#FFFFFF',
-              fontWeight: 700,
-              fontSize: 18,
-              letterSpacing: -0.2,
-            }}
-          >
-            {scene.title}
-          </span>
-        </div>
-
-        {/* Visual Type Indicator */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            backgroundColor: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(8px)',
-            padding: '8px 16px',
-            borderRadius: 14,
-            border: '1.5px solid rgba(59, 130, 246, 0.4)',
+            justifyContent: 'space-between',
+            pointerEvents: 'none',
           }}
         >
           <div
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: '#3B82F6',
-            }}
-          />
-          <span
-            style={{
-              color: '#E2E8F0',
-              fontSize: 13,
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              backgroundColor: 'rgba(15, 23, 42, 0.85)',
+              backdropFilter: 'blur(8px)',
+              padding: '8px 18px',
+              borderRadius: 14,
+              border: '1.5px solid rgba(245, 158, 11, 0.4)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
             }}
           >
-            {visualType}
-          </span>
+            <span
+              style={{
+                backgroundColor: '#F59E0B',
+                color: '#0F172A',
+                fontWeight: 900,
+                fontSize: 14,
+                padding: '2px 8px',
+                borderRadius: 6,
+                letterSpacing: 0.5,
+              }}
+            >
+              CẢNH {scene.id}
+            </span>
+            <span
+              style={{
+                color: '#FFFFFF',
+                fontWeight: 700,
+                fontSize: 18,
+                letterSpacing: -0.2,
+              }}
+            >
+              {scene.title} - Beat {activeBeatIndex + 1}/{beats.length}
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              backgroundColor: 'rgba(15, 23, 42, 0.85)',
+              backdropFilter: 'blur(8px)',
+              padding: '8px 16px',
+              borderRadius: 14,
+              border: '1.5px solid rgba(59, 130, 246, 0.4)',
+            }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: '#3B82F6',
+              }}
+            />
+            <span
+              style={{
+                color: '#E2E8F0',
+                fontSize: 13,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+              }}
+            >
+              {visualType}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Synchronized Audio */}
       {audioSrc && <Audio src={audioSrc} volume={1} />}

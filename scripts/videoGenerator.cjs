@@ -1297,15 +1297,48 @@ function createCartoonSceneSvg({ clauseText, sceneTitle, sceneIndex, subIndex, f
  */
 async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', speed = 1.0) {
   const safeSpeed = Math.min(Math.max(Number(speed) || 1.0, 0.5), 2.0);
+
+  // If audio file already exists with valid length, reuse it
+  if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 2000) {
+    try {
+      const probe = execSync(`/opt/homebrew/bin/ffprobe -i "${outputPath}" -show_entries format=duration -v quiet -of csv="p=0"`).toString().trim();
+      const dur = parseFloat(probe);
+      if (dur > 0.5) {
+        return dur;
+      }
+    } catch (_) {}
+  }
+
   const tempRaw = outputPath.replace('.mp3', '_raw.mp3');
+
+  const VOICE_MAP = {
+    'vi-VN-Standard-A': { voice: 'vi-VN-HoaiMyNeural', pitch: '+0Hz' },
+    'vi-VN-Standard-B': { voice: 'vi-VN-NamMinhNeural', pitch: '+0Hz' },
+    'vi-VN-Standard-C': { voice: 'vi-VN-HoaiMyNeural', pitch: '+2Hz' },
+    'vi-VN-Standard-D': { voice: 'vi-VN-NamMinhNeural', pitch: '-1Hz' },
+    'vi-VN-Studio-AI': { voice: 'vi-VN-HoaiMyNeural', pitch: '+0Hz' },
+    'vi-VN-Nam-Deep': { voice: 'vi-VN-NamMinhNeural', pitch: '-3Hz' },
+    'vi-VN-Nu-Warm': { voice: 'vi-VN-HoaiMyNeural', pitch: '-2Hz' },
+    'vi-VN-Nam-Tech': { voice: 'vi-VN-NamMinhNeural', pitch: '+1Hz' },
+    'vi-VN-Nu-Energetic': { voice: 'vi-VN-HoaiMyNeural', pitch: '+3Hz' },
+    'en-US-GuyNeural': { voice: 'en-US-GuyNeural', pitch: '+0Hz' },
+    'en-US-JennyNeural': { voice: 'en-US-JennyNeural', pitch: '+0Hz' },
+    'en-US-AriaNeural': { voice: 'en-US-AriaNeural', pitch: '+0Hz' },
+    'en-US-ChristopherNeural': { voice: 'en-US-ChristopherNeural', pitch: '+0Hz' },
+    'en-GB-RyanNeural': { voice: 'en-GB-RyanNeural', pitch: '+0Hz' },
+    'en-GB-SoniaNeural': { voice: 'en-GB-SoniaNeural', pitch: '+0Hz' },
+  };
 
   let success = false;
   try {
     const ratePercent = Math.round((safeSpeed - 1.0) * 100);
     const rateStr = ratePercent >= 0 ? `+${ratePercent}%` : `${ratePercent}%`;
-    const edgeVoice = voice.includes('Nam') ? 'vi-VN-NamMinhNeural' : 'vi-VN-HoaiMyNeural';
+    const cfg = VOICE_MAP[voice] || (voice.includes('Nam') ? { voice: 'vi-VN-NamMinhNeural', pitch: '+0Hz' } : { voice: 'vi-VN-HoaiMyNeural', pitch: '+0Hz' });
+    const edgeVoice = cfg.voice;
+    const pitchStr = cfg.pitch || '+0Hz';
+
     execSync(
-      `edge-tts --voice "${edgeVoice}" --rate="${rateStr}" --text "${text.replace(/"/g, '\\"')}" --write-media "${outputPath}" 2>/dev/null`
+      `edge-tts --voice "${edgeVoice}" --pitch="${pitchStr}" --rate="${rateStr}" --text "${text.replace(/"/g, '\\"')}" --write-media "${outputPath}" 2>/dev/null`
     );
     if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
       success = true;
@@ -1351,20 +1384,34 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
 /**
  * Main Video Generator Pipeline
  */
-async function generateVideo({ title, subtitle, voice, speed, scenes, script, content, geminiApiKey }) {
+async function generateVideo({ title, subtitle, voice, speed, scenes, script, content, geminiApiKey, openaiApiKey }) {
   const { generateStoryboardFromContent } = require('./storyboardGenerator.cjs');
+  const {
+    createVideoStyleGuide,
+    segmentSceneIntoBeats,
+    createLocalBeatPlan,
+    planVisualBeatsWithAI,
+    validateVisualBeat,
+    generateSemanticSvgForBeat,
+    runProjectQualityGate,
+  } = require('./visualBeatPlanner.cjs');
+  const { generateFluxImage } = require('./fluxImageGenerator.cjs');
+
+  // Store full data reference for downstream DALL-E 3 access
+  const data = { openaiApiKey };
 
   const selectedVoice = voice || 'vi-VN-Standard-A';
   const playbackSpeed = Number(speed) || 1.0;
+  const styleGuide = createVideoStyleGuide(title);
 
   console.log(`\n======================================================`);
-  console.log(`🎨 [TẠO VIDEO THEO PHONG CÁCH STICKMAN CARTOON EXPLAINER]`);
+  console.log(`🎨 [TẠO VIDEO THEO PHONG CÁCH STICKMAN CARTOON EXPLAINER V2]`);
   console.log(`Tiêu đề: ${title || 'Video Giải Thích Mới'}`);
   console.log(`Giọng đọc: ${selectedVoice} (${playbackSpeed}x)`);
   console.log(`======================================================\n`);
 
-  // 1. Run AI Storyboard Generator to split content & plan diverse visuals
-  console.log(`[Bước 1/4] Chạy AI Storyboard Generator để phân tích và lập kế hoạch hình ảnh...`);
+  // 1. Run AI Storyboard Generator to split content & plan diverse scenes
+  console.log(`[Bước 1/5] Chạy Storyboard Generator để phân tích và tạo kịch bản phân cảnh...`);
   const plannedScenes = await generateStoryboardFromContent({
     content: content || script,
     scenesInput: scenes,
@@ -1373,12 +1420,13 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
 
   console.log(`✓ Kế hoạch Storyboard gồm ${plannedScenes.length} phân cảnh:`);
   plannedScenes.forEach((sc, i) => {
-    console.log(`   [${i + 1}] Loại: [${sc.visual_type.toUpperCase()}] | Tiêu đề: "${sc.title}" | Text chính: "${sc.main_text}"`);
+    console.log(`   [${i + 1}] Loại: [${(sc.visual_type || 'character').toUpperCase()}] | Tiêu đề: "${sc.title}"`);
   });
 
   let totalFrames = 0;
   const finalizedScenes = [];
   const sceneClipPaths = [];
+  let previousMethod = null;
 
   for (let i = 0; i < plannedScenes.length; i++) {
     const rawScene = plannedScenes[i];
@@ -1386,112 +1434,208 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
     const sceneTitle = rawScene.title || `Cảnh ${sceneId}`;
     const sceneText = (rawScene.narration || rawScene.text || '').trim();
 
-    console.log(`\n--- Phân cảnh ${sceneId}/${plannedScenes.length}: "${sceneTitle}" [${rawScene.visual_type.toUpperCase()}] ---`);
+    console.log(`\n--- Phân cảnh ${sceneId}/${plannedScenes.length}: "${sceneTitle}" ---`);
     console.log(`Nội dung: ${sceneText.substring(0, 80)}...`);
 
-    // 1. Generate Voice Audio via Edge-TTS / Google-TTS
+    // 1. Generate Voice Audio via TTS
     const audioFileName = `scene_${sceneId}.mp3`;
     const audioPath = path.join(AUDIO_DIR, audioFileName);
 
-    console.log(`[Bước 2/4] Đang tổng hợp giọng nói AI cho cảnh ${sceneId}...`);
+    console.log(`[Bước 2/5] Đang tổng hợp giọng nói AI cho cảnh ${sceneId}...`);
     const durationInSeconds = await generateTTSAudio(sceneText, audioPath, selectedVoice, playbackSpeed);
     const durationInFrames = Math.round(durationInSeconds * 30);
     console.log(`✓ Audio cảnh ${sceneId} hoàn tất: ${durationInSeconds.toFixed(2)}s (${durationInFrames} frames)`);
 
-    // 2. Segment naturally without arbitrary <= 5s limit
-    console.log(`[Bước 3/4] Phân tích ngữ cảnh nội dung & phân bổ hình minh họa theo ý kịch bản...`);
-    const naturalBeats = segmentSceneNaturally(
+    // 2. Segment into 2 - 4 beats (1.5s - 3.5s per beat)
+    console.log(`[Bước 3/5] Phân chia thành các Visual Beats theo diễn tiến câu chuyện...`);
+    const segmentedBeats = segmentSceneIntoBeats(
       { id: sceneId, title: sceneTitle, text: sceneText },
       durationInSeconds,
       durationInFrames
     );
+    console.log(`✓ Cảnh ${sceneId} được chia thành ${segmentedBeats.length} visual beats (trung bình ${(durationInSeconds / segmentedBeats.length).toFixed(1)}s/beat)`);
+
+    // 3. Visual Planner: Plan structured visual beats with AI + Smart local fallback
+    console.log(`[Bước 4/5] Lập kế hoạch hình ảnh (Visual Planner) & Kiểm định ngữ nghĩa (Validator)...`);
+    let beatPlans = await planVisualBeatsWithAI({
+      scene: { id: sceneId, title: sceneTitle, text: sceneText },
+      beats: segmentedBeats,
+      styleGuide,
+      geminiApiKey,
+      previousMethod,
+    });
+
+    if (!beatPlans || beatPlans.length !== segmentedBeats.length) {
+      beatPlans = segmentedBeats.map((b, bIdx) =>
+        createLocalBeatPlan({
+          beatText: b.text,
+          beatIndex: bIdx + 1,
+          totalBeats: segmentedBeats.length,
+          sceneTitle,
+          sceneText,
+          videoTitle: title,
+          prevMethod: bIdx > 0 ? beatPlans?.[bIdx - 1]?.visualMethod : previousMethod,
+        })
+      );
+    }
 
     const tempSceneDir = path.join(PUBLIC_DIR, `temp_scene_${sceneId}`);
     if (!fs.existsSync(tempSceneDir)) fs.mkdirSync(tempSceneDir, { recursive: true });
     const beatClipPaths = [];
-
     const beats = [];
-    const usedSceneTypes = new Set();
 
-    for (const beat of naturalBeats) {
-      const excludedList = Array.from(usedSceneTypes).join(', ');
-      let features = await analyzeWithGemini(beat.text, sceneTitle, geminiApiKey, excludedList);
-      const sourceLabel = features?.fromGemini ? 'Gemini AI' : 'Local Rule';
-      if (!features) {
-        features = extractComicFeatures(beat.text, sceneTitle);
-      } else {
-        const fallback = extractComicFeatures(beat.text, sceneTitle);
-        if (!features.percentage) features.percentage = fallback.percentage;
-        if (!features.metric) features.metric = fallback.metric;
+    for (let bIdx = 0; bIdx < segmentedBeats.length; bIdx++) {
+      const beat = segmentedBeats[bIdx];
+      let plan = beatPlans[bIdx];
+
+      // Semantic Validation & Quality Check
+      let validation = validateVisualBeat({ beatText: beat.text, plan });
+      if (validation.regenerate) {
+        console.warn(`   ⚠️ Beat ${beat.sub_index} có cảnh báo ngữ nghĩa (${validation.issues.join('; ')}). Tự động tinh chỉnh kế hoạch...`);
+        plan = createLocalBeatPlan({
+          beatText: beat.text,
+          beatIndex: bIdx + 1,
+          totalBeats: segmentedBeats.length,
+          sceneTitle,
+          sceneText,
+          videoTitle: title,
+          prevMethod: previousMethod,
+        });
+        validation = validateVisualBeat({ beatText: beat.text, plan });
       }
 
-      // Map visual_type to sceneType if present
-      if (rawScene.visual_type === 'chart') features.sceneType = 'pie_chart';
-      if (rawScene.visual_type === 'numbers') features.sceneType = 'crowd_wave';
-      if (rawScene.visual_type === 'environment') features.sceneType = 'street_walk';
-      if (rawScene.visual_type === 'comparison') features.sceneType = 'lifestyle_vs';
-      if (rawScene.visual_type === 'process') features.sceneType = 'growth';
-      if (rawScene.visual_type === 'object_metaphor') features.sceneType = 'locked_door';
+      beat.plan = plan;
+      beat.validation = validation;
+      previousMethod = plan.visualMethod;
 
-      if (rawScene.main_text) features.comicTitle = rawScene.main_text;
-      if (rawScene.metric) features.metric = rawScene.metric;
-      if (rawScene.percentage) features.percentage = rawScene.percentage;
+      // Generate Image: Prefer DALL-E 3 (Hand-drawn style) → Fallback to SVG
+      const beatImageFile = `scene_${sceneId}_beat_${beat.sub_index}.png`;
+      const beatPngPath = path.join(IMAGES_DIR, beatImageFile);
+      let imageMethod = 'svg_fallback';
+      let svgContent = null;
 
-      usedSceneTypes.add(features.sceneType);
+      const openaiApiKey = data?.openaiApiKey || process.env.OPENAI_API_KEY;
+      const imgPrompt = plan.imageGenerationPrompt;
 
-      const svgContent = createCartoonSceneSvg({
-        clauseText: beat.text,
-        sceneTitle,
-        sceneIndex: i,
-        subIndex: beat.sub_index,
-        features,
-      });
+      if (openaiApiKey && imgPrompt) {
+        try {
+          console.log(`   🎨 [DALL-E 3] Đang tạo ảnh hand-drawn cho beat ${beat.sub_index}...`);
+          const diegeticLabel = plan.diegeticText || plan.keyText || '';
+          const fullPrompt = diegeticLabel
+            ? `${imgPrompt}. Ensure exact text "${diegeticLabel}" is written clearly in the scene on a sign, chalkboard, or label.`
+            : imgPrompt;
 
-      console.log(`   • Beat ${beat.sub_index} [${sourceLabel}]: [${rawScene.visual_type}] "${features.comicTitle}" -> ${beat.duration_in_seconds}s`);
+          const dalleRes = await fetch('https://api.openai.com/v1/images/generations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${openaiApiKey}`,
+            },
+            body: JSON.stringify({
+              model: 'dall-e-3',
+              prompt: fullPrompt.substring(0, 4000),
+              n: 1,
+              size: '1792x1024',
+              quality: 'standard',
+              style: 'vivid',
+            }),
+          });
 
-      beats.push({
-        id: beat.id,
-        sub_index: beat.sub_index,
-        title: beat.title,
-        prompt: `2D cartoon explainer, ${rawScene.visual_type}, ${features.comicTitle}, clean vector art, 1080p.`,
-        caption: beat.caption,
-        image_file: `scene_${sceneId}_beat_${beat.sub_index}.png`,
-        svg_data: svgContent,
-        duration_in_seconds: beat.duration_in_seconds,
-        duration_in_frames: beat.duration_in_frames,
-        start_frame_offset: beat.start_frame_offset,
-        features,
-        visual_type: rawScene.visual_type,
-        main_text: rawScene.main_text,
-        sub_text: rawScene.sub_text,
-        motion: rawScene.motion,
-      });
-    }
+          if (dalleRes.ok) {
+            const dalleData = await dalleRes.json();
+            const imageUrl = dalleData.data?.[0]?.url;
+            if (imageUrl) {
+              const imgFetchRes = await fetch(imageUrl);
+              const arrayBuffer = await imgFetchRes.arrayBuffer();
+              const buffer = Buffer.from(arrayBuffer);
 
-    // 3. Render PNG & Video Clips for beats
-    for (const beat of beats) {
-      const beatPngPath = path.join(IMAGES_DIR, beat.image_file);
-      await sharp(Buffer.from(beat.svg_data)).png({ quality: 95 }).toFile(beatPngPath);
+              await sharp(buffer)
+                .resize(1920, 1080, { fit: 'cover', position: 'centre' })
+                .png({ quality: 95 })
+                .toFile(beatPngPath);
+
+              imageMethod = 'dall-e-3';
+              console.log(`   ✓ DALL-E 3 thành công: ${beatImageFile}`);
+            }
+          } else {
+            const errBody = await dalleRes.text().catch(() => '');
+            console.warn(`   ⚠️ DALL-E 3 HTTP ${dalleRes.status}: ${errBody.substring(0, 200)}`);
+          }
+        } catch (dallErr) {
+          console.warn(`   ⚠️ Lỗi DALL-E 3, chuyển fallback FLUX / SVG: ${dallErr.message}`);
+        }
+      }
+
+      // Step 2: Try FLUX.1 (Local Apple Silicon MLX / Draw Things / Free FLUX)
+      if (imageMethod === 'svg_fallback' && imgPrompt) {
+        try {
+          const diegeticLabel = plan.diegeticText || plan.keyText || '';
+          const fluxRes = await generateFluxImage({
+            prompt: imgPrompt,
+            diegeticLabel,
+            outputPath: beatPngPath,
+          });
+          if (fluxRes.success) {
+            imageMethod = fluxRes.method || 'flux';
+            console.log(`   ✓ FLUX.1 thành công (${imageMethod}): ${beatImageFile}`);
+          }
+        } catch (fluxErr) {
+          // If FLUX not ready or offline, smooth fallback to SVG
+        }
+      }
+
+      // Step 3: Fallback: Generate SVG if DALL-E 3 & FLUX were not used or failed
+      if (imageMethod === 'svg_fallback') {
+        svgContent = generateSemanticSvgForBeat({
+          beat,
+          scene: { id: sceneId, title: sceneTitle, text: sceneText, videoTitle: title },
+          styleGuide,
+        });
+        await sharp(Buffer.from(svgContent)).png({ quality: 95 }).toFile(beatPngPath);
+      }
+
+      console.log(`   • Beat ${beat.sub_index} [${plan.visualMethod.toUpperCase()}] (${imageMethod}): "${plan.diegeticText || plan.keyText || ''}" (${beat.duration_in_seconds}s) -> ${(plan.stickmanAction || plan.action || '').substring(0, 50)}...`);
 
       if (beat.sub_index === 1) {
         fs.copyFileSync(beatPngPath, path.join(IMAGES_DIR, `scene_${sceneId}.png`));
       }
 
+      // Render beat clip with smooth micro-motion (subtle Ken-Burns push-in)
       const beatClipOut = path.join(tempSceneDir, `beat_${beat.sub_index}.mp4`);
       const beatSec = (beat.duration_in_frames / 30).toFixed(2);
       try {
         execSync(
-          `/opt/homebrew/bin/ffmpeg -y -loop 1 -t ${beatSec} -i "${beatPngPath}" -c:v libx264 -tune stillimage -pix_fmt yuv420p -r 30 -an "${beatClipOut}"`,
+          `/opt/homebrew/bin/ffmpeg -y -loop 1 -i "${beatPngPath}" -vf "scale=1920:1080,zoompan=z='min(zoom+0.0008,1.035)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30" -c:v libx264 -t ${beatSec} -pix_fmt yuv420p -r 30 -an "${beatClipOut}"`,
           { stdio: 'ignore' }
         );
         beatClipPaths.push(beatClipOut);
       } catch (err) {
-        console.warn(`Error rendering clip for beat ${beat.id}:`, err);
+        console.warn(`Lỗi render clip beat ${beat.id}:`, err);
       }
+
+      beats.push({
+        id: beat.id,
+        sub_index: beat.sub_index,
+        title: beat.title,
+        text: beat.text,
+        prompt: `2D cartoon explainer, ${plan.visualMethod}, ${plan.keyText}, clean vector art, 1080p.`,
+        caption: beat.caption,
+        image_file: beatImageFile,
+        svg_data: svgContent,
+        duration_in_seconds: beat.duration_in_seconds,
+        duration_in_frames: beat.duration_in_frames,
+        start_frame_offset: beat.start_frame_offset,
+        plan,
+        validation,
+        visual_type: plan.visualMethod === 'character_action' ? 'character' : plan.visualMethod === 'object_metaphor' ? 'object_metaphor' : plan.visualMethod,
+        main_text: plan.keyText,
+        sub_text: plan.meaning,
+        motion: 'slide',
+      });
     }
 
     // 4. Combine beat clips with scene audio
-    console.log(`[Bước 4/4] Ghép nối hình ảnh minh họa với file audio của cảnh...`);
+    console.log(`[Bước 5/5] Ghép nối các beat clips với giọng đọc audio của cảnh ${sceneId}...`);
     const sceneClipOut = path.join(PUBLIC_DIR, `clip_${sceneId}.mp4`);
 
     if (beatClipPaths.length > 0) {
@@ -1505,7 +1649,7 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
         );
         sceneClipPaths.push(sceneClipOut);
       } catch (err) {
-        console.warn(`Error concatenating scene ${sceneId}:`, err);
+        console.warn(`Lỗi ghép scene ${sceneId}:`, err);
       }
     }
 
@@ -1518,36 +1662,18 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
       prompt: beats[0]?.prompt || `2D cartoon explainer, ${sceneTitle}`,
       audio_file: audioFileName,
       image_file: `scene_${sceneId}_beat_1.png`,
-      visual_type: rawScene.visual_type || 'character',
-      visual_description: rawScene.visual_description || '',
-      subject: rawScene.subject || '',
-      environment: rawScene.environment || '',
-      objects: rawScene.objects || [],
-      composition: rawScene.composition || '',
-      action: rawScene.action || '',
-      main_text: rawScene.main_text || sceneTitle,
-      sub_text: rawScene.sub_text || '',
-      motion: rawScene.motion || 'slide',
-      camera: rawScene.camera || 'static',
-      metric: rawScene.metric || null,
-      percentage: rawScene.percentage || null,
-      beats: beats.map((b) => ({
-        id: b.id,
-        sub_index: b.sub_index,
-        title: b.title,
-        prompt: b.prompt,
-        image_file: b.image_file,
-        svg_data: b.svg_data,
-        duration_in_seconds: b.duration_in_seconds,
-        duration_in_frames: b.duration_in_frames,
-        start_frame_offset: b.start_frame_offset,
-        caption: b.caption,
-        features: b.features,
-        visual_type: rawScene.visual_type || 'character',
-        main_text: rawScene.main_text || sceneTitle,
-        sub_text: rawScene.sub_text || '',
-        motion: rawScene.motion || 'slide',
-      })),
+      visual_type: beats[0]?.visual_type || 'character',
+      visual_description: beats[0]?.plan?.meaning || '',
+      subject: beats[0]?.plan?.subject || '',
+      environment: beats[0]?.plan?.environment || '',
+      objects: beats[0]?.plan?.objects || [],
+      composition: beats[0]?.plan?.composition || '',
+      action: beats[0]?.plan?.action || '',
+      main_text: beats[0]?.main_text || sceneTitle,
+      sub_text: beats[0]?.sub_text || '',
+      motion: 'slide',
+      camera: 'static',
+      beats,
       duration_in_seconds: Number(durationInSeconds.toFixed(2)),
       duration_in_frames: durationInFrames,
       start_frame: totalFrames,
@@ -1555,6 +1681,13 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
 
     totalFrames += durationInFrames;
     finalizedScenes.push(sceneRecord);
+  }
+
+  // Quality Gate Check before export
+  const qualityReport = runProjectQualityGate(finalizedScenes);
+  console.log(`\n🛡️ [QUALITY GATE CHECK]: Passed=${qualityReport.validation_passed} | Total Beats=${qualityReport.total_beats} | Avg Beat Dur=${qualityReport.avg_beat_duration_sec}s`);
+  if (qualityReport.issues.length > 0) {
+    qualityReport.issues.forEach((iss) => console.log(`   • ${iss}`));
   }
 
   // Concatenate all scene clips into final-video.mp4
@@ -1571,8 +1704,6 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
     }
   }
 
-  const totalBeatsCount = finalizedScenes.reduce((acc, sc) => acc + (sc.beats?.length || 1), 0);
-
   const metadata = {
     title: title || 'Video Giải Thích Đa Dạng',
     subtitle: subtitle || `Giọng đọc ${playbackSpeed}x`,
@@ -1585,6 +1716,8 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
     created_at: new Date().toISOString(),
     voice: selectedVoice,
     speed: playbackSpeed,
+    style_guide: styleGuide,
+    quality_report: qualityReport,
   };
 
   const outputData = {
@@ -1596,9 +1729,9 @@ async function generateVideo({ title, subtitle, voice, speed, scenes, script, co
   fs.writeFileSync(path.join(SRC_DATA_DIR, 'scenes.json'), JSON.stringify(outputData, null, 2));
 
   console.log(`\n🎉 [HOÀN TẤT XUẤT SẮC - DATA-DRIVEN CARTOON EXPLAINER]:`);
-  console.log(`- ${finalizedScenes.length} Phân cảnh với các loại Visual:`);
+  console.log(`- ${finalizedScenes.length} Phân cảnh với ${qualityReport.total_beats} visual beats.`);
   finalizedScenes.forEach((s) => {
-    console.log(`  • Cảnh ${s.id}: [${s.visual_type?.toUpperCase()}] - ${s.title}`);
+    console.log(`  • Cảnh ${s.id}: ${s.beats?.length || 1} beats - ${s.title}`);
   });
   console.log(`- Tổng thời lượng: ${(totalFrames / 30).toFixed(1)}s (${totalFrames} frames)`);
 

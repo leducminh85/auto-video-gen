@@ -44,6 +44,81 @@ export interface ComicFeatures {
   fromGemini?: boolean;
 }
 
+export type ShotType =
+  | 'wide'
+  | 'medium'
+  | 'close-up'
+  | 'infographic'
+  | 'diagram'
+  | 'wide_angle'
+  | 'medium_shot'
+  | 'close_up'
+  | 'isometric_view';
+
+export type VisualMethod =
+  // New: Hand-drawn Detailed Explainer methods (DALL-E 3 / Midjourney)
+  | 'scenic_environment'       // Wide detailed shot of a location (street, cafe interior, factory)
+  | 'character_interaction'    // Stickman interacting with realistic objects (espresso machine, clipboard)
+  | 'diegetic_infographic'     // Charts/numbers integrated into the physical environment (chalkboard, wall)
+  | 'object_close_up'          // Close-up on highly detailed realistic props (money, portafilter)
+  | 'split_screen_comparison'  // Physical spaces side-by-side (busy cafe vs bankrupt cafe)
+  // Legacy: Minimalist SVG methods (fallback)
+  | 'character_action'
+  | 'object_metaphor'
+  | 'infographic'
+  | 'comparison'
+  | 'process'
+  | 'numbers'
+  | 'diagram'
+  | 'typography'
+  | 'environment';
+
+export interface VisualBeatPlan {
+  meaning: string;
+  visualMethod: VisualMethod;
+  shotType: ShotType;
+
+  // New: Hand-drawn Detailed Explainer fields (for DALL-E 3 / Midjourney)
+  environmentDetails?: string;   // Highly detailed description of background and setting
+  stickmanAction?: string;       // What the stickman is doing/wearing (e.g., 'barista in brown apron')
+  heroObjects?: string | string[]; // Detailed realistic objects in the scene
+  diegeticText?: string;         // Short text appearing IN the world (on a sign, chalkboard). Max 3 words.
+  imageGenerationPrompt?: string;// Full English prompt for DALL-E 3 / Midjourney image generation
+
+  // Legacy: Minimalist SVG fields (backward compat & SVG fallback)
+  subject?: string;
+  action?: string;
+  objects?: string[];
+  environment?: string;
+  composition?: string;
+  keyText?: string;
+  mustNotInclude?: string[];
+  transitionIntent?: string;
+}
+
+export interface VideoStyleGuide {
+  characterStyle: string;
+  strokeWidth: number;
+  palette: {
+    background: string;
+    card: string;
+    outline: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+    danger: string;
+    muted: string;
+  };
+  typography: string;
+  levelOfDetail: 'minimalist' | 'focused';
+}
+
+export interface ValidationResult {
+  score: number; // 0 - 100
+  issues: string[];
+  regenerate: boolean;
+}
+
 export interface VisualBeat {
   id: string;
   sub_index: number;
@@ -60,6 +135,8 @@ export interface VisualBeat {
   main_text?: string;
   sub_text?: string;
   motion?: MotionPreset;
+  plan?: VisualBeatPlan;
+  validation?: ValidationResult;
 }
 
 export interface SceneData {
@@ -108,6 +185,13 @@ export interface VideoMetadata {
   voice?: string;
   speed?: number;
   max_image_duration_sec?: number;
+  style_guide?: VideoStyleGuide;
+  quality_report?: {
+    total_beats: number;
+    avg_beat_duration_sec: number;
+    validation_passed: boolean;
+    issues: string[];
+  };
 }
 
 export interface ProductionData {

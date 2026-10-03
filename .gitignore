@@ -9,8 +9,10 @@ coverage/
 public/temp_scene_*/
 
 # Media and generated video assets
-public/audio/scene_*.mp3
+public/audio/
 public/images/
 public/*.mp4
 public/clips_list.txt
 *.mp4
+*.mp3
+*.wav

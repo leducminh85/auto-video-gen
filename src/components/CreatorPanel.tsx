@@ -17,6 +17,7 @@ import { buildMultiBeatScenes } from '../utils/stickmanArtGenerator';
 import { audioPreviewManager, SAMPLE_PHRASES } from '../utils/audioPreview';
 
 export const VOICE_OPTIONS: VoiceOption[] = [
+  // Tiếng Việt
   {
     id: 'vi-VN-Standard-A',
     name: 'Nữ Miền Bắc',
@@ -56,6 +57,87 @@ export const VOICE_OPTIONS: VoiceOption[] = [
     gender: 'female',
     tag: 'Điện Ảnh',
     description: 'Tổng hợp giọng đọc AI chất lượng cao với ngữ điệu tự nhiên.',
+  },
+  {
+    id: 'vi-VN-Nam-Deep',
+    name: 'Nam Điện Ảnh',
+    region: 'Toàn quốc',
+    gender: 'male',
+    tag: 'Sâu Lắng',
+    description: 'Tông trầm điện ảnh, mang phong cách phim tài liệu sâu sắc.',
+  },
+  {
+    id: 'vi-VN-Nu-Warm',
+    name: 'Nữ Ấm Áp',
+    region: 'Toàn quốc',
+    gender: 'female',
+    tag: 'Tâm Sự',
+    description: 'Giọng nữ ấm áp, thích hợp cho chủ đề tài chính và bài học cuộc sống.',
+  },
+  {
+    id: 'vi-VN-Nam-Tech',
+    name: 'Nam Công Nghệ',
+    region: 'Toàn quốc',
+    gender: 'male',
+    tag: 'Dứt Khoát',
+    description: 'Giọng nam công nghệ dứt khoát, chuyên biệt cho video explainer.',
+  },
+  {
+    id: 'vi-VN-Nu-Energetic',
+    name: 'Nữ Sôi Nổi',
+    region: 'Toàn quốc',
+    gender: 'female',
+    tag: 'Viral Video',
+    description: 'Giọng nữ năng động, hào hứng, tạo năng lượng tích cực cho video ngắn.',
+  },
+  // English / Global Voices
+  {
+    id: 'en-US-GuyNeural',
+    name: 'Guy (US Explainer)',
+    region: 'US',
+    gender: 'male',
+    tag: 'Vox Style',
+    description: 'Giọng nam Mỹ chuẩn phóng sự giải thích khoa học và tài chính.',
+  },
+  {
+    id: 'en-US-JennyNeural',
+    name: 'Jenny (US Story)',
+    region: 'US',
+    gender: 'female',
+    tag: 'Thân Thiện',
+    description: 'Giọng nữ Mỹ tự nhiên, thân thiện và gần gũi.',
+  },
+  {
+    id: 'en-US-AriaNeural',
+    name: 'Aria (US Doc)',
+    region: 'US',
+    gender: 'female',
+    tag: 'Tự Tin',
+    description: 'Giọng nữ Mỹ phong thái phim tài liệu National Geographic.',
+  },
+  {
+    id: 'en-US-ChristopherNeural',
+    name: 'Christopher (US)',
+    region: 'US',
+    gender: 'male',
+    tag: 'Kể Chuyện',
+    description: 'Giọng nam Mỹ tự sự giàu cảm xúc và lôi cuốn.',
+  },
+  {
+    id: 'en-GB-RyanNeural',
+    name: 'Ryan (British)',
+    region: 'UK',
+    gender: 'male',
+    tag: 'Quý Tộc',
+    description: 'Giọng Anh-Anh lịch lãm, phong thái học thuật và sang trọng.',
+  },
+  {
+    id: 'en-GB-SoniaNeural',
+    name: 'Sonia (British)',
+    region: 'UK',
+    gender: 'female',
+    tag: 'BBC Doc',
+    description: 'Giọng nữ Anh-Anh chuẩn đài BBC, rõ ràng và cuốn hút.',
   },
 ];
 
@@ -183,6 +265,9 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     return localStorage.getItem('gemini_api_key') || '';
   });
   const [showAdvancedSettings, setShowAdvancedSettings] = useState<boolean>(false);
+  const [openaiApiKey, setOpenaiApiKey] = useState<string>(() => {
+    return localStorage.getItem('openai_api_key') || '';
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -295,6 +380,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           content: textContent,
           scenes: rawParsedScenes,
           geminiApiKey: geminiApiKey.trim() || undefined,
+          openaiApiKey: openaiApiKey.trim() || undefined,
         }),
       });
 
@@ -649,6 +735,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
           {/* Advanced Gemini API Key Setting */}
           {showAdvancedSettings && (
+            <>
             <div
               style={{
                 marginTop: 10,
@@ -678,6 +765,46 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 style={{ width: '100%', fontSize: 12, fontFamily: 'monospace' }}
               />
             </div>
+            <div
+              style={{
+                marginTop: 10,
+                padding: 12,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-base)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>🎨 OpenAI API Key (DALL-E 3)</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: openaiApiKey ? 'var(--success)' : 'var(--text-muted)',
+                    background: openaiApiKey ? 'rgba(34,197,94,0.1)' : 'rgba(100,100,100,0.1)',
+                    padding: '2px 8px',
+                    borderRadius: 10,
+                    fontWeight: 600,
+                  }}
+                >
+                  {openaiApiKey ? '✓ Active — Hand-drawn mode' : 'Không có → SVG fallback'}
+                </span>
+              </div>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+                Nhập key để sinh ảnh Hand-drawn Detailed bằng DALL-E 3. Nếu bỏ trống, hệ thống dùng SVG vector.
+              </span>
+              <input
+                type="password"
+                value={openaiApiKey}
+                onChange={(e) => {
+                  setOpenaiApiKey(e.target.value);
+                  localStorage.setItem('openai_api_key', e.target.value);
+                }}
+                className="input"
+                placeholder="sk-..."
+                style={{ width: '100%', fontSize: 12, fontFamily: 'monospace' }}
+              />
+            </div>
+            </>
           )}
         </div>
       </div>

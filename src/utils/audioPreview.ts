@@ -17,6 +17,26 @@ export const SAMPLE_PHRASES: Record<string, string> = {
     'Kính chào quý khán giả, đây là giọng Nam Miền Nam chững chạc, uy tín cho video giải thích.',
   'vi-VN-Studio-AI':
     'Hệ thống tổng hợp giọng đọc AI thông minh, tự động đồng bộ nhịp độ và tối ưu chuyển cảnh.',
+  'vi-VN-Nam-Deep':
+    'Xin kính chào quý vị, đây là giọng nam trầm điện ảnh, mang phong cách phim tài liệu sâu sắc.',
+  'vi-VN-Nu-Warm':
+    'Chào bạn, đây là giọng nữ ấm áp, thích hợp cho các chủ đề tâm sự và bài học cuộc sống.',
+  'vi-VN-Nam-Tech':
+    'Chào bạn, đây là giọng nam công nghệ dứt khoát, chuyên biệt cho video giải thích và phân tích xu hướng.',
+  'vi-VN-Nu-Energetic':
+    'Xin chào các bạn, đây là giọng nữ năng động và sôi nổi, giúp video luôn tràn đầy năng lượng tích cực.',
+  'en-US-GuyNeural':
+    'Hello, this is Guy, a natural and professional American voice for explainer videos.',
+  'en-US-JennyNeural':
+    'Hi there, I am Jenny, a friendly and conversational voice for engaging storytelling.',
+  'en-US-AriaNeural':
+    'Welcome. This is Aria, an authoritative and confident documentary voice.',
+  'en-US-ChristopherNeural':
+    'Greetings. I am Christopher, bringing rich narrative depth to your stories.',
+  'en-GB-RyanNeural':
+    'Good day, I am Ryan, presenting with a polished and sophisticated British accent.',
+  'en-GB-SoniaNeural':
+    'Hello, I am Sonia, delivering clear, elegant British narration for your presentations.',
 };
 
 class AudioPreviewManager {

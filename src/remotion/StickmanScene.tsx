@@ -4,9 +4,10 @@ import { SceneData, VisualBeat } from '../types/scenes';
 
 interface StickmanSceneProps {
   scene: SceneData;
+  isDebug?: boolean;
 }
 
-export const StickmanScene: React.FC<StickmanSceneProps> = ({ scene }) => {
+export const StickmanScene: React.FC<StickmanSceneProps> = ({ scene, isDebug = false }) => {
   const frame = useCurrentFrame();
   const totalDuration = scene.duration_in_frames;
 
@@ -124,91 +125,93 @@ export const StickmanScene: React.FC<StickmanSceneProps> = ({ scene }) => {
         />
       </div>
 
-      {/* Top Header Badge Overlay (Guaranteed Vietnamese font rendering) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 24,
-          left: 36,
-          right: 36,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          pointerEvents: 'none',
-        }}
-      >
+      {/* Top Header Badge Overlay - ONLY SHOWN IN DEBUG MODE */}
+      {isDebug && (
         <div
           style={{
+            position: 'absolute',
+            top: 24,
+            left: 36,
+            right: 36,
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
-            backgroundColor: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(8px)',
-            padding: '8px 18px',
-            borderRadius: 14,
-            border: '1.5px solid rgba(245, 158, 11, 0.4)',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            justifyContent: 'space-between',
+            pointerEvents: 'none',
           }}
         >
-          <span
-            style={{
-              backgroundColor: '#F59E0B',
-              color: '#0F172A',
-              fontWeight: 900,
-              fontSize: 14,
-              padding: '2px 8px',
-              borderRadius: 6,
-              letterSpacing: 0.5,
-            }}
-          >
-            CẢNH {scene.id}
-          </span>
-          <span
-            style={{
-              color: '#FFFFFF',
-              fontWeight: 700,
-              fontSize: 18,
-              letterSpacing: -0.2,
-            }}
-          >
-            {scene.title}
-          </span>
-        </div>
-
-        {/* Visual Beat Indicator (Shows multiple images per scene, each <= 5s) */}
-        {beats.length > 1 && (
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
+              gap: 12,
               backgroundColor: 'rgba(15, 23, 42, 0.85)',
               backdropFilter: 'blur(8px)',
-              padding: '8px 14px',
+              padding: '8px 18px',
               borderRadius: 14,
-              border: '1.5px solid rgba(16, 185, 129, 0.4)',
+              border: '1.5px solid rgba(245, 158, 11, 0.4)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
             }}
           >
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: '#10B981',
-              }}
-            />
             <span
               style={{
-                color: '#E2E8F0',
+                backgroundColor: '#F59E0B',
+                color: '#0F172A',
+                fontWeight: 900,
                 fontSize: 14,
-                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: 6,
+                letterSpacing: 0.5,
               }}
             >
-              Hình {activeBeatIndex + 1}/{beats.length}
+              CẢNH {scene.id}
+            </span>
+            <span
+              style={{
+                color: '#FFFFFF',
+                fontWeight: 700,
+                fontSize: 18,
+                letterSpacing: -0.2,
+              }}
+            >
+              {scene.title}
             </span>
           </div>
-        )}
-      </div>
+
+          {/* Visual Beat Indicator (Shows multiple images per scene) */}
+          {beats.length > 1 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                backdropFilter: 'blur(8px)',
+                padding: '8px 14px',
+                borderRadius: 14,
+                border: '1.5px solid rgba(16, 185, 129, 0.4)',
+              }}
+            >
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: '#10B981',
+                }}
+              />
+              <span
+                style={{
+                  color: '#E2E8F0',
+                  fontSize: 14,
+                  fontWeight: 700,
+                }}
+              >
+                Hình {activeBeatIndex + 1}/{beats.length}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Audio Playback synchronized */}
 

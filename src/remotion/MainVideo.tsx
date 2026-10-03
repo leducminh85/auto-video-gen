@@ -5,9 +5,10 @@ import { SceneRenderer } from './SceneRenderer';
 
 interface MainVideoProps {
   scenes: SceneData[];
+  isDebug?: boolean;
 }
 
-export const MainVideo: React.FC<MainVideoProps> = ({ scenes }) => {
+export const MainVideo: React.FC<MainVideoProps> = ({ scenes, isDebug = false }) => {
   return (
     <div
       style={{
@@ -26,7 +27,7 @@ export const MainVideo: React.FC<MainVideoProps> = ({ scenes }) => {
             durationInFrames={scene.duration_in_frames}
             name={`Scene ${scene.id} - ${scene.title}`}
           >
-            <SceneRenderer scene={scene} />
+            <SceneRenderer scene={scene} isDebug={isDebug} />
           </Sequence>
         );
       })}
