@@ -108,6 +108,25 @@ function videoApiPlugin(): Plugin {
           return;
         }
 
+        // Regenerate Beat Image via AI API
+        if (req.url === '/api/regenerate-beat' && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', async () => {
+            res.setHeader('Content-Type', 'application/json');
+            try {
+              const payload = JSON.parse(body || '{}');
+              const { regenerateBeatImage } = require('./scripts/beatImageRegenerator.cjs');
+              const result = await regenerateBeatImage(payload);
+              res.end(JSON.stringify(result));
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ success: false, error: err.message || String(err) }));
+            }
+          });
+          return;
+        }
+
         next();
       });
     },

@@ -87,7 +87,9 @@ export const StickmanScene: React.FC<StickmanSceneProps> = ({ scene, isDebug = f
     if (file.startsWith('data:') || file.startsWith('http') || file.startsWith('/')) {
       return file;
     }
-    return staticFile(`images/${file}`);
+    const cacheBust = beat.image_version || scene.image_version || scene.audio_version;
+    const pathWithCache = cacheBust ? `images/${file}?v=${cacheBust}` : `images/${file}`;
+    return staticFile(pathWithCache);
   };
 
   const imageSrc = getImageSource(activeBeat);

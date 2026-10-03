@@ -120,25 +120,43 @@ export default function App() {
   const handleSaveRegeneratedImage = (
     sceneId: number,
     beatId: string | undefined,
-    svgData: string,
-    newPrompt: string
+    newPrompt: string,
+    imageFile?: string,
+    imageVersion?: number
   ) => {
+    const version = imageVersion || Date.now();
     setScenes((prev) =>
       prev.map((sc) => {
         if (sc.id !== sceneId) return sc;
         if (sc.beats && sc.beats.length > 0) {
           const updatedBeats = sc.beats.map((b) => {
             if (!beatId || b.id === beatId) {
-              return { ...b, svg_data: svgData, prompt: newPrompt };
+              return {
+                ...b,
+                svg_data: null,
+                prompt: newPrompt,
+                ...(imageFile ? { image_file: imageFile } : {}),
+                image_version: version,
+              };
             }
             return b;
           });
-          return { ...sc, beats: updatedBeats };
+          const isFirstBeat = !beatId || updatedBeats[0]?.id === beatId;
+          return {
+            ...sc,
+            beats: updatedBeats,
+            ...(isFirstBeat && imageFile ? { image_file: imageFile, image_version: version, prompt: newPrompt } : {}),
+          };
         }
-        return { ...sc, prompt: newPrompt };
+        return {
+          ...sc,
+          prompt: newPrompt,
+          ...(imageFile ? { image_file: imageFile, image_version: version } : {}),
+        };
       })
     );
-    showToast('✓ Ảnh mới đã được áp dụng');
+    setVideoTimestamp(Date.now());
+    showToast('✓ Ảnh AI mới đã được áp dụng vào video');
   };
 
   const handleGenerateNewVideo = (newScenes: SceneData[], newMetadata: VideoMetadata) => {
