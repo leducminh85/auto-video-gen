@@ -77,6 +77,10 @@ export interface VisualBeatPlan {
   meaning: string;
   visualMethod: VisualMethod;
   shotType: ShotType;
+  intent?: string;
+  planningSource?: 'ai' | 'local';
+  what_to_show?: string;
+  how_to_show?: string;
 
   // New: Hand-drawn Detailed Explainer fields (for DALL-E 3 / Midjourney)
   environmentDetails?: string;   // Highly detailed description of background and setting

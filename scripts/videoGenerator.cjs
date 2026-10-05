@@ -1517,6 +1517,9 @@ async function generateVideo({
   });
 
   const totalScenes = plannedScenes.length;
+  const fullScriptContext = content || script || plannedScenes.map(s => s.narration || s.text || '').join('\n');
+  const videoDomain = extractDomainAnchor(title, '', fullScriptContext);
+  const recentPlans = [];
   console.log(`✓ Kế hoạch Storyboard gồm ${totalScenes} phân cảnh:`);
   plannedScenes.forEach((sc, i) => {
     console.log(`   [${i + 1}] Loại: [${(sc.visual_type || 'character').toUpperCase()}] | Tiêu đề: "${sc.title}"`);
@@ -1589,8 +1592,8 @@ async function generateVideo({
     );
     console.log(`✓ Cảnh ${sceneId} được chia thành ${segmentedBeats.length} visual beats (trung bình ${(durationInSeconds / segmentedBeats.length).toFixed(1)}s/beat)`);
 
-    const dynamicDomain = extractDomainAnchor(title, sceneTitle, sceneText || script || content);
-    const resolvedTopic = title || dynamicDomain.topic;
+    const dynamicDomain = videoDomain;
+    const resolvedTopic = videoDomain.topic;
 
     // 3. Visual Planner: Plan structured visual beats with AI + Smart local fallback
     console.log(`[Bước 4/5] Lập kế hoạch hình ảnh (Visual Planner) & Kiểm định ngữ nghĩa (Validator)...`);
@@ -1603,12 +1606,15 @@ async function generateVideo({
       previousMethod,
       videoTitle: title || dynamicDomain.topicVn,
       overallTopic: resolvedTopic,
-      fullScriptContext: script || content,
+      fullScriptContext,
+      recentPlans,
     });
 
     if (!beatPlans || beatPlans.length !== segmentedBeats.length) {
-      beatPlans = segmentedBeats.map((b, bIdx) =>
-        createLocalBeatPlan({
+      console.warn(`Cảnh ${sceneId}: AI planner không trả về kế hoạch hợp lệ; dùng bộ lập kế hoạch cục bộ theo nội dung.`);
+      beatPlans = [];
+      for (const [bIdx, b] of segmentedBeats.entries()) {
+        beatPlans.push(createLocalBeatPlan({
           beatText: b.text,
           beatIndex: bIdx + 1,
           totalBeats: segmentedBeats.length,
@@ -1616,9 +1622,21 @@ async function generateVideo({
           sceneText,
           videoTitle: title || dynamicDomain.topicVn,
           overallTopic: resolvedTopic,
+          recentPlans: [...recentPlans, ...beatPlans],
           prevMethod: bIdx > 0 ? beatPlans?.[bIdx - 1]?.visualMethod : previousMethod,
-        })
-      );
+        }));
+      }
+    }
+
+    for (let bIdx = 0; bIdx < beatPlans.length; bIdx++) {
+      if (validateVisualBeat({ beatText: segmentedBeats[bIdx].text, plan: beatPlans[bIdx] }).regenerate) {
+        beatPlans[bIdx] = createLocalBeatPlan({
+          beatText: segmentedBeats[bIdx].text, sceneText, sceneTitle,
+          overallTopic: resolvedTopic, recentPlans,
+        });
+      }
+      recentPlans.push(beatPlans[bIdx]);
+      previousMethod = beatPlans[bIdx].visualMethod;
     }
 
     const planDonePct = 35 + ((i + 1) / totalScenes) * 15;
@@ -1669,6 +1687,8 @@ async function generateVideo({
           sceneTitle: sData.sceneTitle,
           sceneText: sData.sceneText,
           videoTitle: title,
+          overallTopic: videoDomain.topic,
+          recentPlans: allBeatsToGenerate.map(item => item.plan),
           prevMethod: previousMethod,
         });
         validation = validateVisualBeat({ beatText: beat.text, plan });
@@ -1901,7 +1921,7 @@ async function generateVideo({
         sub_index: beat.sub_index,
         title: beat.title,
         text: beat.text,
-        prompt: `2D cartoon explainer, ${plan.visualMethod}, ${plan.keyText}, clean vector art, 1080p.`,
+        prompt: plan.imageGenerationPrompt,
         caption: beat.caption,
         image_file: beatImageFile,
         image_version: generationRunId,
