@@ -250,7 +250,10 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
       await sharp(rawImageBuffer)
-        .resize(1920, 1080, { fit: 'cover', position: 'centre' })
+        .resize(1920, 1080, {
+          fit: 'contain',
+          background: { r: 255, g: 255, b: 255, alpha: 1 },
+        })
         .png({ quality: 95 })
         .toFile(outputPath);
 

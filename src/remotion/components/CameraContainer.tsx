@@ -22,17 +22,17 @@ export const CameraContainer: React.FC<CameraContainerProps> = ({
   let translateY = 0;
 
   if (camera === 'slow_push') {
-    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.05], {
+    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.02], {
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
     });
   } else if (camera === 'slow_pan') {
-    translateX = interpolate(frame, [0, durationInFrames], [0, -25], {
+    translateX = interpolate(frame, [0, durationInFrames], [0, -12], {
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
     });
   } else if (camera === 'punch_in') {
-    scale = interpolate(frame, [0, 8, 16], [1.0, 1.07, 1.04], {
+    scale = interpolate(frame, [0, 8, 16], [1.0, 1.03, 1.015], {
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
     });

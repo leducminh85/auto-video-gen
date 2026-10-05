@@ -33,10 +33,17 @@ class FluxProvider extends BaseImageProvider {
    */
   preparePrompt(prompt, options = {}) {
     const { diegeticLabel } = options;
-    if (diegeticLabel) {
-      return `${prompt}. Hand-drawn stickman comic explainer style, minimalist line art, clean vector comic style, warm paper texture background. The exact text "${diegeticLabel}" is legibly written on a sign, label, or chalkboard.`;
+    let clean = (prompt || '').trim();
+    if (clean.includes('whiteboard animation doodle') || clean.includes('Pure white background')) {
+      if (diegeticLabel && !clean.includes(diegeticLabel)) {
+        clean += ` The text "${diegeticLabel}" is written clearly and boldly.`;
+      }
+      return clean;
     }
-    return `${prompt}. Hand-drawn stickman comic explainer style, minimalist line art, clean vector comic style, warm paper texture background.`;
+    if (diegeticLabel) {
+      return `${clean}. Hand-drawn stickman comic explainer style, minimalist line art, clean vector comic style, warm paper texture background. The exact text "${diegeticLabel}" is legibly written on a sign, label, or chalkboard.`;
+    }
+    return `${clean}. Hand-drawn stickman comic explainer style, minimalist line art, clean vector comic style, warm paper texture background.`;
   }
 
   /**

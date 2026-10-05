@@ -53,6 +53,39 @@ function extractBasicMetrics(text) {
 }
 
 /**
+ * Build production-ready whiteboard doodle prompt matching user's exact specification
+ */
+function buildWhiteboardPrompt({ actionDescription, keyText, accentColor = 'cyan blue' }) {
+  const cleanAction = (actionDescription || 'A stickman character actively engaging in the scene').trim().replace(/\.+$/, '');
+  const textClause = keyText ? ` The text "${keyText.trim()}" is written clearly and boldly, placed safely inside the illustration.` : '';
+  return `A hyper-minimalist whiteboard animation doodle, Pictionary drawing style, horizontal 16:9 widescreen composition with generous white padding. ${cleanAction}.${textClause} Characters are absolute pure stickmen with an empty circle for a head, absolutely NO facial features, NO eyes, NO mouth, and single thin black lines for bodies and limbs. Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO drop shadows under feet, NO gray tones, NO 3D effects. All text, characters, and drawing elements are well within the safe zone, comfortably centered with at least 15% clear white margin from all edges. Pure white background with ONLY ONE subtle ${accentColor} accent color used for highlights. Clean, extremely simplified 2D flat vector explainer video illustration.`;
+}
+
+/**
+ * Dynamic subtle accent color selection
+ */
+function getSubtleAccentColor(visualMethod, index = 0) {
+  switch (visualMethod) {
+    case 'numbers':
+    case 'infographic':
+      return 'cyan blue';
+    case 'comparison':
+    case 'problem_conflict':
+      return 'amber orange';
+    case 'typography':
+      return 'golden yellow';
+    case 'object_metaphor':
+      return 'emerald green';
+    case 'process':
+      return 'cyan blue';
+    default: {
+      const palette = ['cyan blue', 'amber orange', 'emerald green', 'golden yellow'];
+      return palette[index % palette.length];
+    }
+  }
+}
+
+/**
  * Distribute an array of clauses into N balanced buckets
  */
 function distributeIntoBuckets(items, bucketCount) {
@@ -302,13 +335,20 @@ function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, scen
 
   // Ensure whatToShow and howToShow are populated
   if (!whatToShow) {
-    whatToShow = `Stickman character actively engaged with props illustrating: ${keyText}.`;
+    whatToShow = `A stickman character actively demonstrating ${keyText}.`;
   }
   if (!howToShow) {
-    howToShow = `Medium clean studio shot. Expressive stick figure body language conveying the scene idea.`;
+    howToShow = `Clean studio shot with expressive stick figure body language.`;
   }
 
-  const imageGenerationPrompt = `A hyper-minimalist whiteboard animation doodle, Pictionary drawing style. [WHAT TO SHOW: ${whatToShow}]. [HOW TO SHOW: ${howToShow}]. Character is a pure simple stickman (circle for head, simple lines for body and limbs, completely faceless). Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO gradients, NO 3D effects. Pure white background with only one subtle accent color. Explainer video flat vector graphic, clean, extremely simplified.`;
+  const cleanKeyText = keyText.substring(0, 24).toUpperCase();
+  const accentColor = getSubtleAccentColor(visualMethod, beatIndex);
+  const actionDescription = `${whatToShow} ${howToShow}`.trim();
+  const imageGenerationPrompt = buildWhiteboardPrompt({
+    actionDescription,
+    keyText: cleanKeyText,
+    accentColor,
+  });
 
   return {
     meaning,
@@ -321,7 +361,7 @@ function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, scen
     composition: 'Center focused',
     shotType,
     visualMethod,
-    keyText: keyText.substring(0, 24).toUpperCase(),
+    keyText: cleanKeyText,
     mustNotInclude: [],
     transitionIntent: 'Nối tiếp mạch diễn giải',
     imageGenerationPrompt,
@@ -362,8 +402,8 @@ Right at this planning stage, you must explicitly plan out:
 CRITICAL DIRECTIVES:
 - NO GENERIC PHRASES: NEVER use vague filler like "diễn đạt trực quan", "visual representation", "explaining concept", "illustrating the idea", or raw narration repetition.
 - SPECIFICITY: Ground everything specifically in the topic of the narration (e.g. computer store, electronics workbench, customer examining PC parts, student studying on laptop, business growth chart).
-- ART STYLE: imageGenerationPrompt must follow this structure:
-  "A hyper-minimalist whiteboard animation doodle, Pictionary drawing style. [WHAT TO SHOW: specific subject, setting, and key objects]. [HOW TO SHOW: composition, character pose, actions, and visual dynamics]. Character is a pure simple stickman (circle for head, simple lines for body and limbs, completely faceless). Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO gradients, NO 3D effects. Pure white background with only one subtle accent color. Explainer video flat vector graphic, clean, extremely simplified."
+- ART STYLE: Every beat's "imageGenerationPrompt" MUST strictly follow this exact template:
+  "A hyper-minimalist whiteboard animation doodle, Pictionary drawing style, horizontal 16:9 widescreen composition with generous white padding. {Action description in English: e.g. A stickman fixing a giant gear while another stickman points at an up-trend chart}. The text \"{Key text on image in 1-3 words}\" is written clearly and boldly, placed safely inside the illustration. Characters are absolute pure stickmen with an empty circle for a head, absolutely NO facial features, NO eyes, NO mouth, and single thin black lines for bodies and limbs. Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO drop shadows under feet, NO gray tones, NO 3D effects. All text, characters, and drawing elements are well within the safe zone, comfortably centered with at least 15% clear white margin from all edges. Pure white background with ONLY ONE subtle {one accent color: e.g. cyan blue, amber orange, emerald green, or golden yellow} accent color used for highlights. Clean, extremely simplified 2D flat vector explainer video illustration."
 - DIVERSE VISUAL METHODS: alternate between 'character_action', 'object_metaphor', 'comparison', 'infographic', 'numbers', 'process', 'typography', 'environment'.
 - KEY TEXT: 'keyText' must be 1 to 3 punchy Vietnamese words or exact metric for on-screen text/badge (e.g. "NHU CẦU ỔN ĐỊNH", "ĐA NGUỒN THU", "GIÁ TRỊ TRỌN GÓI").
 
@@ -379,18 +419,28 @@ Return ONLY a JSON array with exactly ${beats.length} items matching this schema
     "visualMethod": "character_action | object_metaphor | comparison | infographic | numbers | process | typography | environment",
     "shotType": "wide | medium | close-up | diagram | infographic",
     "keyText": "1-3 UPPERCASE WORDS",
-    "imageGenerationPrompt": "Full English image prompt in hyper-minimalist whiteboard animation doodle style following the ART STYLE rule above."
+    "accentColor": "cyan blue | amber orange | emerald green | golden yellow",
+    "imageGenerationPrompt": "Full English image prompt following the exact ART STYLE rule above."
   }
 ]`;
 
     const normalizeBeatArray = (json) => {
       if (!Array.isArray(json) || json.length !== beats.length) return null;
-      return json.map((p) => {
+      return json.map((p, idx) => {
         const whatToShow = p.what_to_show || `${p.subject || 'Stickman character'} in relevant scene`;
         const howToShow = p.how_to_show || `${p.action || 'interacting with elements'}`;
-        const genPrompt = p.imageGenerationPrompt && !/diễn đạt trực quan/i.test(p.imageGenerationPrompt)
-          ? p.imageGenerationPrompt
-          : `A hyper-minimalist whiteboard animation doodle, Pictionary drawing style. [WHAT TO SHOW: ${whatToShow}]. [HOW TO SHOW: ${howToShow}]. Character is a pure simple stickman (circle for head, simple lines for body and limbs, completely faceless). Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO gradients, NO 3D effects. Pure white background with only one subtle accent color. Explainer video flat vector graphic, clean, extremely simplified.`;
+        const keyText = (p.keyText || '').substring(0, 24).toUpperCase();
+        const accentColor = p.accentColor || getSubtleAccentColor(p.visualMethod, idx);
+        const actionDesc = `${whatToShow}. ${howToShow}`.trim();
+
+        let genPrompt = p.imageGenerationPrompt;
+        if (!genPrompt || /diễn đạt trực quan/i.test(genPrompt) || !genPrompt.includes('Characters are absolute pure stickmen')) {
+          genPrompt = buildWhiteboardPrompt({
+            actionDescription: actionDesc,
+            keyText,
+            accentColor,
+          });
+        }
 
         return {
           meaning: p.meaning || '',
@@ -403,7 +453,7 @@ Return ONLY a JSON array with exactly ${beats.length} items matching this schema
           composition: p.composition || 'Center focused',
           shotType: p.shotType || 'medium',
           visualMethod: p.visualMethod || 'character_action',
-          keyText: (p.keyText || '').toUpperCase(),
+          keyText,
           mustNotInclude: [],
           transitionIntent: '',
           imageGenerationPrompt: genPrompt,
@@ -833,4 +883,6 @@ module.exports = {
   validateVisualBeat,
   generateSemanticSvgForBeat,
   runProjectQualityGate,
+  buildWhiteboardPrompt,
+  getSubtleAccentColor,
 };

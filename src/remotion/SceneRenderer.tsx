@@ -61,11 +61,11 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
   const beatLocalFrame = Math.max(0, frame - activeBeat.start_frame_offset);
   const beatDuration = Math.max(1, activeBeat.duration_in_frames);
 
-  // Micro-motion Ken-Burns zoom on active beat
+  // Micro-motion Ken-Burns zoom on active beat (softened to prevent cutting text)
   const beatScale = interpolate(
     beatLocalFrame,
     [0, beatDuration],
-    [1.0, 1.03],
+    [1.0, 1.012],
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
 
@@ -210,7 +210,7 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
         width: '100%',
         height: '100%',
         position: 'relative',
-        backgroundColor: '#FDFBF7',
+        backgroundColor: '#FFFFFF',
         overflow: 'hidden',
         fontFamily: "'Be Vietnam Pro', system-ui, -apple-system, sans-serif",
         opacity: sceneOpacity,

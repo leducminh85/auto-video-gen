@@ -54,7 +54,10 @@ async function generateViaLocalServer({ prompt, outputPath, width = 1024, height
       if (b64) {
         const buffer = Buffer.from(b64, 'base64');
         await sharp(buffer)
-          .resize(1920, 1080, { fit: 'cover', position: 'centre' })
+          .resize(1920, 1080, {
+            fit: 'contain',
+            background: { r: 255, g: 255, b: 255, alpha: 1 },
+          })
           .png({ quality: 95 })
           .toFile(outputPath);
         return { success: true, method: 'local_flux_server' };
@@ -92,7 +95,10 @@ async function generateViaMflux({ prompt, outputPath }) {
 
     if (fs.existsSync(tempMfluxOut) && fs.statSync(tempMfluxOut).size > 5000) {
       await sharp(tempMfluxOut)
-        .resize(1920, 1080, { fit: 'cover', position: 'centre' })
+        .resize(1920, 1080, {
+          fit: 'contain',
+          background: { r: 255, g: 255, b: 255, alpha: 1 },
+        })
         .png({ quality: 95 })
         .toFile(outputPath);
       try { fs.unlinkSync(tempMfluxOut); } catch (_) {}

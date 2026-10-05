@@ -1449,6 +1449,7 @@ async function generateVideo({
     validateVisualBeat,
     generateSemanticSvgForBeat,
     runProjectQualityGate,
+    buildWhiteboardPrompt,
   } = require('./visualBeatPlanner.cjs');
   const { generateFluxImage } = require('./fluxImageGenerator.cjs');
 
@@ -1733,7 +1734,12 @@ async function generateVideo({
       const actionDesc = plan.action || plan.meaning || beat.text;
       const contextDesc = sceneTitle ? `related to ${sceneTitle}` : '';
 
-      const fallbackPrompt = `A hyper-minimalist whiteboard animation doodle, Pictionary drawing style. [WHAT TO SHOW: ${subjectDesc} ${contextDesc}]. [HOW TO SHOW: ${actionDesc}]. Character is a pure simple stickman (circle for head, simple lines for body and limbs, completely faceless). Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO gradients, NO 3D effects. Pure white background with only one subtle accent color. Explainer video flat vector graphic, clean, extremely simplified.`;
+      const fallbackAction = `${subjectDesc} actively demonstrating ${contextDesc}: ${actionDesc}`.trim();
+      const fallbackPrompt = buildWhiteboardPrompt({
+        actionDescription: fallbackAction,
+        keyText: diegeticLabel,
+        accentColor: 'cyan blue',
+      });
       const imgPrompt = plan.imageGenerationPrompt || fallbackPrompt;
 
       let imageMethod = 'svg_fallback';
@@ -1790,7 +1796,10 @@ async function generateVideo({
               const buffer = Buffer.from(arrayBuffer);
 
               await sharp(buffer)
-                .resize(1920, 1080, { fit: 'cover', position: 'centre' })
+                .resize(1920, 1080, {
+                  fit: 'contain',
+                  background: { r: 255, g: 255, b: 255, alpha: 1 },
+                })
                 .png({ quality: 95 })
                 .toFile(beatPngPath);
 
@@ -1871,7 +1880,7 @@ async function generateVideo({
       const beatSec = (beat.duration_in_frames / 30).toFixed(2);
       try {
         execSync(
-          `/opt/homebrew/bin/ffmpeg -y -loop 1 -i "${beatPngPath}" -vf "scale=1920:1080,zoompan=z='min(zoom+0.0008,1.035)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30" -c:v libx264 -t ${beatSec} -pix_fmt yuv420p -r 30 -an "${beatClipOut}"`,
+          `/opt/homebrew/bin/ffmpeg -y -loop 1 -i "${beatPngPath}" -vf "scale=1920:1080,zoompan=z='min(zoom+0.0003,1.015)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30" -c:v libx264 -t ${beatSec} -pix_fmt yuv420p -r 30 -an "${beatClipOut}"`,
           { stdio: 'ignore' }
         );
         beatClipPaths.push(beatClipOut);

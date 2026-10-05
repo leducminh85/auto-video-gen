@@ -68,7 +68,7 @@ export const StickmanScene: React.FC<StickmanSceneProps> = ({ scene, isDebug = f
   const beatScale = interpolate(
     beatLocalFrame,
     [0, beatDuration],
-    [1.0, 1.03],
+    [1.0, 1.012],
     {
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
@@ -100,7 +100,7 @@ export const StickmanScene: React.FC<StickmanSceneProps> = ({ scene, isDebug = f
         width: '100%',
         height: '100%',
         position: 'relative',
-        backgroundColor: '#F9F6ED',
+        backgroundColor: '#FFFFFF',
         overflow: 'hidden',
         fontFamily: "'Be Vietnam Pro', system-ui, sans-serif",
         opacity: globalOpacity,

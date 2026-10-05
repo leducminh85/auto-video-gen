@@ -74,7 +74,7 @@ async function regenerateBeatImage({
   const beatSec = (Number(durationInFrames || 90) / 30).toFixed(2);
   try {
     execSync(
-      `${ffmpegBin} -y -loop 1 -i "${beatPngPath}" -vf "scale=1920:1080,zoompan=z='min(zoom+0.0008,1.035)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30" -c:v libx264 -t ${beatSec} -pix_fmt yuv420p -r 30 -an "${beatClipOut}"`,
+      `${ffmpegBin} -y -loop 1 -i "${beatPngPath}" -vf "scale=1920:1080,zoompan=z='min(zoom+0.0003,1.015)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30" -c:v libx264 -t ${beatSec} -pix_fmt yuv420p -r 30 -an "${beatClipOut}"`,
       { stdio: 'ignore' }
     );
     console.log(`✓ [FFmpeg] Re-rendered beat clip: ${beatClipOut}`);

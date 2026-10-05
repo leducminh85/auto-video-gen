@@ -479,7 +479,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
                 }}
               />
               <div style={{ fontSize: 11, color: 'var(--text-muted, #94a3b8)', marginTop: 4 }}>
-                💡 Gợi ý: Giữ phong cách whiteboard doodle, tối giản, nét bút lông đen to, không bóng mờ.
+                💡 Chuẩn phong cách: Whiteboard Doodle (Pictionary) · Tỷ lệ 16:9 lề an toàn ≥15% · Stickman đầu tròn rỗng, KHÔNG mắt mũi miệng · Nét bút dạ đen · Nền trắng tinh khiết.
               </div>
             </div>
 
