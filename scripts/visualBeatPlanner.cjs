@@ -57,8 +57,11 @@ function extractBasicMetrics(text) {
  */
 function buildWhiteboardPrompt({ actionDescription, keyText, accentColor = 'cyan blue' }) {
   const cleanAction = (actionDescription || 'A stickman character actively engaging in the scene').trim().replace(/\.+$/, '');
-  const textClause = keyText ? ` The text "${keyText.trim()}" is written clearly and boldly, placed safely inside the illustration.` : '';
-  return `A hyper-minimalist whiteboard animation doodle, Pictionary drawing style, horizontal 16:9 widescreen composition with generous white padding. ${cleanAction}.${textClause} Characters are absolute pure stickmen with an empty circle for a head, absolutely NO facial features, NO eyes, NO mouth, and single thin black lines for bodies and limbs. Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO drop shadows under feet, NO gray tones, NO 3D effects. All text, characters, and drawing elements are well within the safe zone, comfortably centered with at least 15% clear white margin from all edges. Pure white background with ONLY ONE subtle ${accentColor} accent color used for highlights. Clean, extremely simplified 2D flat vector explainer video illustration.`;
+  const cleanKey = (keyText || '').trim();
+  const textClause = cleanKey
+    ? ` The text "${cleanKey}" is written clearly and boldly, placed safely inside the illustration.`
+    : ' Pure visual storytelling with absolutely NO on-screen text, NO letters, and NO words.';
+  return `A hyper-minimalist whiteboard animation doodle, Pictionary drawing style, horizontal 16:9 widescreen composition with generous white padding. ${cleanAction}.${textClause} Characters are absolute pure stickmen with an empty circle for a head, absolutely NO facial features, NO eyes, NO mouth, and single thin black lines for bodies and limbs. Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO drop shadows under feet, NO gray tones, NO 3D effects. All characters and drawing elements are well within the safe zone, comfortably centered with at least 15% clear white margin from all edges. Pure white background with ONLY ONE subtle ${accentColor} accent color used for highlights. Clean, extremely simplified 2D flat vector explainer video illustration.`;
 }
 
 /**
@@ -216,18 +219,32 @@ function segmentSceneIntoBeats(scene, durationInSeconds, totalFrames) {
 }
 
 const BEAT_STOPWORDS = new Set([
+  // Vietnamese stop words
   'chúng', 'ta', 'tôi', 'bạn', 'mọi', 'người', 'của', 'và', 'hoặc', 'nhưng', 'mà', 'thì', 'là',
   'rằng', 'ở', 'tại', 'với', 'cho', 'để', 'được', 'bị', 'do', 'bởi', 'khiến', 'làm', 'này',
   'đó', 'kia', 'những', 'các', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'ngày', 'nay', 'hiện',
   'tại', 'trong', 'ngoài', 'trên', 'dưới', 'rất', 'quá', 'lắm', 'luôn', 'sẽ', 'đang', 'đã',
   'cũng', 'chỉ', 'đều', 'vừa', 'mới', 'tự', 'ra', 'vào', 'lại', 'thấy', 'nghĩ', 'rõ', 'không',
-  'chưa', 'chẳng', 'thế', 'nào', 'gì', 'sao'
+  'chưa', 'chẳng', 'thế', 'nào', 'gì', 'sao', 'về', 'theo', 'như', 'khi', 'nếu',
+  // English stop words & grammatical fillers
+  'if', 'we', 'you', 'they', 'he', 'she', 'it', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+  'have', 'has', 'had', 'do', 'does', 'did', 'a', 'an', 'the', 'and', 'but', 'or', 'so', 'as',
+  'at', 'by', 'for', 'from', 'in', 'into', 'of', 'off', 'on', 'onto', 'out', 'over', 'to', 'up',
+  'with', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'any', 'because', 'before',
+  'below', 'between', 'both', 'can', 'cannot', 'could', 'down', 'during', 'each', 'few', 'further',
+  'here', 'how', 'i', 'me', 'my', 'more', 'most', 'no', 'nor', 'not', 'only', 'own', 'same',
+  'should', 'some', 'such', 'than', 'that', 'their', 'theirs', 'them', 'then', 'there', 'these',
+  'this', 'those', 'through', 'too', 'under', 'until', 'very', 'what', 'when', 'where', 'which',
+  'while', 'who', 'whom', 'why', 'will', 'would', 'make', 'just', 'like', 'get', 'got', 'one',
+  'two', 'three', 'take', 'come', 'go', 'also', 'well', 'talk', 'talks', 'talking', 'tell',
+  'see', 'need', 'needs', 'needed', 'usually', 'become', 'another', 'might', 'choose', 'right',
+  'keep', 'keeping', 'good', 'condition'
 ]);
 
-function extractDynamicKeyText(text, fallbackTitle) {
-  if (!text) return (fallbackTitle || 'Ý CHÍNH').toUpperCase();
+function extractDynamicKeyText(text) {
+  if (!text) return '';
 
-  // 1. Metric / Number / Percentage first
+  // 1. Metric / Number / Percentage first (highest value)
   const metricMatch = text.match(/(\d+(?:[.,]\d+)?\s*(?:%|triệu|tỷ|usd|đ|k|tiếng|giờ|phút|giây|tháng|năm|người|kg|members|\$))/i);
   if (metricMatch) {
     return metricMatch[0].trim().toUpperCase();
@@ -239,27 +256,135 @@ function extractDynamicKeyText(text, fallbackTitle) {
     return quoteMatch[1].trim().toUpperCase();
   }
 
-  // 3. Extract 2-3 content words
+  // 3. Extract meaningful concept keywords (excluding stop words)
   const clean = text.replace(/[,.!?;:()"'«»“”\n\r]/g, ' ').trim();
   const words = clean.split(/\s+/).filter(Boolean);
-  const contentWords = words.filter((w) => !BEAT_STOPWORDS.has(w.toLowerCase()));
+  const contentWords = words.filter((w) => {
+    const low = w.toLowerCase();
+    return !BEAT_STOPWORDS.has(low) && low.length >= 3;
+  });
 
+  // Only return if we have 1-2 truly meaningful content words
   if (contentWords.length >= 2) {
-    return contentWords.slice(0, 3).join(' ').toUpperCase();
+    return contentWords.slice(0, 2).join(' ').toUpperCase();
   } else if (contentWords.length === 1) {
     return contentWords[0].toUpperCase();
   }
 
-  return (fallbackTitle || 'Ý CHÍNH').toUpperCase();
+  // Do NOT force arbitrary filler text! Return empty string so visual is clean and natural.
+  return '';
+}
+
+/**
+ * Detect the dominant business / subject domain of the entire video
+ * so that all scenes remain visually grounded in this world rather than floating in isolation.
+ */
+function extractDomainAnchor(videoTitle, sceneTitle, sceneText) {
+  const textBody = `${sceneText || ''} ${sceneTitle || ''}`.toLowerCase();
+  const titleBody = `${videoTitle || ''}`.toLowerCase();
+  const combined = `${titleBody} ${textBody}`.trim();
+
+  // 1. Dental Clinic / Nha khoa (Highest priority check on text & title)
+  if (/nha khoa|răng|dental|dentist|teeth|tooth|orthodontic|braces|tẩy trắng răng/i.test(combined)) {
+    return {
+      topic: 'dental clinic business',
+      topicVn: 'phòng khám nha khoa',
+      props: 'dental examination chair, overhead dental operating light, dental checkup mirror and probe, tooth model, dental instrument tray',
+      environment: 'clean modern dental clinic office, dental treatment chair, and reception counter',
+    };
+  }
+
+  // 2. Medical / Doctor / Healthcare Clinic
+  if (/bác sĩ|phòng khám|y tế|bệnh viện|clinic|doctor|hospital|medical|healthcare/i.test(combined)) {
+    return {
+      topic: 'medical clinic healthcare',
+      topicVn: 'phòng khám y tế',
+      props: 'stethoscope, medical clipboard chart, patient examination bed, doctor white coat',
+      environment: 'modern medical clinic consultation room and reception desk',
+    };
+  }
+
+  // 3. Bicycle Rental / Cho thuê xe đạp
+  if (/xe đạp|bicycle|bike|cycl/i.test(combined)) {
+    return {
+      topic: 'bicycle rental service',
+      topicVn: 'dịch vụ cho thuê xe đạp',
+      props: 'rental bicycles, bike helmets, bike repair tools, bicycle locks, rental sign',
+      environment: 'bicycle rental shop, bike stand, and park bike paths',
+    };
+  }
+
+  // 4. Coffee Shop / Quán cà phê
+  if (/cà phê|coffee|cafe|barista/i.test(combined)) {
+    return {
+      topic: 'coffee shop business',
+      topicVn: 'quán cà phê',
+      props: 'coffee cups, espresso machine, coffee counter, barista tools, coffee beans',
+      environment: 'coffee shop counter and cozy cafe seating',
+    };
+  }
+
+  // 5. Gym / Fitness / Thể hình
+  if (/gym|fitness|thể hình|thể thao|workout|tập luyện/i.test(combined)) {
+    return {
+      topic: 'fitness gym business',
+      topicVn: 'phòng gym thể hình',
+      props: 'dumbbells, barbells, workout bench, gym timer, water bottle',
+      environment: 'modern fitness gym studio with workout equipment',
+    };
+  }
+
+  // 6. Computer / Electronics / Máy tính
+  if (/máy tính|pc|laptop|computer|điện tử/i.test(combined)) {
+    return {
+      topic: 'computer electronics store',
+      topicVn: 'cửa hàng máy tính',
+      props: 'laptops, PC components, repair workbench, monitors',
+      environment: 'electronics workbench and computer store',
+    };
+  }
+
+  // 7. Restaurant / Food / Quán ăn
+  if (/nhà hàng|quán ăn|ẩm thực|restaurant|bakery|tiệm bánh|cooking|food/i.test(combined)) {
+    return {
+      topic: 'restaurant food service',
+      topicVn: 'nhà hàng quán ăn',
+      props: 'chef apron, kitchen cookware, dining tables, food menu, plates',
+      environment: 'welcoming restaurant dining area and clean kitchen counter',
+    };
+  }
+
+  // 8. Education / Course / Học tập
+  if (/học tập|khóa học|giáo dục|trường học|course|student|teacher|education/i.test(combined)) {
+    return {
+      topic: 'education and coaching',
+      topicVn: 'giáo dục đào tạo',
+      props: 'whiteboard with diagrams, books, notebook, pen, study desk',
+      environment: 'clean modern classroom or study workshop studio',
+    };
+  }
+
+  // Dynamic fallback from video title or text
+  const titleClean = (videoTitle || sceneTitle || sceneText || '').replace(/[^\p{L}\p{N}\s]/gu, ' ').trim();
+  const words = titleClean.split(/\s+/).filter((w) => !BEAT_STOPWORDS.has(w.toLowerCase()) && w.length >= 3);
+  const detectedTopic = words.slice(0, 3).join(' ') || 'business startup';
+
+  return {
+    topic: detectedTopic,
+    topicVn: detectedTopic,
+    props: `practical tools and equipment for ${detectedTopic}`,
+    environment: `workspace setting for ${detectedTopic}`,
+  };
 }
 
 /**
  * Dynamic Universal Visual Beat Planner (Offline Fallback)
- * Analyzes sentence structure dynamically without any hardcoded domains.
+ * Analyzes sentence structure dynamically and grounds every beat in the video's core domain.
  */
-function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, sceneText, videoTitle, prevMethod }) {
+function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, sceneText, videoTitle, overallTopic, prevMethod }) {
   const clean = (beatText || '').trim();
   const metrics = extractBasicMetrics(clean);
+  const domain = extractDomainAnchor(overallTopic || videoTitle, sceneTitle, sceneText);
 
   let visualMethod = 'character_action';
   let shotType = 'medium';
@@ -269,61 +394,64 @@ function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, scen
   let subject = 'Nhân vật stickman';
   let action = '';
   let objects = [];
-  let environment = 'Clean studio';
-  let keyText = extractDynamicKeyText(clean, sceneTitle);
+  let environment = domain.environment;
+  let keyText = '';
+  const extracted = extractDynamicKeyText(clean);
 
   // 1. Metric / Number / Percentage
   if (metrics.percentage || metrics.money) {
     visualMethod = 'numbers';
     shotType = 'infographic';
     keyText = metrics.percentage || metrics.money.toUpperCase();
-    action = `Nhấn mạnh số liệu quan trọng: ${keyText}`;
-    whatToShow = `A prominent statistical infographic card highlighting the bold metric "${keyText}" with clean comparative data bars.`;
+    action = `Nhấn mạnh số liệu trong ${domain.topicVn}: ${keyText}`;
+    whatToShow = `A prominent statistical infographic card highlighting the bold metric "${keyText}" with data bars, set in the context of ${domain.topic} with ${domain.props}.`;
     howToShow = `Studio presentation framing. Stickman presenter pointing with confidence to the prominent data board.`;
   }
   // 2. Contrast / Comparison / Dilemma
   else if (/nhưng|tuy nhiên|ngược lại|so với|thay vì|khác biệt|chứ không|mặt khác|nghịch lý/i.test(clean)) {
     visualMethod = 'comparison';
     shotType = 'wide';
-    keyText = extractDynamicKeyText(clean, 'SO SÁNH');
-    action = 'Đối chiếu hai khía cạnh đối lập để làm rõ sự khác biệt';
-    whatToShow = `Split visual comparison of two contrasting elements or choices representing: ${keyText}.`;
+    keyText = extracted ? extracted.substring(0, 18) : '';
+    action = `Đối chiếu trong ${domain.topicVn}`;
+    whatToShow = `Split visual comparison of two choices in ${domain.topic}, featuring ${domain.props}.`;
     howToShow = `Split-screen Left vs Right layout with VS emblem in center. Stickman in the middle evaluating both sides thoughtfully.`;
   }
   // 3. Process / Steps / Progression
   else if (/quy trình|bước|tiến trình|giai đoạn|tiếp theo|hành trình|trải qua|thực hiện/i.test(clean)) {
     visualMethod = 'process';
     shotType = 'diagram';
-    keyText = extractDynamicKeyText(clean, 'QUY TRÌNH');
-    action = 'Thực hiện tuần tự các bước trong tiến trình';
-    whatToShow = `A progressive milestone roadmap with connecting checkpoint arrows showing clear operational advancement.`;
+    keyText = `BƯỚC ${beatIndex}`;
+    action = `Tiến trình hoạt động của ${domain.topicVn}`;
+    whatToShow = `A progressive milestone roadmap showing operational workflow for ${domain.topic}, with stickman interacting with ${domain.props}.`;
     howToShow = `Horizontal process flowchart (Step 1 -> Step 2 -> Step 3). Stickman character stepping forward along the path.`;
   }
   // 4. Growth / Success / Positive Outcome
   else if (/tăng|phát triển|thành công|doanh thu|tiềm năng|lợi ích|kết quả|hiệu quả|tối ưu/i.test(clean)) {
     visualMethod = 'numbers';
     shotType = 'infographic';
-    keyText = extractDynamicKeyText(clean, 'TĂNG TRƯỞNG');
-    action = 'Nhấn mạnh sự tăng trưởng và hiệu quả vượt bậc';
-    whatToShow = `Stickman presenter standing beside a dynamic upward-trending performance chart with glowing achievement badges.`;
+    keyText = extracted || 'TĂNG TRƯỞNG';
+    action = `Hiệu quả phát triển của ${domain.topicVn}`;
+    whatToShow = `Stickman business owner in ${domain.environment} proudly presenting growing business results with ${domain.props} neatly arranged.`;
     howToShow = `Infographic studio layout. Stickman pointing enthusiastically to the rising curve of success.`;
   }
   // 5. Rule / Principle / Core Takeaway
   else if (/nguyên tắc|bài học|chìa khóa|cốt lõi|kết luận|tóm lại|quan trọng/i.test(clean)) {
     visualMethod = 'typography';
     shotType = 'medium';
-    keyText = extractDynamicKeyText(clean, 'BÀI HỌC');
-    action = 'Đúc kết nguyên tắc vàng quan trọng nhất';
-    whatToShow = `A prestigious golden rule medal and glowing lightbulb emblem summarizing the ultimate takeaway lesson.`;
+    keyText = extracted || 'BÀI HỌC';
+    action = `Đúc kết kinh nghiệm vàng trong ${domain.topicVn}`;
+    whatToShow = `A prestigious golden rule medal and glowing lightbulb emblem summarizing key wisdom for ${domain.topic}, with ${domain.props}.`;
     howToShow = `Center hero composition with clean badge layout, radiating focal light, and confident stickman presenter.`;
   }
-  // 6. Natural Character Action (Dynamic based on topic keywords)
+  // 6. Natural Character Action & Visual Storytelling (Grounded in domain!)
   else {
     const methodsPool = ['character_action', 'object_metaphor', 'process', 'environment'];
     visualMethod = methodsPool[(beatIndex - 1) % methodsPool.length];
-    keyText = extractDynamicKeyText(clean, sceneTitle);
-    action = `Minh họa chủ đề: ${keyText}`;
-    whatToShow = `Stickman character actively engaged with realistic props and visual elements representing: ${keyText}.`;
+    keyText = (beatIndex === 1 && extracted.length >= 4) ? extracted : '';
+    action = keyText ? `Hoạt động ${domain.topicVn}: ${keyText}` : `Hoạt động thực tế trong ${domain.topicVn}`;
+    whatToShow = keyText
+      ? `Stickman character in ${domain.environment} actively engaging with ${domain.props} representing ${keyText}.`
+      : `Stickman character in ${domain.environment} performing an expressive, authentic action with ${domain.props}.`;
     howToShow = `Medium clean studio shot. Expressive stick figure body language with clear visual comic storytelling and bold lines.`;
   }
 
@@ -335,13 +463,13 @@ function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, scen
 
   // Ensure whatToShow and howToShow are populated
   if (!whatToShow) {
-    whatToShow = `A stickman character actively demonstrating ${keyText}.`;
+    whatToShow = `A stickman character in ${domain.environment} actively demonstrating ${domain.topic}.`;
   }
   if (!howToShow) {
     howToShow = `Clean studio shot with expressive stick figure body language.`;
   }
 
-  const cleanKeyText = keyText.substring(0, 24).toUpperCase();
+  const cleanKeyText = (keyText || '').substring(0, 20).toUpperCase().trim();
   const accentColor = getSubtleAccentColor(visualMethod, beatIndex);
   const actionDescription = `${whatToShow} ${howToShow}`.trim();
   const imageGenerationPrompt = buildWhiteboardPrompt({
@@ -371,7 +499,17 @@ function createLocalBeatPlan({ beatText, beatIndex, totalBeats, sceneTitle, scen
 /**
  * AI Visual Planner with Smart Multi-Tier AI Support (Gemini + OpenAI)
  */
-async function planVisualBeatsWithAI({ scene, beats, styleGuide, geminiApiKey, openaiApiKey, previousMethod }) {
+async function planVisualBeatsWithAI({
+  scene,
+  beats,
+  styleGuide,
+  geminiApiKey,
+  openaiApiKey,
+  previousMethod,
+  videoTitle,
+  overallTopic,
+  fullScriptContext,
+}) {
   const apiKey = geminiApiKey || process.env.GEMINI_API_KEY || '';
   const oaiKey = openaiApiKey || process.env.OPENAI_API_KEY || '';
 
@@ -382,11 +520,17 @@ async function planVisualBeatsWithAI({ scene, beats, styleGuide, geminiApiKey, o
       .map((b, i) => `Beat ${i + 1} (${b.duration_in_seconds}s): "${b.text}"`)
       .join('\n');
 
+    const dominantTopic = overallTopic || videoTitle || scene.title || 'Explainer Video';
+
     const prompt = `You are a World-Class Storyboard Visual Director for high-impact YouTube explainer animations (style of Kurzgesagt, Vox, Polymatter, Casually Explained).
 
-Context:
+OVERARCHING VIDEO TOPIC & DOMAIN (BẮT BUỘC NEO CHỦ ĐỀ CHÍNH):
+- Dominant Video Topic: "${dominantTopic}"
+${fullScriptContext ? `- Full Script Context: "${fullScriptContext.substring(0, 400)}..."` : ''}
+
+CURRENT SCENE CONTEXT:
 - Scene Title: "${scene.title}"
-- Full Narration: "${scene.text}"
+- Scene Narration: "${scene.text}"
 
 Segmented Visual Beats to plan (${beats.length} beats):
 ${beatsSummary}
@@ -394,18 +538,35 @@ ${beatsSummary}
 Previous visual method: "${previousMethod || 'none'}"
 
 YOUR MISSION:
-Right at this planning stage, you must explicitly plan out:
-1. WHAT TO SHOW (what_to_show - ảnh thể hiện điều gì): Specific subjects, characters, environment, physical props, and concrete elements.
-2. HOW TO SHOW IT (how_to_show - ảnh thể hiện như thế nào): Camera framing, composition (wide, split-screen, medium, isometric), character acting/pose/gesture, visual metaphor or diagram layout.
-3. imageGenerationPrompt (FULL ENGLISH PROMPT FOR IMAGE MODEL): A production-ready, vivid prompt for image generation (Google Imagen / Flux).
+Plan out visually rich, contextually anchored whiteboard doodle beats.
 
-CRITICAL DIRECTIVES:
-- NO GENERIC PHRASES: NEVER use vague filler like "diễn đạt trực quan", "visual representation", "explaining concept", "illustrating the idea", or raw narration repetition.
-- SPECIFICITY: Ground everything specifically in the topic of the narration (e.g. computer store, electronics workbench, customer examining PC parts, student studying on laptop, business growth chart).
-- ART STYLE: Every beat's "imageGenerationPrompt" MUST strictly follow this exact template:
-  "A hyper-minimalist whiteboard animation doodle, Pictionary drawing style, horizontal 16:9 widescreen composition with generous white padding. {Action description in English: e.g. A stickman fixing a giant gear while another stickman points at an up-trend chart}. The text \"{Key text on image in 1-3 words}\" is written clearly and boldly, placed safely inside the illustration. Characters are absolute pure stickmen with an empty circle for a head, absolutely NO facial features, NO eyes, NO mouth, and single thin black lines for bodies and limbs. Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO drop shadows under feet, NO gray tones, NO 3D effects. All text, characters, and drawing elements are well within the safe zone, comfortably centered with at least 15% clear white margin from all edges. Pure white background with ONLY ONE subtle {one accent color: e.g. cyan blue, amber orange, emerald green, or golden yellow} accent color used for highlights. Clean, extremely simplified 2D flat vector explainer video illustration."
-- DIVERSE VISUAL METHODS: alternate between 'character_action', 'object_metaphor', 'comparison', 'infographic', 'numbers', 'process', 'typography', 'environment'.
-- KEY TEXT: 'keyText' must be 1 to 3 punchy Vietnamese words or exact metric for on-screen text/badge (e.g. "NHU CẦU ỔN ĐỊNH", "ĐA NGUỒN THU", "GIÁ TRỊ TRỌN GÓI").
+CRITICAL DIRECTIVE #1 - THEMATIC DOMAIN GROUNDING (QUY TẮC SỐNG CÒN: MỌI HÌNH PHẢI NEO THEO CHỦ ĐỀ CHÍNH):
+- The entire video is about: "${dominantTopic}".
+- EVERY SINGLE SCENE AND BEAT MUST BE VISUALLY ANCHORED IN THIS SPECIFIC DOMAIN: "${dominantTopic}".
+- ABSOLUTELY BANNED: NEVER generate generic, disconnected clip-art metaphors (e.g. NEVER draw a generic stickman climbing a generic arrow, NEVER draw generic floating lightbulbs, NEVER draw generic trophies, NEVER draw generic podiums, NEVER draw an abstract house or office unless specifically relevant to ${dominantTopic}).
+- INSTEAD: Always translate abstract concepts (growth, demand, location, marketing, risk, revenue, maintenance) into CONCRETE REAL-WORLD ACTIONS within the world of "${dominantTopic}".
+  * Example: If the video is about Bicycle Rental:
+    - "Steady customer demand" -> Stickman customers (students, workers, tourists) riding rental bicycles along a park lane or picking up bikes at a busy bike rack.
+    - "Flexible location" -> A stickman setting up a mobile bicycle rental booth with a row of 5 bicycles near a university campus gate or beach promenade.
+    - "Good customer service" -> A smiling customer returning a rental bicycle at the rental counter, receiving a member discount card from the bicycle shop owner.
+    - "Expenses & Maintenance" -> A stickman mechanic wearing an apron repairing a bicycle wheel and oiling a chain in a bike workshop corner.
+  * Every beat MUST feature the core domain subjects, props, and setting of "${dominantTopic}".
+
+CRITICAL DIRECTIVE #2 - NO GENERIC PHRASES:
+- NEVER use vague filler like "diễn đạt trực quan", "visual representation", "explaining concept", "illustrating the idea", or raw narration repetition.
+
+CRITICAL DIRECTIVE #3 - ART STYLE:
+Every beat's "imageGenerationPrompt" MUST strictly follow this exact template:
+"A hyper-minimalist whiteboard animation doodle, Pictionary drawing style, horizontal 16:9 widescreen composition with generous white padding. {Action description in English, grounded in ${dominantTopic}}. {Text clause: either 'The text \"{1-2 concept words}\" is written clearly and boldly, placed safely inside the illustration.' OR 'Pure visual storytelling with absolutely NO on-screen text, NO letters, and NO words.'} Characters are absolute pure stickmen with an empty circle for a head, absolutely NO facial features, NO eyes, NO mouth, and single thin black lines for bodies and limbs. Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO drop shadows under feet, NO gray tones, NO 3D effects. All text, characters, and drawing elements are well within the safe zone, comfortably centered with at least 15% clear white margin from all edges. Pure white background with ONLY ONE subtle {one accent color: e.g. cyan blue, amber orange, emerald green, or golden yellow} accent color used for highlights. Clean, extremely simplified 2D flat vector explainer video illustration."
+
+CRITICAL DIRECTIVE #4 - DIVERSE VISUAL METHODS:
+Alternate between 'character_action', 'object_metaphor', 'comparison', 'infographic', 'numbers', 'process', 'typography', 'environment'.
+
+CRITICAL DIRECTIVE #5 - KEY TEXT DIRECTIVES & VARIETY:
+- "keyText": 1-2 meaningful, punchy CONCEPTUAL words in UPPERCASE (e.g. "MAINTENANCE", "LOCATION", "PROFIT", "80%"), OR leave as empty string "" for pure visual storytelling.
+- NEVER use arbitrary narration fragments or grammatical connectors (e.g. NEVER "IF WE TALK", "AND MAKE THE", "WHILE ONE", "OF THE", "CHÚNG TA CẦN", "BICYCLES NOT NEED").
+- VARIETY (CRITICAL): Do NOT force text onto every scene! At least 50% of the beats MUST have "keyText": "" (empty string) to allow pure visual comic storytelling without clutter.
+- Only use text when highlighting a crucial concept keyword, contrast, or number.
 
 Return ONLY a JSON array with exactly ${beats.length} items matching this schema:
 [
@@ -418,7 +579,7 @@ Return ONLY a JSON array with exactly ${beats.length} items matching this schema
     "objects": ["specific object 1", "specific object 2"],
     "visualMethod": "character_action | object_metaphor | comparison | infographic | numbers | process | typography | environment",
     "shotType": "wide | medium | close-up | diagram | infographic",
-    "keyText": "1-3 UPPERCASE WORDS",
+    "keyText": "1-2 UPPERCASE CONCEPT WORDS or empty string \"\" for pure visual",
     "accentColor": "cyan blue | amber orange | emerald green | golden yellow",
     "imageGenerationPrompt": "Full English image prompt following the exact ART STYLE rule above."
   }
@@ -429,7 +590,14 @@ Return ONLY a JSON array with exactly ${beats.length} items matching this schema
       return json.map((p, idx) => {
         const whatToShow = p.what_to_show || `${p.subject || 'Stickman character'} in relevant scene`;
         const howToShow = p.how_to_show || `${p.action || 'interacting with elements'}`;
-        const keyText = (p.keyText || '').substring(0, 24).toUpperCase();
+        let keyText = (p.keyText || '').substring(0, 20).toUpperCase().trim();
+        if (
+          !keyText ||
+          BEAT_STOPWORDS.has(keyText.toLowerCase()) ||
+          /^(IF WE|AND MAKE|WHILE ONE|THE MAIN|BICYCLES NOT|Ý CHÍNH|CHỦ ĐỀ|CẢNH|SCENE|BEAT)$/i.test(keyText)
+        ) {
+          keyText = '';
+        }
         const accentColor = p.accentColor || getSubtleAccentColor(p.visualMethod, idx);
         const actionDesc = `${whatToShow}. ${howToShow}`.trim();
 
@@ -580,7 +748,7 @@ function generateSemanticSvgForBeat({ beat, scene, styleGuide }) {
   const p = guide.palette;
   const sw = guide.strokeWidth;
   const text = (beat.text || beat.caption || beat.plan?.meaning || '').trim();
-  const keyText = escapeXml(plan.keyText || 'Ý CHÍNH');
+  const keyText = plan.keyText ? escapeXml(plan.keyText) : '';
   const method = plan.visualMethod || 'character_action';
 
   let contentSvg = '';
@@ -635,6 +803,7 @@ function generateSemanticSvgForBeat({ beat, scene, styleGuide }) {
 
       ${contentSvg}
 
+      ${keyText ? `
       <!-- Top Stylized KeyText Pill Badge -->
       <g transform="translate(960, 80)">
         <rect x="-260" y="-35" width="520" height="70" rx="35" fill="${p.card}" stroke="${p.outline}" stroke-width="${sw - 1}" filter="url(#cardShadow)"/>
@@ -642,7 +811,7 @@ function generateSemanticSvgForBeat({ beat, scene, styleGuide }) {
         <text x="-175" y="11" font-family="${guide.typography}" font-weight="900" font-size="28" fill="${p.outline}" letter-spacing="1.2">
           ${keyText}
         </text>
-      </g>
+      </g>` : ''}
     </svg>
   `;
 }
@@ -885,4 +1054,5 @@ module.exports = {
   runProjectQualityGate,
   buildWhiteboardPrompt,
   getSubtleAccentColor,
+  extractDomainAnchor,
 };

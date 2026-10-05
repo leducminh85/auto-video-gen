@@ -1450,6 +1450,7 @@ async function generateVideo({
     generateSemanticSvgForBeat,
     runProjectQualityGate,
     buildWhiteboardPrompt,
+    extractDomainAnchor,
   } = require('./visualBeatPlanner.cjs');
   const { generateFluxImage } = require('./fluxImageGenerator.cjs');
 
@@ -1588,6 +1589,9 @@ async function generateVideo({
     );
     console.log(`✓ Cảnh ${sceneId} được chia thành ${segmentedBeats.length} visual beats (trung bình ${(durationInSeconds / segmentedBeats.length).toFixed(1)}s/beat)`);
 
+    const dynamicDomain = extractDomainAnchor(title, sceneTitle, sceneText || script || content);
+    const resolvedTopic = title || dynamicDomain.topic;
+
     // 3. Visual Planner: Plan structured visual beats with AI + Smart local fallback
     console.log(`[Bước 4/5] Lập kế hoạch hình ảnh (Visual Planner) & Kiểm định ngữ nghĩa (Validator)...`);
     let beatPlans = await planVisualBeatsWithAI({
@@ -1597,6 +1601,9 @@ async function generateVideo({
       geminiApiKey,
       openaiApiKey,
       previousMethod,
+      videoTitle: title || dynamicDomain.topicVn,
+      overallTopic: resolvedTopic,
+      fullScriptContext: script || content,
     });
 
     if (!beatPlans || beatPlans.length !== segmentedBeats.length) {
@@ -1607,7 +1614,8 @@ async function generateVideo({
           totalBeats: segmentedBeats.length,
           sceneTitle,
           sceneText,
-          videoTitle: title,
+          videoTitle: title || dynamicDomain.topicVn,
+          overallTopic: resolvedTopic,
           prevMethod: bIdx > 0 ? beatPlans?.[bIdx - 1]?.visualMethod : previousMethod,
         })
       );
