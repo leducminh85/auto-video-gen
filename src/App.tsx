@@ -11,7 +11,6 @@ import {
   Download,
   Film,
   Layers,
-  Sparkles,
   Volume2,
   VolumeX,
   CheckCircle2,
@@ -21,7 +20,6 @@ import {
   RefreshCw,
   Copy,
   Check,
-  Wand2,
   PlusCircle,
   X,
   Image as ImageIcon,
@@ -106,7 +104,7 @@ export default function App() {
     }
     const audio = new Audio(`/audio/${scene.audio_file}`);
     audio.onended = () => setPlayingAudioId(null);
-    audio.play();
+    audio.play().catch(() => { setPlayingAudioId(null); showToast('Không phát được giọng đọc của cảnh này.'); });
     singleAudioRef.current = audio;
     setPlayingAudioId(scene.id);
   };
@@ -135,6 +133,7 @@ export default function App() {
                 ...b,
                 svg_data: null,
                 prompt: newPrompt,
+                ...(b.plan ? { plan: { ...b.plan, imageGenerationPrompt: newPrompt } } : {}),
                 ...(imageFile ? { image_file: imageFile } : {}),
                 image_version: version,
               };
@@ -180,11 +179,13 @@ export default function App() {
     }, 150);
   };
 
-  const copyJsonToClipboard = () => {
+  const copyJsonToClipboard = async () => {
     const exportData: ProductionData = { metadata, scenes };
-    navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
-    setCopiedJson(true);
-    setTimeout(() => setCopiedJson(false), 2500);
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+      setCopiedJson(true);
+      setTimeout(() => setCopiedJson(false), 2500);
+    } catch { showToast('Không thể sao chép. Hãy cho phép truy cập bộ nhớ tạm.'); }
   };
 
   const totalDuration = parseFloat(metadata.total_duration_in_seconds);
@@ -193,7 +194,7 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* ───── Header ───── */}
-      <header
+      <header className="studio-header" inert={showCreatorDrawer || regenerateModalOpen}
         style={{
           position: 'sticky',
           top: 0,
@@ -219,7 +220,7 @@ export default function App() {
               justifyContent: 'center',
             }}
           >
-            <Film style={{ width: 16, height: 16, color: 'var(--text-inverse)' }} />
+            <img src="/favicon.svg" alt="" width={32} height={32} />
           </div>
           <div>
             <h1
@@ -232,7 +233,7 @@ export default function App() {
                 letterSpacing: '-0.01em',
               }}
             >
-              Stickman Studio
+              Wevic Video Studio
             </h1>
             <p
               style={{
@@ -249,7 +250,7 @@ export default function App() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Studio Metrics */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 6 }}>
+          <div className="studio-metrics" style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 6 }}>
             <span className="badge badge-accent">
               {scenes.length} cảnh
             </span>
@@ -266,7 +267,7 @@ export default function App() {
             onClick={() => setShowCreatorDrawer(true)}
           >
             <PlusCircle style={{ width: 14, height: 14 }} />
-            <span>Tạo Video Mới</span>
+            <span>Tạo video mới</span>
           </button>
 
           <a
@@ -281,7 +282,7 @@ export default function App() {
       </header>
 
       {/* ───── Main Content ───── */}
-      <main
+      <main className="studio-main" inert={showCreatorDrawer || regenerateModalOpen}
         style={{
           flex: 1,
           maxWidth: 1200,
@@ -312,7 +313,7 @@ export default function App() {
               >
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Eye style={{ width: 14, height: 14 }} />
-                  Preview
+                  Xem trước
                 </span>
               </button>
               <button
@@ -409,7 +410,7 @@ export default function App() {
                       className="btn btn-primary"
                       onClick={() => handleOpenRegenerate(selectedScene)}
                     >
-                      <Wand2 style={{ width: 14, height: 14 }} />
+                      <RefreshCw style={{ width: 14, height: 14 }} />
                       <span>Tạo lại ảnh cảnh #{selectedScene.id}</span>
                     </button>
                   </div>
@@ -417,7 +418,7 @@ export default function App() {
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
                       gap: 12,
                     }}
                   >
@@ -428,6 +429,8 @@ export default function App() {
                         <div
                           key={sc.id}
                           className={`card ${isActive ? 'card-active' : ''}`}
+                          role="button" tabIndex={0} aria-label={`Xem cảnh ${sc.id}: ${sc.title}`}
+                          onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); jumpToScene(sc); } }}
                           style={{ padding: 12, cursor: 'pointer' }}
                           onClick={() => jumpToScene(sc)}
                         >
@@ -592,7 +595,7 @@ export default function App() {
                                 whiteSpace: 'nowrap',
                               }}
                             >
-                              <Wand2 style={{ width: 12, height: 12 }} />
+                              <RefreshCw style={{ width: 12, height: 12 }} />
                               Tạo lại
                             </button>
                           </div>
@@ -783,6 +786,8 @@ export default function App() {
                 <div
                   key={sc.id}
                   className={`scene-card ${isSelected ? 'active' : ''}`}
+                  role="button" tabIndex={0} aria-label={`Xem cảnh ${sc.id}: ${sc.title}`}
+                  onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); jumpToScene(sc); } }}
                   onClick={() => jumpToScene(sc)}
                   style={{
                     border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
@@ -919,12 +924,12 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button
                 className="btn btn-primary"
                 onClick={() => handleOpenRegenerate(selectedScene)}
               >
-                <Wand2 style={{ width: 14, height: 14 }} />
+                <RefreshCw style={{ width: 14, height: 14 }} />
                 <span>Tạo lại ảnh</span>
               </button>
               <button
@@ -1069,7 +1074,7 @@ export default function App() {
                       lineHeight: 1.4,
                     }}
                   >
-                    {beat.prompt}
+                    {beat.caption || beat.title}
                   </p>
 
                   <div
@@ -1097,8 +1102,8 @@ export default function App() {
                         padding: 0,
                       }}
                     >
-                      <Sparkles style={{ width: 12, height: 12 }} />
-                      Tạo lại ảnh AI
+                      <RefreshCw style={{ width: 12, height: 12 }} />
+                      Tạo lại ảnh
                     </button>
                     <button
                       onClick={() => jumpToScene(selectedScene, beat.start_frame_offset)}
@@ -1124,7 +1129,7 @@ export default function App() {
           </div>
 
           {/* Script & Prompt */}
-          <div
+          <div className="scene-script-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -1163,9 +1168,9 @@ export default function App() {
                 "{selectedScene.text}"
               </p>
             </div>
-            <div>
-              <span className="label" style={{ marginBottom: 6, display: 'block' }}>
-                <Sparkles
+            <details>
+              <summary className="label" style={{ marginBottom: 6, cursor: 'pointer' }}>
+                <ImageIcon
                   style={{
                     width: 12,
                     height: 12,
@@ -1175,8 +1180,8 @@ export default function App() {
                     color: 'var(--accent)',
                   }}
                 />
-                Prompt
-              </span>
+                Mô tả tạo ảnh
+              </summary>
               <p
                 className="mono"
                 style={{
@@ -1192,7 +1197,7 @@ export default function App() {
               >
                 {selectedScene.prompt}
               </p>
-            </div>
+            </details>
           </div>
         </section>
       </main>
@@ -1202,6 +1207,7 @@ export default function App() {
         <div className="creator-fullscreen-overlay">
           <CreatorPanel
             currentScenes={scenes}
+            currentMetadata={metadata}
             onGenerateNewVideo={handleGenerateNewVideo}
             onCancel={() => setShowCreatorDrawer(false)}
           />
@@ -1221,7 +1227,7 @@ export default function App() {
 
       {/* ───── Toast Notification ───── */}
       {toastMessage && (
-        <div className="toast toast-success">
+        <div className="toast toast-success" role="status">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <CheckCircle2 style={{ width: 16, height: 16, color: 'var(--success)' }} />
             <span>{toastMessage}</span>
@@ -1230,7 +1236,7 @@ export default function App() {
       )}
 
       {/* ───── Footer ───── */}
-      <footer
+      <footer inert={showCreatorDrawer || regenerateModalOpen}
         style={{
           borderTop: '1px solid var(--border)',
           padding: '20px 24px',
@@ -1240,7 +1246,7 @@ export default function App() {
         }}
       >
         <p style={{ margin: 0 }}>
-          Stickman Video Studio · Remotion + AI Pipeline · Font Be Vietnam Pro
+          Wevic Video Studio
         </p>
       </footer>
     </div>

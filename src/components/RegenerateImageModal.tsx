@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
   X,
   Check,
   Loader2,
@@ -12,6 +11,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { SceneData, VisualBeat } from '../types/scenes';
+import { useDialog } from '../utils/useDialog';
 
 interface RegenerateImageModalProps {
   isOpen: boolean;
@@ -27,14 +27,16 @@ interface RegenerateImageModalProps {
   ) => void;
 }
 
-export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
+export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = (props) =>
+  props.isOpen ? <RegenerateImageDialog key={`${props.scene.id}:${props.selectedBeat?.id || ''}`} {...props} /> : null;
+
+const RegenerateImageDialog: React.FC<RegenerateImageModalProps> = ({
   isOpen,
   onClose,
   scene,
   selectedBeat,
   onSaveImage,
 }) => {
-  if (!isOpen) return null;
 
   const currentBeatIndex = selectedBeat ? selectedBeat.sub_index : 1;
   const defaultImageFile = selectedBeat?.image_file || scene.image_file || `scene_${scene.id}_beat_${currentBeatIndex}.png`;
@@ -61,6 +63,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
   const [imageFile, setImageFile] = useState<string>(defaultImageFile);
   const [imageVersion, setImageVersion] = useState<number>(selectedBeat?.image_version || Date.now());
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const dialogRef = useDialog(onClose, !isGenerating);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [hasNewImage, setHasNewImage] = useState<boolean>(false);
@@ -74,7 +77,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
       .then((data) => {
         if (!isMounted) return;
         if (data.preferredProvider === 'google_ai_studio') {
-          setProviderName('Google AI Studio (Gemini 2.5 Flash)');
+          setProviderName('Google AI Studio');
         } else if (data.preferredProvider === 'flux_local') {
           setProviderName('FLUX.1 [schnell]');
         }
@@ -134,6 +137,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
   };
 
   const handleApply = () => {
+    if (!hasNewImage || isGenerating) return;
     onSaveImage(
       scene.id,
       selectedBeat?.id,
@@ -147,7 +151,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
   const previewUrl = `/images/${imageFile}?v=${imageVersion}`;
 
   return (
-    <div
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Tạo lại ảnh" tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -157,9 +161,8 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
         justifyContent: 'center',
         padding: 24,
         background: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(8px)',
       }}
-      className="animate-fade-in"
+      className="animate-fade-in regenerate-overlay"
     >
       <div
         style={{
@@ -176,7 +179,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
         }}
       >
         {/* Header */}
-        <div
+        <div className="regenerate-header"
           style={{
             padding: '16px 24px',
             borderBottom: '1px solid var(--border, rgba(255, 255, 255, 0.1))',
@@ -192,17 +195,16 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
                 width: 36,
                 height: 36,
                 borderRadius: 10,
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                background: 'var(--accent)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
               }}
             >
-              <Sparkles style={{ width: 18, height: 18, color: '#0f172a' }} />
+              <RotateCcw style={{ width: 18, height: 18, color: '#0f172a' }} />
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary, #f8fafc)', margin: 0 }}>
                   Tạo lại ảnh bằng AI
                 </h3>
@@ -228,6 +230,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
 
           <button
             onClick={onClose}
+            aria-label="Đóng hộp tạo lại ảnh"
             disabled={isGenerating}
             style={{
               width: 32,
@@ -254,7 +257,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
             overflowY: 'auto',
             padding: 24,
             display: 'grid',
-            gridTemplateColumns: 'minmax(320px, 1.1fr) minmax(320px, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
             gap: 24,
           }}
         >
@@ -347,7 +350,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
 
             {/* Error Banner */}
             {error && (
-              <div
+              <div role="alert"
                 style={{
                   padding: '10px 14px',
                   borderRadius: 8,
@@ -424,7 +427,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
             {/* Prompt Section */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <label
+                <label htmlFor="image-prompt"
                   style={{
                     fontSize: 13,
                     fontWeight: 600,
@@ -435,7 +438,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
                   }}
                 >
                   <FileText style={{ width: 14, height: 14, color: 'var(--accent, #f59e0b)' }} />
-                  Prompt hiện tại của Beat
+                  Mô tả hình ảnh
                 </label>
                 <button
                   type="button"
@@ -458,7 +461,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
                 </button>
               </div>
 
-              <textarea
+              <textarea id="image-prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={9}
@@ -479,13 +482,13 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
                 }}
               />
               <div style={{ fontSize: 11, color: 'var(--text-muted, #94a3b8)', marginTop: 4 }}>
-                💡 Chuẩn phong cách: Whiteboard Doodle (Pictionary) · Tỷ lệ 16:9 lề an toàn ≥15% · Stickman đầu tròn rỗng, KHÔNG mắt mũi miệng · Nét bút dạ đen · Nền trắng tinh khiết.
+                Mô tả nhân vật, hành động và bố cục. Giữ nét đen, nền trắng và khung hình 16:9 để đồng nhất với video.
               </div>
             </div>
 
             {/* Diegetic Label (Text in scene) */}
             <div>
-              <label
+              <label htmlFor="image-label"
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
@@ -494,14 +497,15 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
                   marginBottom: 6,
                 }}
               >
-                Chữ hiển thị trong hình (Biển hiệu / Bảng đen)
+                Chữ trong hình (không bắt buộc)
               </label>
               <input
+                id="image-label"
                 type="text"
                 value={diegeticLabel}
                 onChange={(e) => setDiegeticLabel(e.target.value)}
                 disabled={isGenerating}
-                placeholder="VD: COFFEE SHOP, 50% SALE, GYM CLOSED..."
+                placeholder="Để trống nếu không cần chữ trong hình"
                 style={{
                   width: '100%',
                   padding: '9px 12px',
@@ -530,7 +534,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
                   borderRadius: 10,
                   background: isGenerating
                     ? 'rgba(245, 158, 11, 0.3)'
-                    : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+                    : 'var(--accent)',
                   border: 'none',
                   color: isGenerating ? '#cbd5e1' : '#0f172a',
                   fontWeight: 700,
@@ -540,7 +544,6 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  boxShadow: isGenerating ? 'none' : '0 4px 14px rgba(245, 158, 11, 0.35)',
                   transition: 'all 0.2s ease',
                 }}
               >
@@ -551,7 +554,7 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <Sparkles style={{ width: 18, height: 18, color: '#0f172a' }} />
+                    <RotateCcw style={{ width: 18, height: 18, color: '#0f172a' }} />
                     Tạo ảnh mới
                   </>
                 )}
@@ -564,6 +567,8 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
         <div
           style={{
             padding: '14px 24px',
+            flexWrap: 'wrap',
+            gap: 12,
             borderTop: '1px solid var(--border, rgba(255, 255, 255, 0.1))',
             display: 'flex',
             alignItems: 'center',
@@ -598,20 +603,19 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = ({
               type="button"
               className="btn btn-primary"
               onClick={handleApply}
-              disabled={isGenerating}
+              disabled={isGenerating || !hasNewImage}
               style={{
                 padding: '8px 20px',
                 borderRadius: 8,
-                background: '#10b981',
+                background: 'var(--accent)',
                 border: 'none',
-                color: '#ffffff',
+                color: 'var(--text-inverse)',
                 fontWeight: 600,
                 fontSize: 13,
                 cursor: isGenerating ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
               }}
             >
               <Check style={{ width: 15, height: 15 }} />

@@ -1,13 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Sparkles,
   Mic,
   Gauge,
   FileText,
   Upload,
   Volume2,
   VolumeX,
-  Zap,
   AlertCircle,
   X,
   ChevronRight,
@@ -24,6 +22,8 @@ import {
 import { VoiceOption, SceneData, VideoMetadata } from '../types/scenes';
 import { buildMultiBeatScenes } from '../utils/stickmanArtGenerator';
 import { audioPreviewManager, SAMPLE_PHRASES } from '../utils/audioPreview';
+import { readCreatorDraft, saveCreatorDraft } from '../utils/creatorDraft';
+import { useDialog } from '../utils/useDialog';
 
 export interface PipelineStepDef {
   key: string;
@@ -208,21 +208,31 @@ Học cách đặt câu hỏi thông minh, tư duy phản biện và làm chủ 
 
 interface CreatorPanelProps {
   currentScenes: SceneData[];
+  currentMetadata: VideoMetadata;
   onGenerateNewVideo: (newScenes: SceneData[], metadata: VideoMetadata) => void;
-  onCancel?: () => void;
+  onCancel: () => void;
 }
 
 export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   currentScenes,
+  currentMetadata,
   onGenerateNewVideo,
   onCancel,
 }) => {
-  const [selectedVoice, setSelectedVoice] = useState<string>('vi-VN-Standard-B');
-  const [speed, setSpeed] = useState<number>(1.0);
+  const [draft] = useState(() => readCreatorDraft({
+    voice: currentMetadata.voice || 'vi-VN-Standard-B',
+    speed: currentMetadata.speed || 1,
+    text: currentScenes.map(scene => scene.text).join('\n\n'),
+    title: currentMetadata.title || '',
+    subtitle: currentMetadata.subtitle || '',
+  }));
+  const [selectedVoice, setSelectedVoice] = useState<string>(draft.voice);
+  const [speed, setSpeed] = useState<number>(draft.speed);
   const [contentMode, setContentMode] = useState<'text' | 'file'>('text');
-  const [textContent, setTextContent] = useState<string>('');
-  const [scriptTitle, setScriptTitle] = useState<string>('Kịch bản video mới');
-  const [scriptSubtitle, setScriptSubtitle] = useState<string>('');
+  const [textContent, setTextContent] = useState<string>(draft.text);
+  const [scriptTitle, setScriptTitle] = useState<string>(draft.title);
+  const [scriptSubtitle, setScriptSubtitle] = useState<string>(draft.subtitle);
+  const [draftSaved, setDraftSaved] = useState(true);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [isVoiceSectionOpen, setIsVoiceSectionOpen] = useState<boolean>(false);
   const [isAISettingsOpen, setIsAISettingsOpen] = useState<boolean>(false);
@@ -230,13 +240,17 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  const dialogRef = useDialog(onCancel, !isCreating);
+  useEffect(() => {
+    setDraftSaved(saveCreatorDraft({ voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle }));
+  }, [selectedVoice, speed, textContent, scriptTitle, scriptSubtitle]);
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [currentStepKey, setCurrentStepKey] = useState<string>('storyboard');
   const [currentMessage, setCurrentMessage] = useState<string>('');
   const [progressDetails, setProgressDetails] = useState<Record<string, any>>({});
   const [creationLogs, setCreationLogs] = useState<string[]>([]);
   const [creationSuccess, setCreationSuccess] = useState<boolean>(false);
-  const [showTerminalLogs, setShowTerminalLogs] = useState<boolean>(true);
+  const [showTerminalLogs, setShowTerminalLogs] = useState<boolean>(false);
   const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
     return localStorage.getItem('gemini_api_key') || '';
   });
@@ -510,11 +524,9 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
     try {
       let effectiveTitle = (scriptTitle || '').trim();
-      const isGymPresetTitle = effectiveTitle === 'Kinh Tế Học Phòng Gym';
-      const textIsActuallyGym = /gym|phòng tập|thể hình|máy chạy bộ|tạ tay/i.test(textContent);
-      if (!effectiveTitle || (isGymPresetTitle && !textIsActuallyGym)) {
+      if (!effectiveTitle) {
         const firstScene = rawParsedScenes[0];
-        effectiveTitle = firstScene?.title ? firstScene.title : 'Video Stickman Mới';
+        effectiveTitle = firstScene?.title ? firstScene.title : 'Video mới';
       }
 
       const response = await fetch('/api/generate-video', {
@@ -586,7 +598,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               setProgressPercent(100);
               setCurrentStepKey('done');
               setCreationSuccess(true);
-              setCurrentMessage('🎉 Hoàn tất 100%! Đang tải video vào Remotion Player...');
+              setCurrentMessage('Đã tạo xong. Đang mở video để xem trước…');
               setCreationLogs((prev) => [
                 ...prev,
                 `[${new Date().toLocaleTimeString()}] 🎉 Hoàn tất xuất sắc! Video đã sẵn sàng phát.`,
@@ -629,12 +641,12 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
   const wordCount = textContent.trim().split(/\s+/).filter(Boolean).length;
   const estimatedSeconds = ((wordCount / 3.2) / speed);
-  const selectedVoiceObj = VOICE_OPTIONS.find((v) => v.id === selectedVoice) || VOICE_OPTIONS[0];
+  const selectedVoiceObj = VOICE_OPTIONS.find((v) => v.id === selectedVoice) || { ...VOICE_OPTIONS[0], id: selectedVoice, name: selectedVoice };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: 'var(--bg-base)', position: 'relative', overflow: 'hidden' }}>
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="creator-title" tabIndex={-1} className="creator-panel" style={{ display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%', background: 'var(--bg-base)', position: 'relative', overflow: 'hidden' }}>
       {/* Top Navbar */}
-      <div
+      <div className="creator-header" inert={isCreating}
         style={{
           padding: '12px 24px',
           borderBottom: '1px solid var(--border)',
@@ -652,26 +664,22 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               width: 36,
               height: 36,
               borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--accent) 0%, #6366f1 100%)',
+              background: 'var(--accent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 10px rgba(99, 102, 241, 0.3)',
             }}
           >
-            <Sparkles style={{ width: 18, height: 18, color: '#fff' }} />
+            <img src="/favicon.svg" alt="" width={36} height={36} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                Studio Tạo Video Mới
+              <h2 id="creator-title" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                Tạo video mới
               </h2>
-              <span className="badge badge-accent" style={{ fontSize: 10, padding: '2px 8px' }}>
-                Toàn màn hình
-              </span>
             </div>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-              Doodle Stickman Explainer Video Studio (Pictionary Whiteboard Drawing)
+              Wevic Video Studio
             </p>
           </div>
         </div>
@@ -679,6 +687,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={onCancel}
+            disabled={isCreating}
             className="btn btn-secondary"
             style={{
               fontSize: 12,
@@ -696,7 +705,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
       {/* Error banner */}
       {errorMessage && (
-        <div
+        <div role="alert"
           style={{
             maxWidth: 1040,
             margin: '12px auto 0',
@@ -718,7 +727,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       )}
 
       {/* Main Scrollable Content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 110px' }}>
+      <div inert={isCreating} style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 140px' }}>
         <div style={{ maxWidth: 1040, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Section 1: Voice & Speed (Collapsible) */}
@@ -733,7 +742,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             }}
           >
             {/* Collapsible Header */}
-            <div
+            <button type="button" aria-expanded={isVoiceSectionOpen} className="voice-toggle"
               onClick={() => setIsVoiceSectionOpen(!isVoiceSectionOpen)}
               style={{
                 padding: '14px 18px',
@@ -744,12 +753,15 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 background: isVoiceSectionOpen ? 'var(--bg-elevated)' : 'transparent',
                 borderBottom: isVoiceSectionOpen ? '1px solid var(--border)' : 'none',
                 transition: 'background 0.15s ease',
+                width: '100%',
+                textAlign: 'left',
+                border: 'none',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <Mic style={{ width: 16, height: 16, color: 'var(--accent)' }} />
                 <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  1. Giọng đọc & Tốc độ phát
+                  Giọng đọc và tốc độ
                 </span>
                 <span className="badge badge-accent" style={{ fontSize: 11, padding: '2px 8px' }}>
                   {selectedVoiceObj.name} ({selectedVoiceObj.gender === 'female' ? 'Nữ' : 'Nam'} · {selectedVoiceObj.tag})
@@ -766,7 +778,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                   <ChevronDown style={{ width: 16, height: 16 }} />
                 )}
               </div>
-            </div>
+            </button>
 
             {/* Collapsible Body */}
             {isVoiceSectionOpen && (
@@ -796,6 +808,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <input type="radio" name="voice" aria-label={voice.name} checked={isSelected} onChange={() => setSelectedVoice(voice.id)} style={{ accentColor: 'var(--accent)', width: 16, height: 16 }} />
                             <div
                               style={{
                                 width: 32,
@@ -828,6 +841,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                             className={`btn ${isPlayingThis ? 'btn-primary' : 'btn-secondary'}`}
                             style={{ padding: '6px 12px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
                             title={isPlayingThis ? 'Dừng' : 'Phát'}
+                            aria-label={`${isPlayingThis ? 'Dừng' : 'Nghe thử'} giọng ${voice.name}`}
                           >
                             {isPlayingThis ? <VolumeX style={{ width: 13, height: 13 }} /> : <Volume2 style={{ width: 13, height: 13 }} />}
                             <span>{isPlayingThis ? 'Dừng' : 'Phát'}</span>
@@ -847,7 +861,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                       {speed}×
                     </span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(64px, 1fr))', gap: 6 }}>
                     {SPEED_PRESETS.map((preset) => {
                       const isActive = speed === preset.value;
                       return (
@@ -876,7 +890,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                           }}
                         >
                           <div>{preset.label}</div>
-                          <div style={{ fontSize: 9, opacity: 0.7, marginTop: 1 }}>{preset.desc}</div>
+                          <div style={{ fontSize: 11, marginTop: 2 }}>{preset.desc}</div>
                         </button>
                       );
                     })}
@@ -904,7 +918,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <FileText style={{ width: 16, height: 16, color: 'var(--accent)' }} />
                 <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  2. Kịch bản Video
+                  Kịch bản
                 </span>
              
               </div>
@@ -943,7 +957,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             </div>
 
             {/* ONLY ONE CLEAN TEXTAREA - NO PRESETS */}
-            <textarea
+            <label className="label" htmlFor="script-title">Tên video</label>
+            <input id="script-title" className="input" value={scriptTitle} onChange={event => setScriptTitle(event.target.value)} placeholder="Đặt tên cho video" />
+            <label className="label" htmlFor="script-content">Nội dung lời thoại</label>
+            <textarea id="script-content"
               value={textContent}
               onChange={(e) => {
                 setTextContent(e.target.value);
@@ -963,7 +980,6 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 borderRadius: 'var(--radius-md)',
                 background: 'var(--bg-base)',
                 border: '1px solid var(--border)',
-                outline: 'none',
               }}
               placeholder="Nhập toàn bộ kịch bản phân cảnh tại đây "
             />
@@ -980,7 +996,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 gap: 8,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <span>
                   <strong style={{ color: 'var(--text-primary)' }}>{wordCount}</strong> từ
                 </span>
@@ -1001,7 +1017,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       </div>
 
       {/* Sticky Bottom Action Bar */}
-      <div
+      <div className="creator-actions" inert={isCreating}
         style={{
           position: 'fixed',
           bottom: 0,
@@ -1020,21 +1036,15 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
-            <span style={{ fontWeight: 600 }}>Cấu hình:</span>
-            <span className="badge badge-accent">{selectedVoiceObj.name} ({speed}×)</span>
-            <span className="badge badge-muted">Google AI Studio</span>
-            <span style={{ color: 'var(--text-muted)' }}>| {wordCount} từ · ≈{estimatedSeconds.toFixed(0)}s</span>
+            <span role="status">{draftSaved ? 'Đã lưu kịch bản và giọng đọc trên trình duyệt này' : 'Không thể lưu bản nháp trên trình duyệt này'}</span>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button className="btn btn-secondary" onClick={onCancel} style={{ fontSize: 13, padding: '8px 16px' }}>
-            Hủy
-          </button>
           <button
             className="btn btn-primary"
             onClick={handleCreateVideo}
-            disabled={isCreating}
+            disabled={isCreating || !textContent.trim()}
             style={{
               padding: '10px 24px',
               fontSize: 14,
@@ -1043,7 +1053,6 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              boxShadow: '0 2px 14px rgba(99, 102, 241, 0.4)',
             }}
           >
             {isCreating ? (
@@ -1053,8 +1062,8 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               </>
             ) : (
               <>
-                <Zap style={{ width: 16, height: 16 }} />
-                <span>Bắt đầu Tạo Video</span>
+                <Film style={{ width: 16, height: 16 }} />
+                <span>Tạo video</span>
               </>
             )}
           </button>
@@ -1073,11 +1082,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             justifyContent: 'center',
             padding: '16px',
             background: 'rgba(5, 6, 10, 0.82)',
-            backdropFilter: 'blur(12px)',
           }}
           className="animate-fade-in"
         >
-          <div
+          <div className="creation-progress" aria-label="Tiến độ tạo video"
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-hover)',
@@ -1091,32 +1099,31 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             }}
           >
             {/* Top Modal Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: '1 1 220px' }}>
                 <div
                   style={{
                     width: 48,
                     height: 48,
                     borderRadius: 'var(--radius-xl)',
-                    background: creationSuccess ? 'rgba(52, 211, 153, 0.15)' : 'rgba(129, 140, 248, 0.15)',
+                    background: creationSuccess ? 'var(--success-muted)' : 'var(--accent-muted)',
                     border: `1px solid ${creationSuccess ? 'var(--success-border)' : 'var(--accent-border)'}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    boxShadow: creationSuccess ? '0 0 20px rgba(52, 211, 153, 0.25)' : '0 0 20px rgba(129, 140, 248, 0.25)',
                   }}
                 >
                   {creationSuccess ? (
                     <CheckCircle2 style={{ width: 26, height: 26, color: 'var(--success)' }} />
                   ) : (
-                    <Zap style={{ width: 24, height: 24, color: 'var(--accent)' }} />
+                    <Film style={{ width: 24, height: 24, color: 'var(--accent)' }} />
                   )}
                 </div>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                      {creationSuccess ? 'Tạo Video Hoàn Tất!' : 'Đang Tạo Video Explainer'}
+                      {creationSuccess ? 'Video đã sẵn sàng' : 'Đang tạo video'}
                     </h3>
                     <span
                       style={{
@@ -1126,15 +1133,15 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                         letterSpacing: '0.06em',
                         padding: '2px 8px',
                         borderRadius: 99,
-                        background: creationSuccess ? 'rgba(52, 211, 153, 0.12)' : 'rgba(129, 140, 248, 0.12)',
+                        background: creationSuccess ? 'var(--success-muted)' : 'var(--accent-muted)',
                         color: creationSuccess ? 'var(--success)' : 'var(--accent)',
                         border: `1px solid ${creationSuccess ? 'var(--success-border)' : 'var(--accent-border)'}`,
                       }}
                     >
-                      {creationSuccess ? 'Thành công' : 'Live Pipeline'}
+                      {creationSuccess ? 'Hoàn tất' : 'Đang xử lý'}
                     </span>
                   </div>
-                  <p
+                  <p role="status"
                     style={{
                       fontSize: 12,
                       color: 'var(--text-secondary)',
@@ -1146,7 +1153,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                     }}
                   >
                     {creationSuccess
-                      ? 'Đã ghép chuyển động Remotion và nạp video vào Player'
+                      ? 'Video đã sẵn sàng để xem và tải xuống'
                       : currentMessage || 'Hệ thống đang tiến hành xử lý kịch bản...'}
                   </p>
                 </div>
@@ -1223,13 +1230,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                     height: '100%',
                     width: `${progressPercent}%`,
                     background: creationSuccess
-                      ? 'linear-gradient(90deg, #10b981 0%, #34d399 100%)'
-                      : 'linear-gradient(90deg, #6366f1 0%, #818cf8 35%, #a855f7 70%, #34d399 100%)',
+                      ? 'var(--success)'
+                      : 'var(--accent)',
                     borderRadius: 99,
                     transition: 'width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                    boxShadow: creationSuccess
-                      ? '0 0 12px rgba(52, 211, 153, 0.4)'
-                      : '0 0 14px rgba(129, 140, 248, 0.4)',
                   }}
                 />
               </div>
@@ -1259,7 +1263,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                         ? '1px solid rgba(52, 211, 153, 0.2)'
                         : '1px solid var(--border)',
                       background: isActive
-                        ? 'rgba(129, 140, 248, 0.08)'
+                        ? 'var(--accent-muted)'
                         : isCompleted
                         ? 'rgba(52, 211, 153, 0.04)'
                         : 'var(--bg-input)',
@@ -1280,7 +1284,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                           background: isCompleted
                             ? 'rgba(52, 211, 153, 0.15)'
                             : isActive
-                            ? 'rgba(129, 140, 248, 0.2)'
+                            ? 'var(--accent-muted)'
                             : 'var(--bg-surface)',
                           border: `1.5px solid ${
                             isCompleted
@@ -1372,7 +1376,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                             fontSize: 11,
                             fontWeight: 700,
                             color: 'var(--accent)',
-                            background: 'rgba(129, 140, 248, 0.14)',
+                            background: 'var(--accent-muted)',
                             border: '1px solid var(--accent-border)',
                             borderRadius: 99,
                             padding: '3px 10px',

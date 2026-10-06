@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 /* ================================================================
@@ -39,7 +38,7 @@
   /* Typography Colors — High Contrast */
   --text-primary: #f3f4f6;
   --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  --text-muted: #a0a6b3;
   --text-inverse: #090a0f;
 
   /* Borders — Crisp, subtle architectural dividers */
@@ -162,6 +161,7 @@ body {
   border: 1px solid transparent;
   transition: all 0.15s var(--ease-out);
   white-space: nowrap;
+  min-height: 36px;
 }
 
 .btn:active {
@@ -344,7 +344,7 @@ body {
   position: fixed;
   inset: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background: var(--bg-surface);
   z-index: 100;
   overflow: hidden;
@@ -397,4 +397,44 @@ body {
 
 .animate-fade-in {
   animation: fade-in 0.15s var(--ease-out) both;
+}
+
+:where(button, a, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+button:disabled { cursor: not-allowed; opacity: 0.5; }
+.label { text-transform: none; letter-spacing: normal; font-size: 12px; }
+.tab-item { min-height: 36px; }
+.studio-header > div, .creator-header > div { min-width: 0; }
+.studio-header p { max-width: 36vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.studio-main details p { max-height: 280px; overflow: auto; overflow-wrap: anywhere; }
+.scene-script-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)) !important; }
+
+@media (max-width: 640px) {
+  .studio-header { height: auto !important; padding: 12px !important; flex-wrap: wrap; gap: 12px; }
+  .studio-header > div:last-child { width: 100%; }
+  .studio-header p { max-width: 80vw; }
+  .studio-metrics { display: none !important; }
+  .studio-main { padding: 16px 12px 32px !important; }
+  .studio-main .tab-item { padding: 8px; font-size: 11px; }
+  .studio-main .tab-item svg { display: none; }
+  .creator-header { padding: 12px !important; gap: 8px; }
+  .creator-actions { height: auto !important; padding: 12px !important; gap: 12px; flex-wrap: wrap; }
+  .creator-actions > div:last-child, .creator-actions > div:last-child button { width: 100%; }
+  .voice-toggle { gap: 8px; }
+  .voice-toggle > div:last-child > span { display: none; }
+  .regenerate-overlay { padding: 8px !important; }
+  .regenerate-header { padding: 12px !important; gap: 8px; }
+  .regenerate-header > div { min-width: 0; }
+  .regenerate-header > button { flex-shrink: 0; }
+  .creation-progress { padding: 16px !important; }
+  .creation-progress p { white-space: normal !important; }
+  .btn, .tab-item { min-height: 44px; }
+  .toast { left: 12px; right: 12px; bottom: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
