@@ -9,6 +9,11 @@ async function main() {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.route('**/api/image-provider/status', route => route.fulfill({ json: { preferredProvider: 'google_ai_studio' } }));
+    let currentProject = structuredClone(production);
+    await page.route('**/api/project', route => {
+      if (route.request().method() === 'POST') currentProject = route.request().postDataJSON();
+      return route.fulfill({ json: currentProject });
+    });
     let submitted;
     let failGeneration = true;
     await page.route('**/api/generate-video', route => {
@@ -46,20 +51,20 @@ async function main() {
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     await openCreator();
     assert.match(await page.getByLabel('Nội dung lời thoại').inputValue(), /chim non/);
-    await page.getByRole('button', { name: 'Xóa', exact: true }).click();
+    await page.getByRole('button', { name: 'Xóa kịch bản', exact: true }).click();
     assert.equal(await page.getByRole('button', { name: 'Tạo video', exact: true }).isDisabled(), true);
-    await page.locator('input[type="file"]').setInputFiles({ name: 'script.txt', mimeType: 'text/plain', buffer: Buffer.from('Kịch bản nhập từ tệp văn bản.') });
+    await page.locator('input[type="file"][accept*=".txt"]').setInputFiles({ name: 'script.txt', mimeType: 'text/plain', buffer: Buffer.from('Kịch bản nhập từ tệp văn bản.') });
     await page.waitForFunction(() => document.querySelector('#script-content').value.includes('nhập từ tệp'));
     assert.match(await page.getByLabel('Nội dung lời thoại').inputValue(), /nhập từ tệp/);
     await page.keyboard.press('Escape');
-    for (const name of ['Cảnh & Hình ảnh', 'JSON', 'Xem trước']) {
+    for (const name of ['JSON', 'Xem trước']) {
       await page.getByRole('button', { name, exact: true }).click();
     }
     await page.getByRole('button', { name: 'Tạo lại ảnh', exact: true }).first().click();
-    assert.equal(await page.getByRole('button', { name: 'Áp dụng vào Video' }).isDisabled(), true);
+    assert.equal(await page.getByRole('button', { name: 'Lưu ảnh vào cảnh' }).count(), 0);
     await page.getByLabel('Mô tả hình ảnh', { exact: true }).fill('A bird carries a twig, black outlines on white.');
     await page.getByRole('button', { name: 'Tạo ảnh mới', exact: true }).click();
-    await page.getByRole('button', { name: 'Áp dụng vào Video' }).click();
+    await page.getByRole('button', { name: 'Lưu ảnh vào cảnh' }).click();
     await page.getByRole('button', { name: 'Tạo lại ảnh', exact: true }).first().click();
     assert.match(await page.getByLabel('Mô tả hình ảnh', { exact: true }).inputValue(), /bird carries/);
     await page.keyboard.press('Escape');
@@ -75,7 +80,7 @@ async function main() {
       await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => !!document.activeElement.closest('[role="dialog"]')), true);
       await page.keyboard.press('Escape');
-      assert.match(await page.locator(':focus').innerText(), /Tạo video mới/);
+      assert.match(await page.locator(':focus').getAttribute('aria-label'), /Tạo video mới/);
       await page.getByRole('button', { name: 'Tạo lại ảnh', exact: true }).first().click();
       assert.equal(await page.getByRole('dialog').evaluate(element => [...element.querySelectorAll('button, input, textarea')].some(control => control.getBoundingClientRect().right > innerWidth + 1)), false);
       await page.keyboard.press('Escape');

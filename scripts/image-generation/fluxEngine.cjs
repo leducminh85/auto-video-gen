@@ -38,7 +38,6 @@ async function generateViaLocalServer({ prompt, outputPath, width = 1024, height
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt,
-        negative_prompt: '3d, cgi, render, shading, gradients, realistic proportions, human skin, detailed faces, clothing details, complex backgrounds, messy lines, photography, anime, colorful, shadows, depth of field',
         steps,
         width,
         height,
@@ -84,7 +83,7 @@ async function generateViaMflux({ prompt, outputPath }) {
   const tempPromptFile = outputPath.replace('.png', '_prompt.txt');
   const tempMfluxOut = outputPath.replace('.png', '_mflux.png');
   try {
-    const cleanPrompt = prompt.replace(/\r?\n/g, ' ').trim().substring(0, 600);
+    const cleanPrompt = prompt.replace(/\r?\n/g, ' ').trim();
     fs.writeFileSync(tempPromptFile, cleanPrompt, 'utf8');
 
     console.log(`   🎨 [FLUX.1 MLX] Đang render cục bộ bằng mflux trên GPU Metal Apple M4...`);

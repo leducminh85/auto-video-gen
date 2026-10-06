@@ -34,16 +34,10 @@ class FluxProvider extends BaseImageProvider {
   preparePrompt(prompt, options = {}) {
     const { diegeticLabel } = options;
     let clean = (prompt || '').trim();
-    if (clean.includes('whiteboard animation doodle') || clean.includes('Pure white background')) {
-      if (diegeticLabel && !clean.includes(diegeticLabel)) {
-        clean += ` The text "${diegeticLabel}" is written clearly and boldly.`;
-      }
-      return clean;
+    if (diegeticLabel && !clean.includes(diegeticLabel)) {
+      clean += ` The exact text "${diegeticLabel}" is written legibly in the scene.`;
     }
-    if (diegeticLabel) {
-      return `${clean}. Hand-drawn stickman comic explainer style, minimalist line art, clean vector comic style, warm paper texture background. The exact text "${diegeticLabel}" is legibly written on a sign, label, or chalkboard.`;
-    }
-    return `${clean}. Hand-drawn stickman comic explainer style, minimalist line art, clean vector comic style, warm paper texture background.`;
+    return clean;
   }
 
   /**

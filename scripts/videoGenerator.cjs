@@ -1431,6 +1431,9 @@ async function generateVideo({
   geminiApiKey,
   openaiApiKey,
   preferredImageProvider,
+  imageStylePrompt,
+  importedAudio,
+  audioBoundaries,
   onProgress,
 }) {
   if (preferredImageProvider) {
@@ -1478,7 +1481,36 @@ async function generateVideo({
   const playbackSpeed = Number(speed) || 1.0;
   const styleGuide = createVideoStyleGuide(title);
   const generationRunId = Date.now();
+  const editor = require('./projectEditor.cjs');
+  const { defaultPrompt } = require('../src/config/imageStyle.json');
+  const resolvedStyle = typeof imageStylePrompt === 'string' && imageStylePrompt.trim() ? imageStylePrompt.trim() : defaultPrompt;
+  if (resolvedStyle.length > 10000) throw new Error('Prompt phong cách quá dài.');
+  if (importedAudio && !/^import_[\w-]+\.wav$/.test(importedAudio)) throw new Error('Hãy nhập audio qua chức năng tải tệp.');
+  const importedPath = importedAudio ? editor.asset(PUBLIC_DIR, 'audio', importedAudio) : null;
+  const importedDuration = importedPath ? await editor.probe(importedPath) : null;
 
+  notify('storyboard', 5, 'Khởi động Studio Pipeline: Dọn dẹp cache & nạp kịch bản mới...');
+
+  console.log(`\n======================================================`);
+  console.log(`🎨 [TẠO VIDEO THEO PHONG CÁCH STICKMAN CARTOON EXPLAINER V2]`);
+  console.log(`Tiêu đề: ${title || 'Video Giải Thích Mới'}`);
+  console.log(`Giọng đọc: ${selectedVoice} (${playbackSpeed}x)`);
+  console.log(`======================================================\n`);
+
+  // 1. Run AI Storyboard Generator to split content & plan diverse scenes
+  notify('storyboard', 10, 'Đang phân tích kịch bản, xác định nhịp điệu và cấu trúc phân cảnh...');
+  console.log(`[Bước 1/5] Chạy Storyboard Generator để phân tích và tạo kịch bản phân cảnh...`);
+  if (importedPath && (!Array.isArray(scenes) || !scenes.length || scenes.some(scene => !String(scene.narration || scene.text || '').trim()))) throw new Error('Hãy nhập kịch bản tương ứng với audio.');
+  const plannedScenes = importedPath ? scenes : await generateStoryboardFromContent({
+    content: content || script,
+    scenesInput: scenes,
+    geminiApiKey,
+    openaiApiKey,
+  });
+
+  const totalScenes = plannedScenes.length;
+  const audioFrames = importedPath ? editor.allocateAudioFrames(plannedScenes, Math.round(importedDuration * 30), audioBoundaries) : null;
+  let importedOffset = 0;
   // Clean up all existing scene images and audio so no stale assets from previous runs remain
   try {
     const existingImages = fs.readdirSync(IMAGES_DIR);
@@ -1498,25 +1530,6 @@ async function generateVideo({
     }
   } catch (_) {}
 
-  notify('storyboard', 5, 'Khởi động Studio Pipeline: Dọn dẹp cache & nạp kịch bản mới...');
-
-  console.log(`\n======================================================`);
-  console.log(`🎨 [TẠO VIDEO THEO PHONG CÁCH STICKMAN CARTOON EXPLAINER V2]`);
-  console.log(`Tiêu đề: ${title || 'Video Giải Thích Mới'}`);
-  console.log(`Giọng đọc: ${selectedVoice} (${playbackSpeed}x)`);
-  console.log(`======================================================\n`);
-
-  // 1. Run AI Storyboard Generator to split content & plan diverse scenes
-  notify('storyboard', 10, 'Đang phân tích kịch bản, xác định nhịp điệu và cấu trúc phân cảnh...');
-  console.log(`[Bước 1/5] Chạy Storyboard Generator để phân tích và tạo kịch bản phân cảnh...`);
-  const plannedScenes = await generateStoryboardFromContent({
-    content: content || script,
-    scenesInput: scenes,
-    geminiApiKey,
-    openaiApiKey,
-  });
-
-  const totalScenes = plannedScenes.length;
   const fullScriptContext = content || script || plannedScenes.map(s => s.narration || s.text || '').join('\n');
   const videoDomain = extractDomainAnchor(title, '', fullScriptContext);
   const recentPlans = [];
@@ -1532,7 +1545,6 @@ async function generateVideo({
 
   let totalFrames = 0;
   const finalizedScenes = [];
-  const sceneClipPaths = [];
   let previousMethod = null;
 
   // ==========================================
@@ -1553,23 +1565,31 @@ async function generateVideo({
     console.log(`\n--- Phân cảnh ${sceneId}/${totalScenes}: "${sceneTitle}" ---`);
 
     // 1. Generate Voice Audio via TTS (Stage 2: 18% -> 35%)
-    const audioFileName = `scene_${sceneId}.mp3`;
+    const audioFileName = importedPath ? `imported_${generationRunId}_${sceneId}.wav` : `scene_${sceneId}.mp3`;
     const audioPath = path.join(AUDIO_DIR, audioFileName);
 
     const ttsStartPct = 18 + ((i + 0.2) / totalScenes) * 17;
-    notify('tts', ttsStartPct, `[Cảnh ${sceneId}/${totalScenes}] Đang tổng hợp giọng nói AI (${selectedVoice})...`, {
+    notify('tts', ttsStartPct, importedPath ? `Đang chuẩn bị audio đã nhập cho cảnh ${sceneId}` : `[Cảnh ${sceneId}/${totalScenes}] Đang tổng hợp giọng nói AI (${selectedVoice})...`, {
       sceneIndex: sceneId,
       totalScenes,
       sceneTitle,
     });
 
     console.log(`[Bước 2/5] Đang tổng hợp giọng nói AI cho cảnh ${sceneId}...`);
-    const durationInSeconds = await generateTTSAudio(sceneText, audioPath, selectedVoice, playbackSpeed);
+    let durationInSeconds;
+    if (importedPath) {
+      notify('tts', ttsStartPct, `Đang cắt audio đã nhập cho cảnh ${sceneId}/${totalScenes}...`);
+      await editor.sliceAudio(importedPath, audioPath, importedOffset, audioFrames[i]);
+      importedOffset += audioFrames[i];
+      durationInSeconds = audioFrames[i] / 30;
+    } else {
+      durationInSeconds = await generateTTSAudio(sceneText, audioPath, selectedVoice, playbackSpeed);
+    }
     const durationInFrames = Math.round(durationInSeconds * 30);
     console.log(`✓ Audio cảnh ${sceneId} hoàn tất: ${durationInSeconds.toFixed(2)}s (${durationInFrames} frames)`);
 
     const ttsDonePct = 18 + ((i + 1) / totalScenes) * 17;
-    notify('tts', ttsDonePct, `✓ Cảnh ${sceneId}/${totalScenes}: Thu âm giọng đọc thành công (${durationInSeconds.toFixed(1)}s)`, {
+    notify('tts', ttsDonePct, `Cảnh ${sceneId}/${totalScenes}: Audio đã sẵn sàng (${durationInSeconds.toFixed(1)}s)`, {
       sceneIndex: sceneId,
       totalScenes,
       sceneTitle,
@@ -1607,6 +1627,7 @@ async function generateVideo({
       videoTitle: title || dynamicDomain.topicVn,
       overallTopic: resolvedTopic,
       fullScriptContext,
+      imageStylePrompt: resolvedStyle,
       recentPlans,
     });
 
@@ -1647,9 +1668,6 @@ async function generateVideo({
       totalBeatsInScene: segmentedBeats.length,
     });
 
-    const tempSceneDir = path.join(PUBLIC_DIR, `temp_scene_${sceneId}`);
-    if (!fs.existsSync(tempSceneDir)) fs.mkdirSync(tempSceneDir, { recursive: true });
-
     scenesData.push({
       sceneIndex: i,
       rawScene,
@@ -1662,7 +1680,6 @@ async function generateVideo({
       durationInFrames,
       segmentedBeats,
       beatPlans,
-      tempSceneDir,
     });
   }
 
@@ -1694,6 +1711,7 @@ async function generateVideo({
         validation = validateVisualBeat({ beatText: beat.text, plan });
       }
 
+      plan = { ...plan, imageGenerationPrompt: editor.styledPrompt(plan, resolvedStyle) };
       beat.plan = plan;
       beat.validation = validation;
       previousMethod = plan.visualMethod;
@@ -1881,8 +1899,6 @@ async function generateVideo({
     const sceneId = sData.sceneId;
     const sceneTitle = sData.sceneTitle;
     const sceneText = sData.sceneText;
-    const tempSceneDir = sData.tempSceneDir;
-    const audioPath = sData.audioPath;
     const durationInSeconds = sData.durationInSeconds;
     const durationInFrames = sData.durationInFrames;
 
@@ -1891,7 +1907,6 @@ async function generateVideo({
       .filter((item) => item.sceneId === sceneId)
       .sort((a, b) => a.beat.sub_index - b.beat.sub_index);
 
-    const beatClipPaths = [];
     const beats = [];
 
     for (const item of sceneBeats) {
@@ -1901,19 +1916,6 @@ async function generateVideo({
         try {
           fs.copyFileSync(beatPngPath, path.join(IMAGES_DIR, `scene_${sceneId}.png`));
         } catch (_) {}
-      }
-
-      // Render beat clip with smooth micro-motion (Ken-Burns push-in)
-      const beatClipOut = path.join(tempSceneDir, `beat_${beat.sub_index}.mp4`);
-      const beatSec = (beat.duration_in_frames / 30).toFixed(2);
-      try {
-        execSync(
-          `/opt/homebrew/bin/ffmpeg -y -loop 1 -i "${beatPngPath}" -vf "scale=1920:1080,zoompan=z='min(zoom+0.0003,1.015)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30" -c:v libx264 -t ${beatSec} -pix_fmt yuv420p -r 30 -an "${beatClipOut}"`,
-          { stdio: 'ignore' }
-        );
-        beatClipPaths.push(beatClipOut);
-      } catch (err) {
-        console.warn(`Lỗi render clip beat ${beat.id}:`, err);
       }
 
       beats.push({
@@ -1936,32 +1938,6 @@ async function generateVideo({
         sub_text: plan.meaning,
         motion: 'slide',
       });
-    }
-
-    // Combine beat clips with scene audio
-    const renderScenePct = 80 + ((i + 0.8) / totalScenes) * 12;
-    notify('render', renderScenePct, `[Cảnh ${sceneId}/${totalScenes}] Đang kết hợp clip Ken-Burns với giọng đọc audio...`, {
-      sceneIndex: sceneId,
-      totalScenes,
-      sceneTitle,
-    });
-
-    console.log(`[Bước 5/5] Ghép nối các beat clips với giọng đọc audio của cảnh ${sceneId}...`);
-    const sceneClipOut = path.join(PUBLIC_DIR, `clip_${sceneId}.mp4`);
-
-    if (beatClipPaths.length > 0) {
-      const beatListFile = path.join(tempSceneDir, 'beat_list.txt');
-      fs.writeFileSync(beatListFile, beatClipPaths.map((p) => `file '${p}'`).join('\n'));
-
-      try {
-        execSync(
-          `/opt/homebrew/bin/ffmpeg -y -f concat -safe 0 -i "${beatListFile}" -i "${audioPath}" -c:v copy -c:a aac -b:a 192k -af "apad=pad_dur=0.4" -shortest "${sceneClipOut}"`,
-          { stdio: 'ignore' }
-        );
-        sceneClipPaths.push(sceneClipOut);
-      } catch (err) {
-        console.warn(`Lỗi ghép scene ${sceneId}:`, err);
-      }
     }
 
     const rawScene = sData.rawScene;
@@ -2005,36 +1981,9 @@ async function generateVideo({
     qualityReport.issues.forEach((iss) => console.log(`   • ${iss}`));
   }
 
-  // Concatenate all scene clips into final-video.mp4
-  notify('render', 95, 'Đang xuất và ghép nối file video tổng hợp final-video.mp4...');
-  const finalVideoPath = path.join(PUBLIC_DIR, 'final-video.mp4');
-  if (sceneClipPaths.length > 0) {
-    const listFile = path.join(PUBLIC_DIR, 'clips_list.txt');
-    const listContent = sceneClipPaths.map((p) => `file '${p}'`).join('\n');
-    fs.writeFileSync(listFile, listContent);
-    try {
-      execSync(`/opt/homebrew/bin/ffmpeg -y -f concat -safe 0 -i "${listFile}" -c copy "${finalVideoPath}"`, { stdio: 'ignore' });
-      console.log(`✓ Đã ghép xong final-video.mp4 (${fs.statSync(finalVideoPath).size} bytes)`);
-    } catch (concatErr) {
-      console.warn('ffmpeg concat error:', concatErr);
-    } finally {
-      try {
-        if (fs.existsSync(listFile)) fs.unlinkSync(listFile);
-        for (let sId = 1; sId <= totalScenes; sId++) {
-          const d = path.join(PUBLIC_DIR, `temp_scene_${sId}`);
-          if (fs.existsSync(d)) {
-            fs.rmSync(d, { recursive: true, force: true });
-          }
-        }
-      } catch (_) {}
-    }
-  }
-
-  notify('render', 99, 'Đang đồng bộ hóa metadata & danh sách phân cảnh vào Remotion Player...');
-
   const metadata = {
     title: title || 'Video Giải Thích Đa Dạng',
-    subtitle: subtitle || `Giọng đọc ${playbackSpeed}x`,
+    subtitle: subtitle || (importedPath ? 'Audio đã nhập' : `Giọng đọc ${playbackSpeed}x`),
     fps: 30,
     width: 1920,
     height: 1080,
@@ -2042,9 +1991,12 @@ async function generateVideo({
     total_duration_in_frames: totalFrames,
     total_duration_in_seconds: (totalFrames / 30).toFixed(2),
     created_at: new Date().toISOString(),
-    voice: selectedVoice,
-    speed: playbackSpeed,
+    voice: importedPath ? undefined : selectedVoice,
+    speed: importedPath ? 1 : playbackSpeed,
     style_guide: styleGuide,
+    image_style_prompt: resolvedStyle,
+    audio_source: importedPath ? 'import' : 'tts',
+    imported_audio: importedAudio || undefined,
     quality_report: qualityReport,
   };
 
@@ -2053,6 +2005,9 @@ async function generateVideo({
     scenes: finalizedScenes,
   };
 
+  notify('render', 95, 'Đang ghép ảnh và audio thành MP4...');
+  await editor.renderProject(outputData, PUBLIC_DIR);
+  outputData.metadata.render_dirty = false;
   fs.writeFileSync(path.join(PUBLIC_DIR, 'scenes.json'), JSON.stringify(outputData, null, 2));
   fs.writeFileSync(path.join(SRC_DATA_DIR, 'scenes.json'), JSON.stringify(outputData, null, 2));
 

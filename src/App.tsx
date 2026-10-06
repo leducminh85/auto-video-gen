@@ -5,40 +5,23 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
-import {
-  Play,
-  Pause,
-  Download,
-  Film,
-  Layers,
-  Volume2,
-  VolumeX,
-  CheckCircle2,
-  Code2,
-  Eye,
-  ChevronRight,
-  RefreshCw,
-  Copy,
-  Check,
-  PlusCircle,
-  X,
-  Image as ImageIcon,
-  Clock,
-  Music,
-  FileText,
-} from 'lucide-react';
+import { Play, Pause, Download, Layers, Volume2, VolumeX, CheckCircle2, Code2, Eye, Copy, Check, PlusCircle, Undo2, Loader2 } from 'lucide-react';
 import { MainVideo } from './remotion/MainVideo';
 import scenesDataJson from './data/scenes.json';
 import { ProductionData, SceneData, VisualBeat, VideoMetadata } from './types/scenes';
 import { buildMultiBeatScenes } from './utils/stickmanArtGenerator';
 import { CreatorPanel } from './components/CreatorPanel';
 import { RegenerateImageModal } from './components/RegenerateImageModal';
+import { insertBeat, removeBeat } from './utils/beatEditing';
+import { SceneTimeline } from './components/SceneTimeline';
+import { IconButton } from './components/IconButton';
+import { defaultPrompt } from './config/imageStyle.json';
 
 const initialProductionData = scenesDataJson as ProductionData;
 const initialMultiBeatScenes = buildMultiBeatScenes(initialProductionData.scenes);
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'preview' | 'scenes' | 'data'>('preview');
+  const [activeTab, setActiveTab] = useState<'preview' | 'data'>('preview');
   const [scenes, setScenes] = useState<SceneData[]>(initialMultiBeatScenes);
   const [metadata, setMetadata] = useState<VideoMetadata>({
     ...initialProductionData.metadata,
@@ -46,11 +29,34 @@ export default function App() {
   });
   const [selectedSceneId, setSelectedSceneId] = useState<number>(1);
   const [selectedBeatId, setSelectedBeatId] = useState<string | null>(null);
+  const [currentFrame, setCurrentFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [copiedJson, setCopiedJson] = useState<boolean>(false);
   const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
   const [showCreatorDrawer, setShowCreatorDrawer] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [projectBusy, setProjectBusy] = useState(false);
+  const [projectLoading, setProjectLoading] = useState(true);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [insertAfterId, setInsertAfterId] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const editorRef = useRef<HTMLElement>(null);
+  const [addingBeat, setAddingBeat] = useState(false);
+  const [undoProject, setUndoProject] = useState<ProductionData | null>(null);
+  useEffect(() => {
+    let active = true;
+    fetch('/api/project').then(async response => {
+      if (!response.ok) throw new Error('Không đọc được dự án đã lưu.');
+      return response.json();
+    }).then(project => {
+      if (!active) return;
+      setScenes(buildMultiBeatScenes(project.scenes));
+      setMetadata(project.metadata);
+      setSelectedSceneId(project.scenes[0]?.id || 1);
+    }).catch(error => { if (active) setProjectError(error.message); })
+      .finally(() => { if (active) setProjectLoading(false); });
+    return () => { active = false; };
+  }, []);
   const [videoTimestamp, setVideoTimestamp] = useState<number>(Date.now());
 
   // Regenerate Modal state
@@ -62,6 +68,27 @@ export default function App() {
   const singleAudioRef = useRef<HTMLAudioElement | null>(null);
   const playerSectionRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const player = remotionPlayerRef.current;
+    if (!player) return;
+    const onFrame = (event: { detail: { frame: number } }) => {
+      setCurrentFrame(event.detail.frame);
+      if (player.isPlaying()) {
+        const active = scenes.find(scene => event.detail.frame >= scene.start_frame && event.detail.frame < scene.start_frame + scene.duration_in_frames);
+        if (active) setSelectedSceneId(active.id);
+      }
+    };
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    player.addEventListener('frameupdate', onFrame);
+    player.addEventListener('play', onPlay);
+    player.addEventListener('pause', onPause);
+    return () => { player.removeEventListener('frameupdate', onFrame); player.removeEventListener('play', onPlay); player.removeEventListener('pause', onPause); };
+  }, [videoTimestamp, activeTab, scenes]);
+  useEffect(() => { setSelectedBeatId(null); singleAudioRef.current?.pause(); setPlayingAudioId(null); }, [selectedSceneId]);
+
+  useEffect(() => () => { singleAudioRef.current?.pause(); }, []);
+
   const selectedScene = scenes.find((s) => s.id === selectedSceneId) || scenes[0];
   const selectedSceneBeats = selectedScene?.beats || [];
   const totalImagesCount = scenes.reduce((acc, sc) => acc + (sc.beats?.length || 1), 0);
@@ -72,6 +99,8 @@ export default function App() {
   };
 
   const togglePlay = () => {
+    singleAudioRef.current?.pause();
+    setPlayingAudioId(null);
     if (remotionPlayerRef.current?.isPlaying()) {
       remotionPlayerRef.current.pause();
       setIsPlaying(false);
@@ -81,20 +110,9 @@ export default function App() {
     }
   };
 
-  const jumpToScene = (scene: SceneData, beatOffset: number = 0) => {
-    setSelectedSceneId(scene.id);
-    const targetFrame = scene.start_frame + beatOffset;
-    if (remotionPlayerRef.current) {
-      remotionPlayerRef.current.seekTo(targetFrame);
-      if (!remotionPlayerRef.current.isPlaying()) {
-        remotionPlayerRef.current.play();
-        setIsPlaying(true);
-      }
-    }
-    setActiveTab('preview');
-  };
-
   const playSceneAudio = (scene: SceneData) => {
+    remotionPlayerRef.current?.pause();
+    setIsPlaying(false);
     if (singleAudioRef.current) {
       singleAudioRef.current.pause();
     }
@@ -104,61 +122,105 @@ export default function App() {
     }
     const audio = new Audio(`/audio/${scene.audio_file}`);
     audio.onended = () => setPlayingAudioId(null);
+    audio.ontimeupdate = () => { const frame = Math.min(scene.start_frame + scene.duration_in_frames - 1, scene.start_frame + Math.round(audio.currentTime * metadata.fps)); setCurrentFrame(frame); remotionPlayerRef.current?.seekTo(frame); };
     audio.play().catch(() => { setPlayingAudioId(null); showToast('Không phát được giọng đọc của cảnh này.'); });
     singleAudioRef.current = audio;
     setPlayingAudioId(scene.id);
   };
 
   const handleOpenRegenerate = (scene: SceneData, beat?: VisualBeat) => {
+    if (projectBusy || projectLoading) return;
+    setAddingBeat(false);
     setSceneToRegenerate(scene);
     setBeatToRegenerate(beat || scene.beats?.[0] || null);
     setRegenerateModalOpen(true);
   };
 
-  const handleSaveRegeneratedImage = (
-    sceneId: number,
-    beatId: string | undefined,
-    newPrompt: string,
-    imageFile?: string,
-    imageVersion?: number
-  ) => {
-    const version = imageVersion || Date.now();
-    setScenes((prev) =>
-      prev.map((sc) => {
-        if (sc.id !== sceneId) return sc;
-        if (sc.beats && sc.beats.length > 0) {
-          const updatedBeats = sc.beats.map((b) => {
-            if (!beatId || b.id === beatId) {
-              return {
-                ...b,
-                svg_data: null,
-                prompt: newPrompt,
-                ...(b.plan ? { plan: { ...b.plan, imageGenerationPrompt: newPrompt } } : {}),
-                ...(imageFile ? { image_file: imageFile } : {}),
-                image_version: version,
-              };
-            }
-            return b;
-          });
-          const isFirstBeat = !beatId || updatedBeats[0]?.id === beatId;
-          return {
-            ...sc,
-            beats: updatedBeats,
-            ...(isFirstBeat && imageFile ? { image_file: imageFile, image_version: version, prompt: newPrompt } : {}),
-          };
-        }
-        return {
-          ...sc,
-          prompt: newPrompt,
-          ...(imageFile ? { image_file: imageFile, image_version: version } : {}),
-        };
-      })
-    );
-    setVideoTimestamp(Date.now());
-    showToast('✓ Ảnh AI mới đã được áp dụng vào video');
+  const persistProject = async (next: ProductionData, render = false, remember = true, quiet = false) => {
+    setProjectBusy(true);
+    setProjectError(null);
+    remotionPlayerRef.current?.pause();
+    singleAudioRef.current?.pause();
+    setPlayingAudioId(null);
+    setIsPlaying(false);
+    const restoreFrame = remotionPlayerRef.current?.getCurrentFrame() || selectedScene.start_frame;
+    try {
+      const response = await fetch(render ? '/api/project/render' : '/api/project', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next),
+      });
+      const saved = await response.json();
+      if (!response.ok) throw new Error(saved.error || 'Không lưu được thay đổi.');
+      if (remember && !render) setUndoProject({ scenes, metadata });
+      setScenes(saved.scenes);
+      setMetadata(saved.metadata);
+      setVideoTimestamp(Date.now());
+      requestAnimationFrame(() => remotionPlayerRef.current?.seekTo(restoreFrame));
+      if (!quiet) showToast(render ? 'MP4 đã sẵn sàng.' : 'Đã lưu chỉnh sửa.');
+      return true;
+    } catch (error: any) { setProjectError(error.message); return false; }
+    finally { setProjectBusy(false); }
+  };
+
+  const downloadVideo = async () => {
+    if (projectBusy || projectLoading) return;
+    setExporting(true);
+    try {
+      if (metadata.render_dirty && !await persistProject({ scenes, metadata }, true)) return;
+      const link = document.createElement('a');
+      link.href = `/final-video.mp4?t=${Date.now()}`;
+      link.download = `${(metadata.title || 'video').replace(/[^\p{L}\p{N} -]/gu, '')}.mp4`;
+      document.body.appendChild(link); link.click(); link.remove();
+    } finally { setExporting(false); }
+  };
+
+  const selectScene = (scene: SceneData) => {
+    setSelectedSceneId(scene.id);
+    remotionPlayerRef.current?.pause();
+    remotionPlayerRef.current?.seekTo(scene.start_frame);
+    setCurrentFrame(scene.start_frame);
+    setIsPlaying(false);
+  };
+
+  const seekTimeline = (offset: number) => {
+    singleAudioRef.current?.pause();
+    setPlayingAudioId(null);
+    remotionPlayerRef.current?.pause();
+    const frame = selectedScene.start_frame + offset;
+    remotionPlayerRef.current?.seekTo(frame);
+    setCurrentFrame(frame);
+    setIsPlaying(false);
+  };
+
+  const handleAddBeat = () => {
+    if (!selectedScene || projectBusy) return;
+    const prompt = `${metadata.image_style_prompt || defaultPrompt}\n\nNội dung cần minh họa: ${selectedScene.text}`;
+    setSceneToRegenerate(selectedScene);
+    setBeatToRegenerate({ ...selectedSceneBeats[0], id: crypto.randomUUID(), sub_index: selectedSceneBeats.length + 1, title: 'Ảnh mới', prompt, plan: undefined, caption: selectedScene.text });
+    setInsertAfterId(selectedSceneBeats.find(beat => beat.duration_in_frames >= 2)?.id || '');
+    setAddingBeat(true);
+    setRegenerateModalOpen(true);
+  };
+
+  const handleDeleteBeat = (beat: VisualBeat) => {
+    if (selectedSceneBeats.length <= 1 || projectBusy) return;
+    const edited = removeBeat(selectedScene, beat.id, metadata.fps);
+    void persistProject({ metadata, scenes: scenes.map(scene => scene.id === edited.id ? edited : scene) });
+    setSelectedBeatId(null);
+  };
+
+  const handleSaveRegeneratedImage = async (sceneId: number, beatId: string | undefined, newPrompt: string, imageFile?: string, imageVersion?: number) => {
+    const next = scenes.map(scene => {
+      if (scene.id !== sceneId) return scene;
+      const update = (beat: VisualBeat) => ({ ...beat, svg_data: null, prompt: newPrompt, image_file: imageFile || beat.image_file, image_version: imageVersion || Date.now(), ...(beat.plan ? { plan: { ...beat.plan, imageGenerationPrompt: newPrompt } } : {}) });
+      if (addingBeat && beatToRegenerate) return insertBeat(scene, update(beatToRegenerate), insertAfterId, metadata.fps);
+      return { ...scene, beats: (scene.beats || []).map(beat => beat.id === beatId ? update(beat) : beat) };
+    });
+    if (!await persistProject({ metadata, scenes: next })) throw new Error('Không lưu được ảnh. Vui lòng thử áp dụng lại.');
   };
 
   const handleGenerateNewVideo = (newScenes: SceneData[], newMetadata: VideoMetadata) => {
+    setUndoProject(null);
+    setProjectError(null);
     setScenes(newScenes);
     setMetadata(newMetadata);
     setSelectedSceneId(newScenes[0]?.id || 1);
@@ -192,1063 +254,59 @@ export default function App() {
   const durationDisplay = `${Math.floor(totalDuration / 60)}:${String(Math.floor(totalDuration % 60)).padStart(2, '0')}`;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* ───── Header ───── */}
-      <header className="studio-header" inert={showCreatorDrawer || regenerateModalOpen}
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 40,
-          background: 'var(--bg-surface)',
-          borderBottom: '1px solid var(--border)',
-          padding: '0 24px',
-          height: 54,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--accent)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <img src="/favicon.svg" alt="" width={32} height={32} />
-          </div>
-          <div>
-            <h1
-              style={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                margin: 0,
-                lineHeight: 1.2,
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Wevic Video Studio
-            </h1>
-            <p
-              style={{
-                fontSize: 11,
-                color: 'var(--text-muted)',
-                margin: 0,
-                lineHeight: 1.2,
-              }}
-            >
-              {metadata.title}
-            </p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Studio Metrics */}
-          <div className="studio-metrics" style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 6 }}>
-            <span className="badge badge-accent">
-              {scenes.length} cảnh
-            </span>
-            <span className="badge badge-muted">
-              {totalImagesCount} hình
-            </span>
-            <span className="badge badge-muted mono">
-              {durationDisplay}
-            </span>
-          </div>
-
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowCreatorDrawer(true)}
-          >
-            <PlusCircle style={{ width: 14, height: 14 }} />
-            <span>Tạo video mới</span>
-          </button>
-
-          <a
-            href={`/final-video.mp4?t=${videoTimestamp}`}
-            download={`${(metadata.title || 'stickman-video').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.mp4`}
-            className="btn btn-secondary"
-          >
-            <Download style={{ width: 14, height: 14 }} />
-            <span>Tải MP4</span>
-          </a>
+    <div className="studio-shell">
+      <header className="studio-topbar" inert={showCreatorDrawer || regenerateModalOpen}>
+        <div className="studio-identity"><img src="/favicon.svg" alt="" width={34} height={34} /><div><h1>Wevic Video Studio</h1><p>{metadata.title}</p></div></div>
+        <div className="toolbar-actions">
+          <span className="studio-project-summary">{scenes.length} cảnh · {totalImagesCount} ảnh · {durationDisplay}</span>
+          <IconButton label="Tạo video mới" disabled={projectBusy || projectLoading} onClick={() => setShowCreatorDrawer(true)}><PlusCircle size={20} /></IconButton>
+          <IconButton label={exporting ? 'Đang xuất MP4' : metadata.render_dirty ? 'Xuất và tải MP4' : 'Tải MP4'} className="icon-accent" disabled={projectBusy || projectLoading || exporting} onClick={() => void downloadVideo()}>{exporting ? <Loader2 className="animate-spin" size={20} /> : <Download size={20} />}</IconButton>
         </div>
       </header>
-
-      {/* ───── Main Content ───── */}
-      <main className="studio-main" inert={showCreatorDrawer || regenerateModalOpen}
-        style={{
-          flex: 1,
-          maxWidth: 1200,
-          width: '100%',
-          margin: '0 auto',
-          padding: '24px 24px 64px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 20,
-        }}
-      >
-        {/* ───── Player Section ───── */}
-        <section ref={playerSectionRef} className="surface" style={{ overflow: 'hidden' }}>
-          {/* Tab bar */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 16px',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
-            <div className="tab-group">
-              <button
-                className={`tab-item ${activeTab === 'preview' ? 'tab-item-active' : ''}`}
-                onClick={() => setActiveTab('preview')}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Eye style={{ width: 14, height: 14 }} />
-                  Xem trước
-                </span>
-              </button>
-              <button
-                className={`tab-item ${activeTab === 'scenes' ? 'tab-item-active' : ''}`}
-                onClick={() => setActiveTab('scenes')}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Layers style={{ width: 14, height: 14 }} />
-                  Cảnh & Hình ảnh
-                </span>
-              </button>
-              <button
-                className={`tab-item ${activeTab === 'data' ? 'tab-item-active' : ''}`}
-                onClick={() => setActiveTab('data')}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Code2 style={{ width: 14, height: 14 }} />
-                  JSON
-                </span>
-              </button>
-            </div>
-
-            <span
-              className="mono"
-              style={{ color: 'var(--text-muted)', fontSize: 11 }}
-            >
-              Cảnh {selectedScene.id}/{scenes.length}
-            </span>
-          </div>
-
-          {/* Player viewport */}
-          <div className="player-container">
-            {activeTab === 'preview' && (
-              <Player
-                key={videoTimestamp}
-                ref={remotionPlayerRef}
-                component={MainVideo}
-                inputProps={{ scenes }}
-                durationInFrames={metadata.total_duration_in_frames}
-                compositionWidth={metadata.width}
-                compositionHeight={metadata.height}
-                fps={metadata.fps}
-                style={{ width: '100%', height: '100%' }}
-                controls
-                autoPlay={false}
-                loop
-                acknowledgeRemotionLicense
-              />
-            )}
-
-            {activeTab === 'scenes' && (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  background: 'var(--bg-base)',
-                  padding: 24,
-                  overflowY: 'auto',
-                }}
-              >
-                <div style={{ maxWidth: 960, margin: '0 auto' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 16,
-                      paddingBottom: 12,
-                      borderBottom: '1px solid var(--border)',
-                    }}
-                  >
-                    <div>
-                      <h3
-                        style={{
-                          fontSize: 16,
-                          fontWeight: 700,
-                          color: 'var(--text-primary)',
-                          margin: 0,
-                        }}
-                      >
-                        {scenes.length} cảnh · {totalImagesCount} hình ảnh
-                      </h3>
-                      <p
-                        style={{
-                          fontSize: 12,
-                          color: 'var(--text-muted)',
-                          margin: '4px 0 0',
-                        }}
-                      >
-                        Chọn cảnh để xem chi tiết, hoặc tạo lại hình ảnh
-                      </p>
-                    </div>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => handleOpenRegenerate(selectedScene)}
-                    >
-                      <RefreshCw style={{ width: 14, height: 14 }} />
-                      <span>Tạo lại ảnh cảnh #{selectedScene.id}</span>
-                    </button>
-                  </div>
-
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
-                      gap: 12,
-                    }}
-                  >
-                    {scenes.map((sc) => {
-                      const beatsCount = sc.beats?.length || 1;
-                      const isActive = selectedSceneId === sc.id;
-                      return (
-                        <div
-                          key={sc.id}
-                          className={`card ${isActive ? 'card-active' : ''}`}
-                          role="button" tabIndex={0} aria-label={`Xem cảnh ${sc.id}: ${sc.title}`}
-                          onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); jumpToScene(sc); } }}
-                          style={{ padding: 12, cursor: 'pointer' }}
-                          onClick={() => jumpToScene(sc)}
-                        >
-                          <div style={{ display: 'flex', gap: 12 }}>
-                            <div
-                              style={{
-                                width: 120,
-                                height: 72,
-                                borderRadius: 'var(--radius-md)',
-                                overflow: 'hidden',
-                                background: 'var(--bg-base)',
-                                border: '1px solid var(--border)',
-                                flexShrink: 0,
-                                position: 'relative',
-                              }}
-                            >
-                              <img
-                                src={
-                                  sc.image_file
-                                    ? `/images/${sc.image_file}?v=${videoTimestamp}`
-                                    : sc.beats?.[0]?.svg_data
-                                      ? `data:image/svg+xml;utf8,${encodeURIComponent(sc.beats[0].svg_data)}`
-                                      : `/images/${sc.image_file}?v=${videoTimestamp}`
-                                }
-                                alt={sc.title}
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'contain',
-                                }}
-                              />
-                              <span
-                                style={{
-                                  position: 'absolute',
-                                  bottom: 4,
-                                  right: 4,
-                                  fontSize: 10,
-                                  fontWeight: 600,
-                                  padding: '1px 6px',
-                                  borderRadius: 4,
-                                  background: 'rgba(0,0,0,0.75)',
-                                  color: 'var(--accent)',
-                                  fontFamily: 'var(--font-mono)',
-                                }}
-                              >
-                                {beatsCount} hình
-                              </span>
-                            </div>
-
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontSize: 11,
-                                    fontWeight: 700,
-                                    color: 'var(--accent)',
-                                  }}
-                                >
-                                  #{sc.id}
-                                </span>
-                                <span
-                                  className="mono"
-                                  style={{
-                                    fontSize: 11,
-                                    color: 'var(--text-muted)',
-                                  }}
-                                >
-                                  {sc.duration_in_seconds.toFixed(1)}s
-                                </span>
-                              </div>
-                              <h4
-                                style={{
-                                  fontSize: 13,
-                                  fontWeight: 600,
-                                  color: 'var(--text-primary)',
-                                  margin: '2px 0',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {sc.title}
-                              </h4>
-                              <p
-                                style={{
-                                  fontSize: 12,
-                                  color: 'var(--text-secondary)',
-                                  margin: 0,
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                  overflow: 'hidden',
-                                  lineHeight: 1.4,
-                                }}
-                              >
-                                {sc.text}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Beat chips */}
-                          <div
-                            style={{
-                              marginTop: 8,
-                              paddingTop: 8,
-                              borderTop: '1px solid var(--border)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: 8,
-                            }}
-                          >
-                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                              {sc.beats?.slice(0, 4).map((b) => (
-                                <button
-                                  key={b.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    jumpToScene(sc, b.start_frame_offset);
-                                  }}
-                                  style={{
-                                    padding: '2px 8px',
-                                    borderRadius: 'var(--radius-sm)',
-                                    background: 'var(--bg-hover)',
-                                    border: '1px solid var(--border)',
-                                    fontSize: 10,
-                                    fontWeight: 600,
-                                    color: 'var(--text-secondary)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.15s',
-                                  }}
-                                  title={`Hình ${b.sub_index} (${b.duration_in_seconds}s)`}
-                                >
-                                  #{b.sub_index}
-                                </button>
-                              ))}
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenRegenerate(sc);
-                              }}
-                              style={{
-                                padding: '3px 10px',
-                                borderRadius: 'var(--radius-sm)',
-                                background: 'var(--accent-muted)',
-                                border: '1px solid var(--accent-border)',
-                                fontSize: 11,
-                                fontWeight: 600,
-                                color: 'var(--accent)',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 4,
-                                transition: 'all 0.15s',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              <RefreshCw style={{ width: 12, height: 12 }} />
-                              Tạo lại
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'data' && (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  background: 'var(--bg-base)',
-                  padding: 24,
-                  overflow: 'auto',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 12,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: 'var(--text-muted)',
-                    }}
-                  >
-                    Dữ liệu cấu trúc scenes (JSON)
-                  </span>
-                  <button className="btn btn-secondary" onClick={copyJsonToClipboard}>
-                    {copiedJson ? (
-                      <Check style={{ width: 14, height: 14, color: 'var(--success)' }} />
-                    ) : (
-                      <Copy style={{ width: 14, height: 14 }} />
-                    )}
-                    <span>{copiedJson ? 'Đã sao chép' : 'Sao chép'}</span>
-                  </button>
-                </div>
-                <pre
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: 16,
-                    fontSize: 12,
-                    fontFamily: 'var(--font-mono)',
-                    color: 'var(--success)',
-                    overflow: 'auto',
-                    margin: 0,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {JSON.stringify({ metadata, scenes }, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-
-          {/* Timeline */}
-          <div
-            style={{
-              padding: '12px 16px',
-              borderTop: '1px solid var(--border)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Timeline
-              </span>
-              <span
-                className="mono"
-                style={{ fontSize: 11, color: 'var(--text-muted)' }}
-              >
-                {totalDuration.toFixed(1)}s · {metadata.total_duration_in_frames} frames
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                height: 28,
-                background: 'var(--bg-base)',
-                borderRadius: 'var(--radius-md)',
-                overflow: 'hidden',
-                padding: 3,
-                gap: 2,
-                border: '1px solid var(--border)',
-              }}
-            >
-              {scenes.map((sc) => {
-                const widthPercent =
-                  (sc.duration_in_frames / metadata.total_duration_in_frames) * 100;
-                const isCurrent = selectedSceneId === sc.id;
-                return (
-                  <button
-                    key={sc.id}
-                    onClick={() => jumpToScene(sc)}
-                    style={{
-                      width: `${widthPercent}%`,
-                      height: '100%',
-                      borderRadius: 'var(--radius-sm)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.15s',
-                      background: isCurrent ? 'var(--accent)' : 'var(--bg-elevated)',
-                      color: isCurrent ? 'var(--text-inverse)' : 'var(--text-muted)',
-                      ...(isCurrent
-                        ? {
-                            boxShadow: '0 0 0 1px var(--accent)',
-                          }
-                        : {}),
-                    }}
-                    title={`Cảnh ${sc.id}: ${sc.title}`}
-                  >
-                    {sc.id}
-                  </button>
-                );
-              })}
-            </div>
+      {(projectError || projectLoading || metadata.render_dirty) && <div className="project-notice" inert={showCreatorDrawer || regenerateModalOpen} role={projectError ? 'alert' : 'status'}>
+        {projectError || (projectLoading ? 'Đang mở dự án…' : 'Đã lưu chỉnh sửa. Xuất MP4 để tải video với timeline mới.')}
+      </div>}
+      <main className="studio-workspace" inert={showCreatorDrawer || regenerateModalOpen}>
+        <section ref={playerSectionRef} className="studio-section preview-section" aria-labelledby="preview-title">
+          <div className="studio-section-heading"><h2 id="preview-title"><span>01</span> Xem trước</h2><div className="toolbar-actions">
+            <IconButton label="Xem trước" aria-pressed={activeTab === 'preview'} onClick={() => setActiveTab('preview')}><Eye size={17} /></IconButton>
+            <IconButton label="JSON" aria-pressed={activeTab === 'data'} onClick={() => setActiveTab('data')}><Code2 size={17} /></IconButton>
+            {activeTab === 'data' && <IconButton label="Sao chép JSON" onClick={copyJsonToClipboard}>{copiedJson ? <Check size={17} /> : <Copy size={17} />}</IconButton>}
+          </div></div>
+          {activeTab === 'preview' ? <div className="studio-player"><Player key={videoTimestamp} ref={remotionPlayerRef} component={MainVideo} inputProps={{ scenes }} durationInFrames={metadata.total_duration_in_frames} compositionWidth={metadata.width} compositionHeight={metadata.height} fps={metadata.fps} style={{ width: '100%', height: '100%' }} controls autoPlay={false} loop acknowledgeRemotionLicense /></div> : <pre className="studio-json">{JSON.stringify({ metadata, scenes }, null, 2)}</pre>}
+          <div className="preview-caption"><span>{(currentFrame / metadata.fps).toFixed(2)} / {totalDuration.toFixed(2)} giây</span><IconButton label="Chỉnh ảnh trong cảnh" onClick={() => editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><Layers size={17} /></IconButton></div>
+        </section>
+        <section className="studio-section scenes-section" aria-labelledby="scenes-title">
+          <div className="studio-section-heading"><h2 id="scenes-title"><span>02</span> Phân cảnh</h2><span className="section-meta">{scenes.length} cảnh</span></div>
+          <div className="studio-scene-list">
+            {scenes.map(scene => <button key={scene.id} className={`studio-scene-item ${selectedScene.id === scene.id ? 'active' : ''}`} aria-label={`Chọn cảnh ${scene.id}: ${scene.title}`} aria-pressed={selectedScene.id === scene.id} disabled={projectBusy} onClick={() => selectScene(scene)}>
+              <img src={`/images/${scene.beats?.[0]?.image_file || scene.image_file}?v=${scene.beats?.[0]?.image_version || scene.image_version || ''}`} alt="" />
+              <span className="scene-item-copy"><strong>Cảnh {scene.id} <span>{scene.duration_in_seconds.toFixed(1)}s</span></strong><span>{scene.text}</span><small>{scene.beats?.length || 1} ảnh</small></span>
+            </button>)}
           </div>
         </section>
-
-        {/* ───── All Scenes Quick Nav ───── */}
-        <section>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 12,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                margin: 0,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              Tất cả {scenes.length} cảnh
-            </h3>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-              gap: 8,
-            }}
-          >
-            {scenes.map((sc) => {
-              const beatsCount = sc.beats?.length || 1;
-              const isSelected = selectedSceneId === sc.id;
-              return (
-                <div
-                  key={sc.id}
-                  className={`scene-card ${isSelected ? 'active' : ''}`}
-                  role="button" tabIndex={0} aria-label={`Xem cảnh ${sc.id}: ${sc.title}`}
-                  onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); jumpToScene(sc); } }}
-                  onClick={() => jumpToScene(sc)}
-                  style={{
-                    border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
-                    position: 'relative',
-                  }}
-                >
-                  <div
-                    style={{
-                      aspectRatio: '16/9',
-                      width: '100%',
-                      borderRadius: 'var(--radius-sm)',
-                      overflow: 'hidden',
-                      background: 'var(--bg-base)',
-                      marginBottom: 6,
-                      position: 'relative',
-                      border: '1px solid var(--border)',
-                    }}
-                  >
-                    <img
-                      src={
-                        sc.image_file
-                          ? `/images/${sc.image_file}?v=${videoTimestamp}`
-                          : sc.beats?.[0]?.svg_data
-                            ? `data:image/svg+xml;utf8,${encodeURIComponent(sc.beats[0].svg_data)}`
-                            : `/images/${sc.image_file}?v=${videoTimestamp}`
-                      }
-                      alt={sc.title}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                      }}
-                    />
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: 3,
-                        right: 4,
-                        fontSize: 9,
-                        fontWeight: 600,
-                        padding: '1px 5px',
-                        borderRadius: 'var(--radius-xs)',
-                        background: 'rgba(0, 0, 0, 0.75)',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      {beatsCount} nhịp
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: isSelected ? 'var(--accent)' : 'var(--text-secondary)',
-                      }}
-                    >
-                      #{sc.id.toString().padStart(2, '0')}
-                    </span>
-                    <span
-                      className="mono"
-                      style={{ fontSize: 10, color: 'var(--text-muted)' }}
-                    >
-                      {sc.duration_in_seconds.toFixed(1)}s
-                    </span>
-                  </div>
-                  <p
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      margin: '2px 0 0',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {sc.title}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ───── Selected Scene Inspector ───── */}
-        <section className="surface" style={{ padding: 20 }}>
-          {/* Header */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 16,
-              paddingBottom: 12,
-              borderBottom: '1px solid var(--border)',
-              flexWrap: 'wrap',
-              gap: 12,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span
-                className="badge badge-accent"
-                style={{ fontSize: 12, fontWeight: 700 }}
-              >
-                #{selectedScene.id}
-              </span>
-              <div>
-                <h3
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: 'var(--text-primary)',
-                    margin: 0,
-                  }}
-                >
-                  {selectedScene.title}
-                </h3>
-                <p
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--text-muted)',
-                    margin: '2px 0 0',
-                  }}
-                >
-                  {selectedSceneBeats.length} hình ảnh · {selectedScene.duration_in_seconds.toFixed(1)}s · {selectedScene.duration_in_frames} frames
-                </p>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <button
-                className="btn btn-primary"
-                onClick={() => handleOpenRegenerate(selectedScene)}
-              >
-                <RefreshCw style={{ width: 14, height: 14 }} />
-                <span>Tạo lại ảnh</span>
-              </button>
-              <button
-                className={`btn ${
-                  playingAudioId === selectedScene.id ? 'btn-primary' : 'btn-secondary'
-                }`}
-                onClick={() => playSceneAudio(selectedScene)}
-              >
-                {playingAudioId === selectedScene.id ? (
-                  <VolumeX style={{ width: 14, height: 14 }} />
-                ) : (
-                  <Volume2 style={{ width: 14, height: 14 }} />
-                )}
-                <span>{playingAudioId === selectedScene.id ? 'Dừng' : 'Audio'}</span>
-              </button>
-              <button
-                className="btn btn-ghost"
-                onClick={() => {
-                  jumpToScene(selectedScene);
-                }}
-              >
-                <Play style={{ width: 12, height: 12 }} />
-                <span>Phát</span>
-              </button>
+        <section ref={editorRef} className="studio-section timeline-section" aria-labelledby="timeline-title">
+          <div className="studio-section-heading timeline-heading">
+            <div><h2 id="timeline-title"><span>03</span> Chi tiết cảnh</h2><p>Cảnh {selectedScene.id} · {selectedSceneBeats.length} ảnh · {selectedScene.duration_in_seconds.toFixed(2)} giây</p></div>
+            <div className="toolbar-actions">
+              <label className="sr-only" htmlFor="editing-scene">Chọn cảnh để chỉnh ảnh</label>
+              <select id="editing-scene" className="input" value={selectedSceneId} disabled={projectBusy} onChange={event => { const scene = scenes.find(item => item.id === Number(event.target.value)); if (scene) selectScene(scene); }}>{scenes.map(scene => <option key={scene.id} value={scene.id}>Cảnh {scene.id}</option>)}</select>
+              <IconButton label={isPlaying ? 'Tạm dừng' : 'Phát'} onClick={togglePlay}>{isPlaying ? <Pause size={18} /> : <Play size={18} />}</IconButton>
+              <IconButton label={playingAudioId === selectedScene.id ? 'Dừng audio' : 'Nghe audio cảnh'} onClick={() => playSceneAudio(selectedScene)}>{playingAudioId === selectedScene.id ? <VolumeX size={18} /> : <Volume2 size={18} />}</IconButton>
+              <IconButton label="Thêm ảnh vào cảnh" disabled={projectBusy || projectLoading || !selectedSceneBeats.some(beat => beat.duration_in_frames >= 2)} onClick={handleAddBeat}><PlusCircle size={18} /></IconButton>
+              <IconButton label="Hoàn tác" disabled={!undoProject || projectBusy} onClick={async () => { if (undoProject && await persistProject(undoProject, false, false)) setUndoProject(null); }}><Undo2 size={18} /></IconButton>
             </div>
           </div>
-
-          {/* Beats gallery */}
-          <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 12,
-              }}
-            >
-              <span
-                className="label"
-                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-              >
-                <ImageIcon style={{ width: 14, height: 14, color: 'var(--accent)' }} />
-                Hình ảnh trong cảnh #{selectedScene.id}
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                gap: 12,
-              }}
-            >
-              {selectedSceneBeats.map((beat) => (
-                <div
-                  key={beat.id}
-                  className="card"
-                  style={{ padding: 10 }}
-                >
-                  <div
-                    style={{
-                      aspectRatio: '16/9',
-                      width: '100%',
-                      borderRadius: 'var(--radius-md)',
-                      overflow: 'hidden',
-                      background: 'var(--bg-base)',
-                      border: '1px solid var(--border)',
-                      position: 'relative',
-                      marginBottom: 8,
-                    }}
-                  >
-                    <img
-                      src={
-                        beat.image_file
-                          ? `/images/${beat.image_file}?v=${videoTimestamp}`
-                          : beat.svg_data
-                            ? `data:image/svg+xml;utf8,${encodeURIComponent(beat.svg_data)}`
-                            : `/images/${selectedScene.image_file}?v=${videoTimestamp}`
-                      }
-                      alt={beat.title}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                      }}
-                    />
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: 6,
-                        left: 6,
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: 'var(--radius-sm)',
-                        background: 'rgba(0,0,0,0.75)',
-                        color: 'var(--accent)',
-                      }}
-                    >
-                      #{beat.sub_index}
-                    </span>
-                    <span
-                      className="mono"
-                      style={{
-                        position: 'absolute',
-                        top: 6,
-                        right: 6,
-                        fontSize: 10,
-                        fontWeight: 600,
-                        padding: '2px 8px',
-                        borderRadius: 'var(--radius-sm)',
-                        background: 'rgba(0,0,0,0.75)',
-                        color: 'var(--success)',
-                      }}
-                    >
-                      {beat.duration_in_seconds}s
-                    </span>
-                  </div>
-
-                  <h5
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      margin: '0 0 4px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {beat.title}
-                  </h5>
-                  <p
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--text-muted)',
-                      margin: 0,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {beat.caption || beat.title}
-                  </p>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginTop: 8,
-                      paddingTop: 8,
-                      borderTop: '1px solid var(--border)',
-                    }}
-                  >
-                    <button
-                      onClick={() => handleOpenRegenerate(selectedScene, beat)}
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: 'var(--accent)',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        padding: 0,
-                      }}
-                    >
-                      <RefreshCw style={{ width: 12, height: 12 }} />
-                      Tạo lại ảnh
-                    </button>
-                    <button
-                      onClick={() => jumpToScene(selectedScene, beat.start_frame_offset)}
-                      style={{
-                        fontSize: 11,
-                        color: 'var(--text-muted)',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 3,
-                        padding: 0,
-                      }}
-                    >
-                      Xem
-                      <ChevronRight style={{ width: 12, height: 12 }} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Script & Prompt */}
-          <div className="scene-script-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 16,
-              marginTop: 16,
-              paddingTop: 16,
-              borderTop: '1px solid var(--border)',
-            }}
-          >
-            <div>
-              <span className="label" style={{ marginBottom: 6, display: 'block' }}>
-                <FileText
-                  style={{
-                    width: 12,
-                    height: 12,
-                    display: 'inline',
-                    verticalAlign: 'middle',
-                    marginRight: 4,
-                    color: 'var(--accent)',
-                  }}
-                />
-                Lời thoại
-              </span>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: 'var(--text-secondary)',
-                  background: 'var(--bg-base)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 12,
-                  margin: 0,
-                  lineHeight: 1.6,
-                }}
-              >
-                "{selectedScene.text}"
-              </p>
-            </div>
-            <details>
-              <summary className="label" style={{ marginBottom: 6, cursor: 'pointer' }}>
-                <ImageIcon
-                  style={{
-                    width: 12,
-                    height: 12,
-                    display: 'inline',
-                    verticalAlign: 'middle',
-                    marginRight: 4,
-                    color: 'var(--accent)',
-                  }}
-                />
-                Mô tả tạo ảnh
-              </summary>
-              <p
-                className="mono"
-                style={{
-                  fontSize: 12,
-                  color: 'var(--text-muted)',
-                  background: 'var(--bg-base)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 12,
-                  margin: 0,
-                  lineHeight: 1.6,
-                }}
-              >
-                {selectedScene.prompt}
-              </p>
-            </details>
-          </div>
+          <SceneTimeline key={selectedScene.id} scene={selectedScene} fps={metadata.fps} busy={projectBusy || projectLoading} selectedId={selectedBeatId} playhead={currentFrame - selectedScene.start_frame}
+            onSelect={beat => { setSelectedBeatId(beat.id); seekTimeline(beat.start_frame_offset); }} onSeek={seekTimeline}
+            onCommit={edited => persistProject({ metadata, scenes: scenes.map(scene => scene.id === edited.id ? edited : scene) }, false, true, true)}
+            onRegenerate={beat => handleOpenRegenerate(selectedScene, beat)} onDelete={handleDeleteBeat} />
+          <details className="timeline-narration"><summary>Lời thoại của cảnh</summary><p>{selectedScene.text}</p></details>
         </section>
       </main>
-
-      {/* ───── Creator Modal (Fullscreen) ───── */}
-      {showCreatorDrawer && (
-        <div className="creator-fullscreen-overlay">
-          <CreatorPanel
-            currentScenes={scenes}
-            currentMetadata={metadata}
-            onGenerateNewVideo={handleGenerateNewVideo}
-            onCancel={() => setShowCreatorDrawer(false)}
-          />
-        </div>
-      )}
-
-      {/* ───── Regenerate Image Modal ───── */}
-      {sceneToRegenerate && (
-        <RegenerateImageModal
-          isOpen={regenerateModalOpen}
-          onClose={() => setRegenerateModalOpen(false)}
-          scene={sceneToRegenerate}
-          selectedBeat={beatToRegenerate}
-          onSaveImage={handleSaveRegeneratedImage}
-        />
-      )}
-
-      {/* ───── Toast Notification ───── */}
-      {toastMessage && (
-        <div className="toast toast-success" role="status">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CheckCircle2 style={{ width: 16, height: 16, color: 'var(--success)' }} />
-            <span>{toastMessage}</span>
-          </div>
-        </div>
-      )}
-
-      {/* ───── Footer ───── */}
-      <footer inert={showCreatorDrawer || regenerateModalOpen}
-        style={{
-          borderTop: '1px solid var(--border)',
-          padding: '20px 24px',
-          textAlign: 'center',
-          fontSize: 12,
-          color: 'var(--text-muted)',
-        }}
-      >
-        <p style={{ margin: 0 }}>
-          Wevic Video Studio
-        </p>
-      </footer>
+      {showCreatorDrawer && <div className="creator-fullscreen-overlay"><CreatorPanel currentScenes={scenes} currentMetadata={metadata} onGenerateNewVideo={handleGenerateNewVideo} onCancel={() => setShowCreatorDrawer(false)} /></div>}
+      {sceneToRegenerate && <RegenerateImageModal isOpen={regenerateModalOpen} onClose={() => setRegenerateModalOpen(false)} scene={sceneToRegenerate} selectedBeat={beatToRegenerate} onSaveImage={handleSaveRegeneratedImage} adding={addingBeat} imageStylePrompt={metadata.image_style_prompt} insertAfterId={insertAfterId} onInsertAfterChange={setInsertAfterId} />}
+      {toastMessage && <div className="toast toast-success" role="status"><CheckCircle2 size={16} /><span>{toastMessage}</span></div>}
     </div>
   );
 }

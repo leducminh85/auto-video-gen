@@ -192,6 +192,10 @@ export interface VideoMetadata {
   voice?: string;
   speed?: number;
   max_image_duration_sec?: number;
+  image_style_prompt?: string;
+  audio_source?: 'tts' | 'import';
+  imported_audio?: string;
+  render_dirty?: boolean;
   style_guide?: VideoStyleGuide;
   quality_report?: {
     total_beats: number;

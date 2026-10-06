@@ -319,6 +319,7 @@ async function planVisualBeatsWithAI({
   videoTitle,
   overallTopic,
   fullScriptContext,
+  imageStylePrompt,
   recentPlans = [],
 }) {
   const apiKey = geminiApiKey || process.env.GEMINI_API_KEY || '';
@@ -377,8 +378,9 @@ CRITICAL DIRECTIVE #2 - NO GENERIC PHRASES:
 - NEVER use vague filler like "diễn đạt trực quan", "visual representation", "explaining concept", "illustrating the idea", or raw narration repetition.
 
 CRITICAL DIRECTIVE #3 - ART STYLE:
-Every beat's "imageGenerationPrompt" MUST strictly follow this exact template:
-"A hyper-minimalist whiteboard animation doodle, Pictionary drawing style, horizontal 16:9 widescreen composition with generous white padding. {Action description in English, grounded in ${dominantTopic}}. {Text clause: either 'The text \"{1-2 concept words}\" is written clearly and boldly, placed safely inside the illustration.' OR 'Pure visual storytelling with absolutely NO on-screen text, NO letters, and NO words.'} Characters are absolute pure stickmen with an empty circle for a head, absolutely NO facial features, NO eyes, NO mouth, and single thin black lines for bodies and limbs. Drawn with thick black marker outlines. Completely FLAT colors, ZERO shading, ZERO drop shadows under feet, NO gray tones, NO 3D effects. All text, characters, and drawing elements are well within the safe zone, arranged according to the specified composition with at least 15% clear white margin from all edges. Pure white background with ONLY ONE subtle amber orange accent color used for highlights. Clean, extremely simplified 2D flat vector explainer video illustration."
+Use the following user-selected style for every subject and image. It overrides any style mentioned in examples elsewhere in these instructions:
+${imageStylePrompt || require('../src/config/imageStyle.json').defaultPrompt}
+Combine this style with the scene-specific action and composition. Do not add conflicting art styles.
 
 CRITICAL DIRECTIVE #4 - DIVERSE VISUAL METHODS:
 Choose the method that explains the narration. Vary actions, focal objects, setting and shot size; changing a method label alone is not diversity. Use comparison only for a narrated contrast, and numbers only for supplied metrics.

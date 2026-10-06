@@ -2,6 +2,8 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, Plugin } from 'vite';
 import { createRequire } from 'module';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 
@@ -10,6 +12,41 @@ function videoApiPlugin(): Plugin {
     name: 'video-api-plugin',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
+        const editor = require('./scripts/projectEditor.cjs');
+        const publicRoot = path.resolve('public');
+        if (req.url === '/api/project' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(fs.readFileSync(path.join(publicRoot, 'scenes.json')));
+          return;
+        }
+        if (['/api/project', '/api/project/render', '/api/audio/import'].includes(req.url || '') && req.method === 'POST') {
+          try {
+            const chunks: Buffer[] = [];
+            let bytes = 0;
+            const limit = req.url === '/api/audio/import' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+            for await (const chunk of req) {
+              bytes += chunk.length;
+              if (bytes > limit) throw new Error('Tệp hoặc dữ liệu vượt dung lượng cho phép.');
+              chunks.push(Buffer.from(chunk));
+            }
+            const body = Buffer.concat(chunks);
+            const result = await editor.exclusive(async () => {
+              if (req.url === '/api/audio/import') return editor.importAudio(body, publicRoot);
+              const project = editor.normalizeProject(JSON.parse(body.toString()));
+              if (req.url === '/api/project/render') return editor.renderProject(project, publicRoot);
+              project.metadata.render_dirty = true;
+              editor.saveProject(project, publicRoot);
+              return project;
+            });
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result));
+          } catch (error: any) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: error.message }));
+          }
+          return;
+        }
         if (req.url === '/api/generate-video' && req.method === 'POST') {
           let body = '';
           req.on('data', (chunk) => {
@@ -22,11 +59,6 @@ function videoApiPlugin(): Plugin {
 
             try {
               const data = JSON.parse(body);
-              Object.keys(require.cache).forEach((k) => {
-                if (k.includes('/scripts/')) {
-                  delete require.cache[k];
-                }
-              });
               const scriptPath = require.resolve('./scripts/videoGenerator.cjs');
               const { generateVideo } = require(scriptPath);
 
@@ -38,10 +70,10 @@ function videoApiPlugin(): Plugin {
                 }
               };
 
-              const result = await generateVideo({
+              const result = await editor.exclusive(() => generateVideo({
                 ...data,
                 onProgress,
-              });
+              }));
 
               res.write(JSON.stringify({ type: 'complete', percent: 100, result }) + '\n');
               res.end();
@@ -117,7 +149,7 @@ function videoApiPlugin(): Plugin {
             try {
               const payload = JSON.parse(body || '{}');
               const { regenerateBeatImage } = require('./scripts/beatImageRegenerator.cjs');
-              const result = await regenerateBeatImage(payload);
+              const result = await editor.exclusive(() => regenerateBeatImage(payload));
               res.end(JSON.stringify(result));
             } catch (err: any) {
               res.statusCode = 500;

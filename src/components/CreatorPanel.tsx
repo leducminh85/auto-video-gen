@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic,
+  Trash2,
+  RotateCcw,
   Gauge,
   FileText,
   Upload,
@@ -24,6 +26,9 @@ import { buildMultiBeatScenes } from '../utils/stickmanArtGenerator';
 import { audioPreviewManager, SAMPLE_PHRASES } from '../utils/audioPreview';
 import { readCreatorDraft, saveCreatorDraft } from '../utils/creatorDraft';
 import { useDialog } from '../utils/useDialog';
+import { IconButton } from './IconButton';
+import { AudioTimingEditor } from './AudioTimingEditor';
+import { defaultPrompt } from '../config/imageStyle.json';
 
 export interface PipelineStepDef {
   key: string;
@@ -225,6 +230,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     text: currentScenes.map(scene => scene.text).join('\n\n'),
     title: currentMetadata.title || '',
     subtitle: currentMetadata.subtitle || '',
+    imageStylePrompt: currentMetadata.image_style_prompt || defaultPrompt,
   }));
   const [selectedVoice, setSelectedVoice] = useState<string>(draft.voice);
   const [speed, setSpeed] = useState<number>(draft.speed);
@@ -232,6 +238,30 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [textContent, setTextContent] = useState<string>(draft.text);
   const [scriptTitle, setScriptTitle] = useState<string>(draft.title);
   const [scriptSubtitle, setScriptSubtitle] = useState<string>(draft.subtitle);
+  const [imageStylePrompt, setImageStylePrompt] = useState(draft.imageStylePrompt);
+  const [audioMode, setAudioMode] = useState<'tts' | 'import'>(draft.audioMode || 'tts');
+  const [importedAudio, setImportedAudio] = useState<{ file: string; duration: number; name: string } | null>(draft.importedAudio || null);
+  const [audioUploading, setAudioUploading] = useState(false);
+  const [audioBoundaries, setAudioBoundaries] = useState(draft.audioBoundaries || '');
+  const importRequest = useRef(0);
+  const audioFileInput = useRef<HTMLInputElement>(null);
+  const handleImportAudio = async (file?: File) => {
+    if (!file) return;
+    const request = ++importRequest.current;
+    setImportedAudio(null);
+    setAudioBoundaries('');
+    setErrorMessage(null);
+    if (file.size > 100 * 1024 * 1024) { setErrorMessage('Tệp audio phải nhỏ hơn 100 MB.'); return; }
+    setAudioUploading(true);
+    try {
+      const response = await fetch('/api/audio/import', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: file });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Không nhập được audio.');
+      if (request === importRequest.current) setImportedAudio({ ...data, name: file.name });
+    } catch (error: any) {
+      if (request === importRequest.current) setErrorMessage(error.message);
+    } finally { if (request === importRequest.current) setAudioUploading(false); }
+  };
   const [draftSaved, setDraftSaved] = useState(true);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [isVoiceSectionOpen, setIsVoiceSectionOpen] = useState<boolean>(false);
@@ -240,10 +270,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState<boolean>(false);
-  const dialogRef = useDialog(onCancel, !isCreating);
+  const dialogRef = useDialog(onCancel, !isCreating && !audioUploading);
   useEffect(() => {
-    setDraftSaved(saveCreatorDraft({ voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle }));
-  }, [selectedVoice, speed, textContent, scriptTitle, scriptSubtitle]);
+    setDraftSaved(saveCreatorDraft({ voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle, imageStylePrompt, audioMode, importedAudio, audioBoundaries }));
+  }, [selectedVoice, speed, textContent, scriptTitle, scriptSubtitle, imageStylePrompt, audioMode, importedAudio, audioBoundaries]);
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [currentStepKey, setCurrentStepKey] = useState<string>('storyboard');
   const [currentMessage, setCurrentMessage] = useState<string>('');
@@ -416,6 +446,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       } catch (_) {}
     }
 
+    if (audioMode === 'import' && !/^(CẢNH|SCENE|PHẦN|ĐOẠN)\s*\d+[:.-]/im.test(trimmed)) {
+      return trimmed.split(/\n\s*\n/).map((text, index) => ({ title: `Cảnh ${index + 1}`, text: text.trim() })).filter(scene => scene.text);
+    }
+
     // 2. Explicit CẢNH / SCENE / # / 1. delimited check
     const lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean);
     const parsed: { title: string; text: string }[] = [];
@@ -502,6 +536,8 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       setErrorMessage('Vui lòng nhập nội dung kịch bản trước khi bấm Tạo Video');
       return;
     }
+    if (!imageStylePrompt.trim()) { setErrorMessage('Hãy nhập phong cách hình ảnh hoặc khôi phục mặc định.'); return; }
+    if (audioMode === 'import' && !importedAudio) { setErrorMessage('Hãy nhập tệp audio trước khi tạo video.'); return; }
     audioPreviewManager.stop();
     setPlayingVoiceId(null);
     setIsCreating(true);
@@ -523,6 +559,10 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     }
 
     try {
+      const cuts = audioMode === 'import' && audioBoundaries.trim() ? audioBoundaries.split(',').map(value => Number(value.trim())) : undefined;
+      if (cuts && (cuts.length !== rawParsedScenes.length - 1 || cuts.some((value, i) => !Number.isFinite(value) || value <= (i ? cuts[i - 1] : 0) || value >= importedAudio!.duration))) {
+        throw new Error('Kiểm tra mốc kết thúc: cảnh sau phải kết thúc muộn hơn cảnh trước và nằm trong thời lượng audio.');
+      }
       let effectiveTitle = (scriptTitle || '').trim();
       if (!effectiveTitle) {
         const firstScene = rawParsedScenes[0];
@@ -534,7 +574,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: effectiveTitle,
-          subtitle: scriptSubtitle || `Giọng đọc ${speed}×`,
+          subtitle: scriptSubtitle || (audioMode === 'import' ? 'Audio đã nhập' : `Giọng đọc ${speed}×`),
           voice: selectedVoice,
           speed,
           content: textContent,
@@ -542,6 +582,9 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           geminiApiKey: geminiApiKey.trim() || undefined,
           openaiApiKey: openaiApiKey.trim() || undefined,
           preferredImageProvider: selectedImageProvider,
+          imageStylePrompt,
+          importedAudio: audioMode === 'import' ? importedAudio?.file : undefined,
+          audioBoundaries: cuts,
         }),
       });
 
@@ -640,7 +683,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   };
 
   const wordCount = textContent.trim().split(/\s+/).filter(Boolean).length;
-  const estimatedSeconds = ((wordCount / 3.2) / speed);
+  const estimatedSeconds = audioMode === 'import' ? (importedAudio?.duration || 0) : ((wordCount / 3.2) / speed);
   const selectedVoiceObj = VOICE_OPTIONS.find((v) => v.id === selectedVoice) || { ...VOICE_OPTIONS[0], id: selectedVoice, name: selectedVoice };
 
   return (
@@ -685,21 +728,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            onClick={onCancel}
-            disabled={isCreating}
-            className="btn btn-secondary"
-            style={{
-              fontSize: 12,
-              padding: '6px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <X style={{ width: 14, height: 14 }} />
-            <span>Đóng</span>
-          </button>
+          <IconButton label="Đóng trình tạo video" onClick={onCancel} disabled={isCreating || audioUploading}><X size={18} /></IconButton>
         </div>
       </div>
 
@@ -728,8 +757,122 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
       {/* Main Scrollable Content */}
       <div inert={isCreating} style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 140px' }}>
-        <div style={{ maxWidth: 1040, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="creator-workspace">
 
+          {/* Section 2: Script Content (Hero section - Only 1 Textarea) */}
+          <div
+            className="card"
+            style={{
+              padding: 18,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            {/* Header with Presets & Upload */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FileText style={{ width: 16, height: 16, color: 'var(--accent)' }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Kịch bản
+                </span>
+
+              </div>
+
+              {/* Action tools: File Upload & Clear */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <IconButton label="Nhập tệp kịch bản" onClick={() => fileInputRef.current?.click()}><Upload size={17} /></IconButton>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".txt,.md,.json,.srt"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+
+                {textContent && (
+                  <IconButton label="Xóa kịch bản" onClick={() => { setTextContent(''); setSelectedPresetId(null); setUploadedFileName(null); }}><Trash2 size={17} /></IconButton>
+                )}
+              </div>
+            </div>
+
+            {/* ONLY ONE CLEAN TEXTAREA - NO PRESETS */}
+            <label className="label" htmlFor="script-title">Tên video</label>
+            <input id="script-title" className="input" value={scriptTitle} onChange={event => setScriptTitle(event.target.value)} placeholder="Đặt tên cho video" />
+            <label className="label" htmlFor="script-content">Nội dung lời thoại</label>
+            <textarea id="script-content"
+              value={textContent}
+              onChange={(e) => {
+                setTextContent(e.target.value);
+                setSelectedPresetId(null);
+                setErrorMessage(null);
+              }}
+              rows={17}
+              className="input"
+              style={{
+                width: '100%',
+                resize: 'vertical',
+                lineHeight: 1.65,
+                fontSize: 13.5,
+                fontFamily: 'inherit',
+                minHeight: 320,
+                padding: '14px 16px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-base)',
+                border: '1px solid var(--border)',
+              }}
+              placeholder="Nhập toàn bộ kịch bản phân cảnh tại đây "
+            />
+
+            {/* Textarea Footer Stats */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: 11,
+                color: 'var(--text-muted)',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <span>
+                  <strong style={{ color: 'var(--text-primary)' }}>{wordCount}</strong> từ
+                </span>
+                <span>•</span>
+                <span>
+                  Thời lượng dự kiến: <strong style={{ color: 'var(--accent)' }}>≈{estimatedSeconds.toFixed(0)}s</strong> ({Math.ceil(estimatedSeconds / 60)} phút)
+                </span>
+                <span>•</span>
+                <span>
+                  Dự kiến: <strong style={{ color: 'var(--text-primary)' }}>{parseContentToScenes(textContent).length}</strong> phân cảnh
+                </span>
+              </div>
+
+            </div>
+          </div>
+
+          <aside className="creator-options">
+          <section className="card editor-settings">
+            <h3>Âm thanh</h3>
+            <div className="audio-source-options" role="group" aria-label="Nguồn âm thanh">
+              <label><input type="radio" name="audio-source" checked={audioMode === 'tts'} onChange={() => setAudioMode('tts')} /> Tạo giọng đọc</label>
+              <label><input type="radio" name="audio-source" checked={audioMode === 'import'} onChange={() => { audioPreviewManager.stop(); setPlayingVoiceId(null); setAudioMode('import'); }} /> Nhập audio có sẵn</label>
+            </div>
+            {audioMode === 'import' && <>
+              <div className="editor-actions"><IconButton label={importedAudio ? 'Đổi tệp audio' : 'Chọn tệp audio'} disabled={audioUploading} onClick={() => audioFileInput.current?.click()}>{audioUploading ? <Loader2 className="animate-spin" size={17} /> : <Upload size={17} />}</IconButton><span className="editor-help">{audioUploading ? 'Đang nhập audio…' : importedAudio ? 'Đổi tệp âm thanh' : 'Chọn tệp âm thanh'}</span></div>
+              <input ref={audioFileInput} id="audio-upload" aria-label="Tệp audio" type="file" accept="audio/*,.m4a,.flac" hidden disabled={audioUploading} onChange={event => void handleImportAudio(event.target.files?.[0])} />
+              <p className="editor-help">MP3, WAV, M4A, OGG, FLAC · Tối đa 100 MB</p>
+              {audioUploading && <p role="status">Đang nhập và kiểm tra audio…</p>}
+              {importedAudio && <AudioTimingEditor audio={importedAudio} scenes={parseContentToScenes(textContent)} boundaries={audioBoundaries} onChange={value => { setAudioBoundaries(value); setErrorMessage(null); }} />}
+              <p className="editor-help">Dùng kịch bản khớp với audio. Mỗi đoạn cách nhau một dòng trống là một cảnh. Audio giữ nguyên tốc độ.</p>
+            </>}
+          </section>
+          {audioMode === 'tts' && <>
           {/* Section 1: Voice & Speed (Collapsible) */}
           <div
             className="card"
@@ -751,7 +894,6 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 justifyContent: 'space-between',
                 cursor: 'pointer',
                 background: isVoiceSectionOpen ? 'var(--bg-elevated)' : 'transparent',
-                borderBottom: isVoiceSectionOpen ? '1px solid var(--border)' : 'none',
                 transition: 'background 0.15s ease',
                 width: '100%',
                 textAlign: 'left',
@@ -835,17 +977,13 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                             </div>
                           </div>
 
-                          <button
-                            type="button"
+                          <IconButton
                             onClick={(e) => handleTogglePlayVoice(voice, e)}
                             className={`btn ${isPlayingThis ? 'btn-primary' : 'btn-secondary'}`}
-                            style={{ padding: '6px 12px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
-                            title={isPlayingThis ? 'Dừng' : 'Phát'}
-                            aria-label={`${isPlayingThis ? 'Dừng' : 'Nghe thử'} giọng ${voice.name}`}
+                            label={`${isPlayingThis ? 'Dừng' : 'Nghe thử'} giọng ${voice.name}`}
                           >
                             {isPlayingThis ? <VolumeX style={{ width: 13, height: 13 }} /> : <Volume2 style={{ width: 13, height: 13 }} />}
-                            <span>{isPlayingThis ? 'Dừng' : 'Phát'}</span>
-                          </button>
+                          </IconButton>
                         </div>
                       );
                     })}
@@ -900,119 +1038,19 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             )}
           </div>
 
-          {/* Section 2: Script Content (Hero section - Only 1 Textarea) */}
-          <div
-            className="card"
-            style={{
-              padding: 18,
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
-            {/* Header with Presets & Upload */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <FileText style={{ width: 16, height: 16, color: 'var(--accent)' }} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Kịch bản
-                </span>
-             
-              </div>
-
-              {/* Action tools: File Upload & Clear */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="btn btn-secondary"
-                  style={{ fontSize: 11, padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 4 }}
-                >
-                  <Upload style={{ width: 12, height: 12 }} />
-                  <span>{uploadedFileName ? `✓ ${uploadedFileName}` : 'Tải file'}</span>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".txt,.md,.json,.srt"
-                  onChange={handleFileUpload}
-                  style={{ display: 'none' }}
-                />
-
-                {textContent && (
-                  <button
-                    type="button"
-                    onClick={() => { setTextContent(''); setSelectedPresetId(null); setUploadedFileName(null); }}
-                    className="btn btn-ghost"
-                    style={{ fontSize: 11, padding: '5px 8px', color: 'var(--text-muted)' }}
-                    title="Xóa kịch bản"
-                  >
-                    Xóa
-                  </button>
-                )}
-              </div>
+          </>}
+          <details className="card style-settings">
+            <summary><span>Phong cách hình ảnh</span><span className="editor-help">Xem và sửa prompt</span></summary>
+            <div className="editor-settings">
+              <label htmlFor="image-style">Prompt phong cách</label>
+              <textarea id="image-style" className="input" rows={10} maxLength={10000} value={imageStylePrompt} onChange={event => setImageStylePrompt(event.target.value)} />
+              <p className="editor-help">Lưu cho video mới và áp dụng chung cho mọi ảnh. Bạn có thể viết bằng tiếng Việt hoặc tiếng Anh.</p>
+              <IconButton label="Khôi phục phong cách mặc định" onClick={() => setImageStylePrompt(defaultPrompt)}><RotateCcw size={17} /></IconButton>
             </div>
+          </details>
+          <p className="style-preview editor-help">{imageStylePrompt || 'Chưa nhập phong cách hình ảnh.'}</p>
 
-            {/* ONLY ONE CLEAN TEXTAREA - NO PRESETS */}
-            <label className="label" htmlFor="script-title">Tên video</label>
-            <input id="script-title" className="input" value={scriptTitle} onChange={event => setScriptTitle(event.target.value)} placeholder="Đặt tên cho video" />
-            <label className="label" htmlFor="script-content">Nội dung lời thoại</label>
-            <textarea id="script-content"
-              value={textContent}
-              onChange={(e) => {
-                setTextContent(e.target.value);
-                setSelectedPresetId(null);
-                setErrorMessage(null);
-              }}
-              rows={14}
-              className="input"
-              style={{
-                width: '100%',
-                resize: 'vertical',
-                lineHeight: 1.65,
-                fontSize: 13.5,
-                fontFamily: 'inherit',
-                minHeight: 280,
-                padding: '14px 16px',
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-base)',
-                border: '1px solid var(--border)',
-              }}
-              placeholder="Nhập toàn bộ kịch bản phân cảnh tại đây "
-            />
-
-            {/* Textarea Footer Stats */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: 11,
-                color: 'var(--text-muted)',
-                flexWrap: 'wrap',
-                gap: 8,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <span>
-                  <strong style={{ color: 'var(--text-primary)' }}>{wordCount}</strong> từ
-                </span>
-                <span>•</span>
-                <span>
-                  Thời lượng dự kiến: <strong style={{ color: 'var(--accent)' }}>≈{estimatedSeconds.toFixed(0)}s</strong> ({Math.ceil(estimatedSeconds / 60)} phút)
-                </span>
-                <span>•</span>
-                <span>
-                  Dự kiến: <strong style={{ color: 'var(--text-primary)' }}>{parseContentToScenes(textContent).length}</strong> phân cảnh
-                </span>
-              </div>
-       
-            </div>
-          </div>
-
+          </aside>
         </div>
       </div>
 
@@ -1036,7 +1074,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
-            <span role="status">{draftSaved ? 'Đã lưu kịch bản và giọng đọc trên trình duyệt này' : 'Không thể lưu bản nháp trên trình duyệt này'}</span>
+            <span role="status">{!textContent.trim() ? 'Nhập lời thoại để tạo video.' : audioUploading ? 'Đang nhập audio…' : audioMode === 'import' && !importedAudio ? 'Chọn tệp audio để tiếp tục.' : !imageStylePrompt.trim() ? 'Mở Phong cách hình ảnh để nhập prompt.' : draftSaved ? 'Đã lưu bản nháp' : 'Không thể lưu bản nháp'}</span>
           </div>
         </div>
 
@@ -1044,7 +1082,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           <button
             className="btn btn-primary"
             onClick={handleCreateVideo}
-            disabled={isCreating || !textContent.trim()}
+            disabled={isCreating || audioUploading || !textContent.trim() || !imageStylePrompt.trim() || (audioMode === 'import' && !importedAudio)}
             style={{
               padding: '10px 24px',
               fontSize: 14,
@@ -1320,7 +1358,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                                 : 'var(--text-secondary)',
                             }}
                           >
-                            Bước {step.number}: {step.title}
+                            Bước {step.number}: {step.key === 'tts' && audioMode === 'import' ? 'Cắt audio theo cảnh' : step.title}
                           </span>
                         </div>
 

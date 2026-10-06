@@ -24,8 +24,8 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
   // Scene entrance & exit opacity
   const sceneOpacity = interpolate(
     frame,
-    [0, 6, totalDuration - 6, totalDuration],
-    [0.1, 1, 1, 0.1],
+    [0, Math.min(6, totalDuration / 3), totalDuration - Math.min(6, totalDuration / 3), totalDuration],
+    [1, 1, 1, 0.1],
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
 
@@ -72,7 +72,7 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
   const beatOpacity = interpolate(
     beatLocalFrame,
     [0, 5],
-    [0.3, 1],
+    [1, 1],
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
 
