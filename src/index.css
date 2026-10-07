@@ -556,6 +556,9 @@ a[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .timeline-heading select { width: 110px; height: 40px; font-size: 12px; }
 .timeline-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 16px; }
 .timeline-tools p { color: var(--text-muted); font-size: 12px; margin: 0; }
+.timeline-zoom { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); flex-shrink: 0; }
+.timeline-zoom input { width: clamp(72px, 14vw, 160px); min-height: 36px; accent-color: var(--accent); cursor: pointer; }
+.timeline-zoom input:disabled { cursor: not-allowed; opacity: 0.5; }
 .timeline-track-layout { display: grid; grid-template-columns: 76px minmax(0, 1fr); padding: 0 16px 0 0; }
 .track-labels { display: grid; grid-template-rows: 34px 88px 150px; color: var(--text-muted); font-size: 11px; border-right: 1px solid var(--border); }
 .track-labels > span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }

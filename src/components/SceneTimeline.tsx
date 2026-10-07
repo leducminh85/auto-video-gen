@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
-import { GripVertical, Image as ImageIcon, Minus, Plus, ScanLine, Music, RefreshCw, Trash2 } from 'lucide-react';
+import { GripVertical, Image as ImageIcon, Minus, Plus, Search, Music, RefreshCw, Trash2 } from 'lucide-react';
 import type { SceneData, VisualBeat } from '../types/scenes';
 import { reorderBeat, resizeBeatBoundary } from '../utils/beatEditing';
 import { IconButton } from './IconButton';
@@ -135,11 +135,15 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
   return <div className="scene-timeline">
     <div className="timeline-tools">
       <p id="timeline-help">Kéo thân ảnh để đổi vị trí · Kéo mép để chỉnh thời gian</p>
-      <div className="toolbar-actions">
-        <IconButton label="Thu nhỏ timeline" disabled={dragging || effectiveZoom <= fitZoom + 0.01} onClick={() => setZoom(Math.max(fitZoom, effectiveZoom / 1.4))}><Minus size={17} /></IconButton>
-        <IconButton label="Vừa khung timeline" disabled={dragging} onClick={() => setZoom(Math.max(1, (viewportWidth - 12) / (scene.duration_in_frames / fps)))}><ScanLine size={17} /></IconButton>
-        <IconButton label="Phóng to timeline" disabled={dragging || effectiveZoom >= 2400} onClick={() => setZoom(Math.min(2400, effectiveZoom * 1.4))}><Plus size={17} /></IconButton>
-      </div>
+      <label className="timeline-zoom">
+        <Search size={16} aria-hidden="true" />
+        <Minus size={14} aria-hidden="true" />
+        <input type="range" aria-label="Mức thu phóng timeline" min={0} max={100} step={1}
+          disabled={dragging || fitZoom >= 2400}
+          value={fitZoom >= 2400 ? 0 : Math.round(100 * Math.log(Math.min(effectiveZoom, 2400) / fitZoom) / Math.log(2400 / fitZoom))}
+          onChange={event => setZoom(fitZoom * Math.pow(2400 / fitZoom, Number(event.target.value) / 100))} />
+        <Plus size={14} aria-hidden="true" />
+      </label>
     </div>
     <div className="timeline-track-layout">
       <div className="track-labels" aria-hidden="true"><span /><span><Music size={16} /> Audio</span><span><ImageIcon size={16} /> Ảnh</span></div>
