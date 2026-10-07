@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, GripVertical, Image as ImageIcon, Minus, Plus, ScanLine, Music, RefreshCw, Trash2 } from 'lucide-react';
+import { GripVertical, Image as ImageIcon, Minus, Plus, ScanLine, Music, RefreshCw, Trash2 } from 'lucide-react';
 import type { SceneData, VisualBeat } from '../types/scenes';
 import { reorderBeat, resizeBeatBoundary } from '../utils/beatEditing';
 import { IconButton } from './IconButton';
@@ -30,14 +30,12 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
   const [dragPreview, setDragPreview] = useState<{ beat: VisualBeat; left: number; top: number; width: number; height: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [announcement, setAnnouncement] = useState('');
-  const [duration, setDuration] = useState('');
   const viewport = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
   const animation = useRef(0);
   const pending = useRef(false);
   const beats = draft.beats || [];
   const selected = beats.find(beat => beat.id === selectedId) || beats[0];
-  const selectedIndex = beats.findIndex(beat => beat.id === selected?.id);
   const locked = busy || saving;
   const fitZoom = Math.max(1, (viewportWidth - 2) / (scene.duration_in_frames / fps));
   const effectiveZoom = Math.max(zoom, fitZoom);
@@ -56,7 +54,6 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
     setZoom(Math.max(70, Math.min(300, 170 / Math.max(shortest, 0.01))));
     if (viewport.current) viewport.current.scrollLeft = 0;
   }, [scene.id, fps]);
-  useEffect(() => { setDuration(selected ? (selected.duration_in_frames / fps).toFixed(2) : ''); }, [selected?.id, selected?.duration_in_frames, fps]);
   useEffect(() => () => cancelAnimationFrame(animation.current), []);
 
   const commit = async (next: SceneData) => {
@@ -122,13 +119,6 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
     const box = event.currentTarget.getBoundingClientRect();
     onSeek(Math.max(0, Math.min(scene.duration_in_frames - 1, Math.round((event.clientX - box.left) / scale))));
   };
-  const editDuration = () => {
-    const frames = Math.round(Number(duration) * fps);
-    if (!Number.isFinite(frames) || frames < 1 || beats.length < 2) { setDuration((selected.duration_in_frames / fps).toFixed(2)); return; }
-    const boundary = selectedIndex < beats.length - 1 ? selectedIndex : selectedIndex - 1;
-    const end = selectedIndex < beats.length - 1 ? selected.start_frame_offset + frames : scene.duration_in_frames - frames;
-    void commit(resizeBeatBoundary(scene, boundary, end, fps));
-  };
   const tickSeconds = effectiveZoom >= 150 ? 0.5 : effectiveZoom >= 60 ? 1 : effectiveZoom >= 25 ? 2 : 5;
   const tickFrames = Math.max(1, Math.round(tickSeconds * fps));
   const ticks = Array.from({ length: Math.ceil(scene.duration_in_frames / tickFrames) }, (_, i) => i * tickFrames);
@@ -183,15 +173,11 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
         <div className="selection-heading"><strong>Ảnh {selected.display_number ?? selected.sub_index}</strong><span>{time(selected.start_frame_offset, fps)} → {time(selected.start_frame_offset + selected.duration_in_frames, fps)}</span></div>
         <p>{selected.caption || selected.title}</p>
         <div className="selection-controls">
-          <label htmlFor="clip-duration">Thời lượng <span className="duration-input"><input id="clip-duration" type="number" step={1 / fps} min={1 / fps} value={duration} disabled={locked || beats.length < 2} onChange={event => setDuration(event.target.value)} onBlur={editDuration} onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }} /> giây</span></label>
           <div className="toolbar-actions">
-            <IconButton label="Đưa ảnh sang trái" disabled={locked || selectedIndex === 0} onClick={() => void commit(reorderBeat(scene, selected.id, selectedIndex - 1, fps))}><ArrowLeft size={17} /></IconButton>
-            <IconButton label="Đưa ảnh sang phải" disabled={locked || selectedIndex === beats.length - 1} onClick={() => void commit(reorderBeat(scene, selected.id, selectedIndex + 1, fps))}><ArrowRight size={17} /></IconButton>
             <IconButton label="Tạo lại ảnh" disabled={locked} onClick={() => onRegenerate(selected)}><RefreshCw size={17} /></IconButton>
             <IconButton label={`Xóa ảnh ${selected.display_number ?? selected.sub_index}`} disabled={locked || beats.length < 2} onClick={() => onDelete(selected)}><Trash2 size={17} /></IconButton>
           </div>
         </div>
-        <small>{beats.length < 2 ? 'Thêm ảnh để chia thời gian của cảnh này.' : 'Thời gian lấy từ ảnh liền kề; tổng thời lượng audio không đổi.'}</small>
       </div>
     </div>
     {dragPreview && createPortal(<div className="timeline-drag-preview" aria-hidden="true" style={{ left: dragPreview.left, top: dragPreview.top, width: dragPreview.width, height: dragPreview.height }}>

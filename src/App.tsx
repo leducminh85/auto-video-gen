@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
-import { Play, Pause, Download, Layers, Volume2, VolumeX, CheckCircle2, Code2, Eye, Copy, Check, PlusCircle, Undo2, Loader2 } from 'lucide-react';
+import { Play, Pause, Download, CheckCircle2, Code2, Eye, Copy, Check, PlusCircle, Undo2, Loader2 } from 'lucide-react';
 import { MainVideo } from './remotion/MainVideo';
 import scenesDataJson from './data/scenes.json';
 import { ProductionData, SceneData, VisualBeat, VideoMetadata } from './types/scenes';
@@ -32,7 +32,6 @@ export default function App() {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [copiedJson, setCopiedJson] = useState<boolean>(false);
-  const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
   const [showCreatorDrawer, setShowCreatorDrawer] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [projectBusy, setProjectBusy] = useState(false);
@@ -40,7 +39,6 @@ export default function App() {
   const [projectError, setProjectError] = useState<string | null>(null);
   const [insertAfterId, setInsertAfterId] = useState('');
   const [exporting, setExporting] = useState(false);
-  const editorRef = useRef<HTMLElement>(null);
   const [addingBeat, setAddingBeat] = useState(false);
   const [undoProject, setUndoProject] = useState<ProductionData | null>(null);
   useEffect(() => {
@@ -65,7 +63,6 @@ export default function App() {
   const [beatToRegenerate, setBeatToRegenerate] = useState<VisualBeat | null>(null);
 
   const remotionPlayerRef = useRef<PlayerRef>(null);
-  const singleAudioRef = useRef<HTMLAudioElement | null>(null);
   const playerSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -85,9 +82,8 @@ export default function App() {
     player.addEventListener('pause', onPause);
     return () => { player.removeEventListener('frameupdate', onFrame); player.removeEventListener('play', onPlay); player.removeEventListener('pause', onPause); };
   }, [videoTimestamp, activeTab, scenes]);
-  useEffect(() => { setSelectedBeatId(null); singleAudioRef.current?.pause(); setPlayingAudioId(null); }, [selectedSceneId]);
+  useEffect(() => { setSelectedBeatId(null); }, [selectedSceneId]);
 
-  useEffect(() => () => { singleAudioRef.current?.pause(); }, []);
 
   const selectedScene = scenes.find((s) => s.id === selectedSceneId) || scenes[0];
   const selectedSceneBeats = selectedScene?.beats || [];
@@ -99,8 +95,6 @@ export default function App() {
   };
 
   const togglePlay = () => {
-    singleAudioRef.current?.pause();
-    setPlayingAudioId(null);
     if (remotionPlayerRef.current?.isPlaying()) {
       remotionPlayerRef.current.pause();
       setIsPlaying(false);
@@ -108,24 +102,6 @@ export default function App() {
       remotionPlayerRef.current?.play();
       setIsPlaying(true);
     }
-  };
-
-  const playSceneAudio = (scene: SceneData) => {
-    remotionPlayerRef.current?.pause();
-    setIsPlaying(false);
-    if (singleAudioRef.current) {
-      singleAudioRef.current.pause();
-    }
-    if (playingAudioId === scene.id) {
-      setPlayingAudioId(null);
-      return;
-    }
-    const audio = new Audio(`/audio/${scene.audio_file}`);
-    audio.onended = () => setPlayingAudioId(null);
-    audio.ontimeupdate = () => { const frame = Math.min(scene.start_frame + scene.duration_in_frames - 1, scene.start_frame + Math.round(audio.currentTime * metadata.fps)); setCurrentFrame(frame); remotionPlayerRef.current?.seekTo(frame); };
-    audio.play().catch(() => { setPlayingAudioId(null); showToast('Không phát được giọng đọc của cảnh này.'); });
-    singleAudioRef.current = audio;
-    setPlayingAudioId(scene.id);
   };
 
   const handleOpenRegenerate = (scene: SceneData, beat?: VisualBeat) => {
@@ -140,8 +116,6 @@ export default function App() {
     setProjectBusy(true);
     setProjectError(null);
     remotionPlayerRef.current?.pause();
-    singleAudioRef.current?.pause();
-    setPlayingAudioId(null);
     setIsPlaying(false);
     const restoreFrame = remotionPlayerRef.current?.getCurrentFrame() || selectedScene.start_frame;
     try {
@@ -182,8 +156,6 @@ export default function App() {
   };
 
   const seekTimeline = (offset: number) => {
-    singleAudioRef.current?.pause();
-    setPlayingAudioId(null);
     remotionPlayerRef.current?.pause();
     const frame = selectedScene.start_frame + offset;
     remotionPlayerRef.current?.seekTo(frame);
@@ -274,7 +246,7 @@ export default function App() {
             {activeTab === 'data' && <IconButton label="Sao chép JSON" onClick={copyJsonToClipboard}>{copiedJson ? <Check size={17} /> : <Copy size={17} />}</IconButton>}
           </div></div>
           {activeTab === 'preview' ? <div className="studio-player"><Player key={videoTimestamp} ref={remotionPlayerRef} component={MainVideo} inputProps={{ scenes }} durationInFrames={metadata.total_duration_in_frames} compositionWidth={metadata.width} compositionHeight={metadata.height} fps={metadata.fps} style={{ width: '100%', height: '100%' }} controls autoPlay={false} loop acknowledgeRemotionLicense /></div> : <pre className="studio-json">{JSON.stringify({ metadata, scenes }, null, 2)}</pre>}
-          <div className="preview-caption"><span>{(currentFrame / metadata.fps).toFixed(2)} / {totalDuration.toFixed(2)} giây</span><IconButton label="Chỉnh ảnh trong cảnh" onClick={() => editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><Layers size={17} /></IconButton></div>
+          <div className="preview-caption"><span>{(currentFrame / metadata.fps).toFixed(2)} / {totalDuration.toFixed(2)} giây</span></div>
         </section>
         <section className="studio-section scenes-section" aria-labelledby="scenes-title">
           <div className="studio-section-heading"><h2 id="scenes-title"><span>02</span> Phân cảnh</h2><span className="section-meta">{scenes.length} cảnh</span></div>
@@ -286,14 +258,11 @@ export default function App() {
           </div>
           <details className="timeline-narration"><summary>Lời thoại của cảnh</summary><p>{selectedScene.text}</p></details>
         </section>
-        <section ref={editorRef} className="studio-section timeline-section" aria-labelledby="timeline-title">
+        <section className="studio-section timeline-section" aria-labelledby="timeline-title">
           <div className="studio-section-heading timeline-heading">
             <div><h2 id="timeline-title"><span>03</span> Chi tiết cảnh</h2><p>Cảnh {selectedScene.id} · {selectedSceneBeats.length} ảnh · {selectedScene.duration_in_seconds.toFixed(2)} giây</p></div>
             <div className="toolbar-actions">
-              <label className="sr-only" htmlFor="editing-scene">Chọn cảnh để chỉnh ảnh</label>
-              <select id="editing-scene" className="input" value={selectedSceneId} disabled={projectBusy} onChange={event => { const scene = scenes.find(item => item.id === Number(event.target.value)); if (scene) selectScene(scene); }}>{scenes.map(scene => <option key={scene.id} value={scene.id}>Cảnh {scene.id}</option>)}</select>
               <IconButton label={isPlaying ? 'Tạm dừng' : 'Phát'} onClick={togglePlay}>{isPlaying ? <Pause size={18} /> : <Play size={18} />}</IconButton>
-              <IconButton label={playingAudioId === selectedScene.id ? 'Dừng audio' : 'Nghe audio cảnh'} onClick={() => playSceneAudio(selectedScene)}>{playingAudioId === selectedScene.id ? <VolumeX size={18} /> : <Volume2 size={18} />}</IconButton>
               <IconButton label="Thêm ảnh vào cảnh" disabled={projectBusy || projectLoading || !selectedSceneBeats.some(beat => beat.duration_in_frames >= 2)} onClick={handleAddBeat}><PlusCircle size={18} /></IconButton>
               <IconButton label="Hoàn tác" disabled={!undoProject || projectBusy} onClick={async () => { if (undoProject && await persistProject(undoProject, false, false)) setUndoProject(null); }}><Undo2 size={18} /></IconButton>
             </div>
