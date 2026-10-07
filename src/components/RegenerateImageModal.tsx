@@ -77,9 +77,9 @@ function ImageDialog({ scene, selectedBeat, adding, imageStylePrompt, insertAfte
           {adding && <div>
             <label htmlFor="insert-position">Chèn sau ảnh</label>
             <select id="insert-position" className="input" value={insertAfterId} disabled={!!busy} onChange={event => onInsertAfterChange?.(event.target.value)}>
-              {scene.beats?.map(beat => <option key={beat.id} value={beat.id} disabled={beat.duration_in_frames < 2}>Ảnh {beat.sub_index} · {beat.duration_in_seconds.toFixed(1)} giây</option>)}
+              {scene.beats?.map(beat => <option key={beat.id} value={beat.id} disabled={beat.duration_in_frames < 2}>Ảnh {beat.display_number ?? beat.sub_index} · {beat.duration_in_seconds.toFixed(1)} giây</option>)}
             </select>
-            <p className="editor-help">{anchor ? `Chia ${anchor.duration_in_seconds.toFixed(1)} giây của ảnh ${anchor.sub_index} cho hai ảnh. Các ảnh khác và audio giữ nguyên.` : 'Chọn ảnh để chia thời gian hiển thị.'}</p>
+            <p className="editor-help">{anchor ? `Chia ${anchor.duration_in_seconds.toFixed(1)} giây của ảnh ${anchor.display_number ?? anchor.sub_index} cho hai ảnh. Các ảnh khác và audio giữ nguyên.` : 'Chọn ảnh để chia thời gian hiển thị.'}</p>
           </div>}
           <div><label htmlFor="image-prompt">Mô tả hình ảnh</label><textarea id="image-prompt" className="input" rows={9} maxLength={20000} value={prompt} disabled={!!busy} onChange={event => setPrompt(event.target.value)} /></div>
           {adding && <details><summary>Phong cách cho ảnh mới</summary><label htmlFor="new-image-style" className="sr-only">Phong cách cho ảnh mới</label><textarea id="new-image-style" className="input" rows={5} value={style} maxLength={10000} disabled={!!busy} onChange={event => setStyle(event.target.value)} /></details>}

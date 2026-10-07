@@ -61,3 +61,8 @@ Bài `studio-timeline.test.cjs` kiểm tra waveform thật từ WAV thử, kéo 
 Bố cục cũ tính chiều cao preview theo chiều rộng rồi đặt ảnh chọn bên dưới timeline, khiến việc chỉnh ảnh phải cuộn khỏi preview. Desktop từ 900px và cao từ 600px hiện dùng workspace vừa cửa sổ, hai hàng có chiều cao giới hạn. Preview co theo vùng còn lại, cảnh cuộn trong danh sách, waveform và ảnh luôn nằm trong hàng timeline. Cửa sổ thấp dùng khoảng cách và track gọn hơn. Thông tin ảnh chọn nằm ở cột bên phải timeline; lời thoại chuyển vào phần danh sách cảnh.
 
 Đã kiểm tra vị trí preview, danh sách, waveform, ảnh và trạng thái timeline trong viewport ở 900×600, 1024×768, 1366×768, 1440×900 và 1920×1080. Trên mobile, đã xem ảnh chụp khi cuộn tới track ảnh để xác nhận preview vẫn nhìn thấy. Lint, build và bốn bài browser regression đều đạt; build còn advisory bundle lớn đã có trước.
+
+
+## Phản hồi khi kéo ảnh
+
+Ảnh đang kéo có bản xem nổi theo con trỏ, viền amber và bóng để phân biệt với track. Vị trí thả có khung nét đứt; thả hoặc Escape đóng bản xem nổi. Tên hiển thị được lưu riêng với vị trí timeline và dùng thống nhất trong thumbnail, bảng ảnh chọn, nhãn truy cập và lựa chọn vị trí chèn. Kiểm tra browser xác nhận bản xem đi đúng độ dịch chuyển ngang/dọc của con trỏ, biến mất khi thả và tên giữ nguyên sau đổi thứ tự/lưu/tải lại. Unit test kiểm tra tên sau chèn ảnh và đổi thứ tự nhiều lần.

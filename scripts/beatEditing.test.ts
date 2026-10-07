@@ -17,6 +17,7 @@ test('inserting a beat splits only its selected neighbor', () => {
   assertTimeline(result, [90, 30, 30, 150]);
   assert.deepEqual(result.beats!.map(beat => beat.id), ['b0', 'b1', 'new', 'b2']);
   assert.equal(scene.beats![1].duration_in_frames, 60);
+  assert.deepEqual(result.beats!.map(beat => beat.display_number), [1,2,4,3]);
 });
 test('deletion gives time to the preceding image, or the first remaining image', () => {
   assertTimeline(removeBeat(scene, 'b0', 30), [150, 150]);
@@ -33,6 +34,8 @@ test('reordering preserves image identity, duration and exact contiguous offsets
   const { reorderBeat } = await import('../src/utils/beatEditing');
   const result = reorderBeat(scene, 'b0', 2, 30);
   assertTimeline(result, [60, 150, 90]);
+  assert.deepEqual(result.beats!.map(beat => beat.display_number), [2,3,1]);
+  assert.deepEqual(reorderBeat(result, 'b0', 0, 30).beats!.map(beat => beat.display_number), [1,2,3]);
   assert.deepEqual(result.beats!.map(beat => beat.id), ['b1', 'b2', 'b0']);
   assert.deepEqual(scene.beats!.map(beat => beat.id), ['b0', 'b1', 'b2']);
 });

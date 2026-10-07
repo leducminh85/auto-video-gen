@@ -6,7 +6,7 @@ Studio chia thành ba phần: **Xem trước**, **Phân cảnh** và **Chi tiế
 
 Timeline có track audio với waveform từ tệp thật và track ảnh với thumbnail. Chọn một ảnh để xem bản lớn trong bảng thông tin ảnh (bên phải timeline trên desktop, bên dưới trên mobile). Desktop giữ cả ba phần trong một màn hình; danh sách cảnh cuộn riêng. Trên mobile, preview bám phía trên khi cuộn chỉnh timeline. Các nút đơn giản dùng icon; rê chuột để xem tên thao tác.
 
-- Kéo thân ảnh sang trái/phải để đổi thứ tự. Mỗi ảnh giữ thời lượng khi đổi vị trí.
+- Kéo thân ảnh sang trái/phải để đổi thứ tự. Ảnh được nhấc lên và đi theo con trỏ; khung nét đứt chỉ vị trí thả. Mỗi ảnh giữ tên và thời lượng khi đổi vị trí, kể cả sau khi lưu và tải lại trang. Ảnh thêm mới nhận số lớn hơn các ảnh đang có.
 - Kéo mép giữa hai ảnh để chỉnh thời gian. Thời gian tăng ở ảnh này được lấy từ ảnh liền kề; tổng thời lượng audio của cảnh giữ nguyên. Mỗi ảnh luôn có ít nhất một frame.
 - Có nút phóng to, thu nhỏ và vừa khung. Cuộn ngang để xem phần timeline còn lại; khi kéo sát mép vùng nhìn, timeline tự cuộn.
 - Có thể nhập số giây của ảnh được chọn. Khi focus mép ảnh, phím trái/phải chỉnh một frame, Shift chỉnh mười frame; Home/End đưa mép tới giới hạn. Alt + trái/phải trên ảnh đổi thứ tự. Các nút mũi tên cung cấp thao tác tương đương.

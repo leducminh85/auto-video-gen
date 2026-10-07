@@ -4,7 +4,7 @@ function withTiming(scene: SceneData, beats: VisualBeat[], fps: number): SceneDa
   if (!beats.length || beats.some(beat => beat.duration_in_frames < 1)) throw new Error('Mỗi cảnh cần ít nhất một ảnh có thời lượng hợp lệ.');
   let offset = 0;
   const next = beats.map((beat, index) => {
-    const result = { ...beat, sub_index: index + 1, duration_in_seconds: beat.duration_in_frames / fps, start_frame_offset: offset };
+    const result = { ...beat, display_number: beat.display_number ?? beat.sub_index, sub_index: index + 1, duration_in_seconds: beat.duration_in_frames / fps, start_frame_offset: offset };
     offset += beat.duration_in_frames;
     return result;
   });
@@ -17,7 +17,7 @@ export function insertBeat(scene: SceneData, beat: VisualBeat, afterId: string, 
   const index = beats.findIndex(item => item.id === afterId);
   if (index < 0 || beats[index].duration_in_frames < 2) throw new Error('Ảnh này quá ngắn để chia thêm. Hãy chọn ảnh khác.');
   const frames = beats[index].duration_in_frames;
-  beats.splice(index, 1, { ...beats[index], duration_in_frames: Math.ceil(frames / 2) }, { ...beat, duration_in_frames: Math.floor(frames / 2) });
+  beats.splice(index, 1, { ...beats[index], duration_in_frames: Math.ceil(frames / 2) }, { ...beat, display_number: Math.max(...beats.map(item => item.display_number ?? item.sub_index)) + 1, duration_in_frames: Math.floor(frames / 2) });
   return withTiming(scene, beats, fps);
 }
 

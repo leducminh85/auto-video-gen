@@ -125,6 +125,7 @@ export interface ValidationResult {
 
 export interface VisualBeat {
   id: string;
+  display_number?: number;
   sub_index: number;
   title: string;
   prompt: string;

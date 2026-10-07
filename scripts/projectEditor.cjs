@@ -36,6 +36,7 @@ function normalizeProject(input) {
       if (typeof beat.id !== 'string' || beatIds.has(beat.id)) throw new Error('ID ảnh không hợp lệ hoặc bị trùng.');
       beatIds.add(beat.id);
       if (!Number.isInteger(beat.duration_in_frames) || beat.duration_in_frames < 1) throw new Error('Mỗi ảnh phải có ít nhất một frame.');
+      beat.display_number = Number.isInteger(beat.display_number) && beat.display_number > 0 ? beat.display_number : (beat.sub_index || index + 1);
       beat.sub_index = index + 1;
       beat.start_frame_offset = offset;
       beat.duration_in_seconds = beat.duration_in_frames / fps;

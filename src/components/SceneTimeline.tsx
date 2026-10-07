@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, GripVertical, Image as ImageIcon, Minus, Plus, ScanLine, Music, RefreshCw, Trash2 } from 'lucide-react';
 import type { SceneData, VisualBeat } from '../types/scenes';
@@ -5,7 +6,7 @@ import { reorderBeat, resizeBeatBoundary } from '../utils/beatEditing';
 import { IconButton } from './IconButton';
 import { AudioWaveform } from './AudioWaveform';
 
-type Gesture = { kind: 'move' | 'resize'; id: string; boundary: number; base: SceneData; startX: number; startScroll: number; pointerId: number; clientX: number; moved: boolean };
+type Gesture = { kind: 'move' | 'resize'; id: string; boundary: number; base: SceneData; startX: number; startY: number; startScroll: number; pointerId: number; clientX: number; clientY: number; width: number; height: number; offsetX: number; offsetY: number; moved: boolean };
 interface Props {
   scene: SceneData;
   fps: number;
@@ -26,6 +27,7 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
   const [zoom, setZoom] = useState(80);
   const [viewportWidth, setViewportWidth] = useState(700);
   const [dragging, setDragging] = useState(false);
+  const [dragPreview, setDragPreview] = useState<{ beat: VisualBeat; left: number; top: number; width: number; height: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [duration, setDuration] = useState('');
@@ -67,12 +69,13 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
     } catch { setScene(scene); setAnnouncement('Không lưu được timeline. Hãy thử lại.'); }
     finally { pending.current = false; setSaving(false); }
   };
-  const applyPointer = (clientX: number) => {
+  const applyPointer = (clientX: number, clientY?: number) => {
     const active = gesture.current;
     if (!active || !viewport.current) return;
     active.clientX = clientX;
+    if (clientY !== undefined) active.clientY = clientY;
     const delta = clientX - active.startX + viewport.current.scrollLeft - active.startScroll;
-    if (Math.abs(delta) > 3) active.moved = true;
+    if (Math.abs(delta) > 3 || Math.abs(active.clientY - active.startY) > 3) active.moved = true;
     if (!active.moved) return;
     if (active.kind === 'resize') {
       const boundary = active.base.beats![active.boundary];
@@ -81,6 +84,7 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
     } else {
       const baseBeats = active.base.beats!;
       const moving = baseBeats.find(beat => beat.id === active.id)!;
+      setDragPreview({ beat: moving, left: clientX - active.offsetX, top: active.clientY - active.offsetY - 10, width: active.width, height: active.height });
       const center = moving.start_frame_offset + moving.duration_in_frames / 2 + delta / scale;
       const target = baseBeats.filter(beat => beat.id !== active.id).filter(beat => center > beat.start_frame_offset + beat.duration_in_frames / 2).length;
       setScene(reorderBeat(active.base, active.id, target, fps));
@@ -91,7 +95,9 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
     event.preventDefault(); event.stopPropagation();
     (event.currentTarget as HTMLElement).focus({ preventScroll: true });
     onSelect(beat);
-    gesture.current = { kind, id: beat.id, boundary, base: scene, startX: event.clientX, startScroll: viewport.current!.scrollLeft, pointerId: event.pointerId, clientX: event.clientX, moved: false };
+    const box = event.currentTarget.getBoundingClientRect();
+    const width = Math.min(280, Math.max(140, box.width));
+    gesture.current = { clientY: event.clientY, width, height: box.height, offsetX: (event.clientX - box.left) / box.width * width, offsetY: event.clientY - box.top, kind, id: beat.id, boundary, base: scene, startY: event.clientY, startX: event.clientX, startScroll: viewport.current!.scrollLeft, pointerId: event.pointerId, clientX: event.clientX, moved: false };
     viewport.current!.setPointerCapture(event.pointerId);
     setDragging(true);
     const scroll = () => {
@@ -107,7 +113,7 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
   const finish = (cancelled = false) => {
     const active = gesture.current;
     if (!active) return;
-    gesture.current = null; cancelAnimationFrame(animation.current); setDragging(false);
+    gesture.current = null; cancelAnimationFrame(animation.current); setDragging(false); setDragPreview(null);
     if (viewport.current?.hasPointerCapture(active.pointerId)) viewport.current.releasePointerCapture(active.pointerId);
     if (cancelled) setScene(scene);
     else if (active.moved) void commit(draftRef.current);
@@ -130,7 +136,7 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
   const resizeHandle = (beat: VisualBeat, boundary: number, edge: 'left' | 'right') => {
     const previous = beats[boundary], next = beats[boundary + 1];
     const value = previous.start_frame_offset + previous.duration_in_frames;
-    return <div role="slider" aria-label={`${edge === 'left' ? 'Đầu' : 'Cuối'} ảnh ${beat.sub_index}`} aria-valuemin={previous.start_frame_offset + 1} aria-valuemax={next.start_frame_offset + next.duration_in_frames - 1} aria-valuenow={value} aria-valuetext={time(value, fps)} aria-disabled={locked} tabIndex={locked ? -1 : 0}
+    return <div role="slider" aria-label={`${edge === 'left' ? 'Đầu' : 'Cuối'} ảnh ${beat.display_number ?? beat.sub_index}`} aria-valuemin={previous.start_frame_offset + 1} aria-valuemax={next.start_frame_offset + next.duration_in_frames - 1} aria-valuenow={value} aria-valuetext={time(value, fps)} aria-disabled={locked} tabIndex={locked ? -1 : 0}
       className={`clip-resize clip-resize-${edge}`} title="Kéo để chỉnh thời lượng · Phím ← →: 1 frame, Shift: 10 frame"
       onPointerDown={event => start(event, beat, 'resize', boundary)}
       onKeyDown={event => { if (locked || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault(); event.stopPropagation(); const valueNext = event.key === 'Home' ? previous.start_frame_offset + 1 : event.key === 'End' ? next.start_frame_offset + next.duration_in_frames - 1 : value + (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1); void commit(resizeBeatBoundary(scene, boundary, valueNext, fps)); }}><span /></div>;
@@ -148,7 +154,7 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
     <div className="timeline-track-layout">
       <div className="track-labels" aria-hidden="true"><span /><span><Music size={16} /> Audio</span><span><ImageIcon size={16} /> Ảnh</span></div>
       <div className={`timeline-scroll ${dragging ? 'is-dragging' : ''}`} ref={viewport} tabIndex={0} aria-label="Timeline cảnh, cuộn ngang để xem các ảnh" aria-describedby="timeline-help"
-        onPointerMove={event => applyPointer(event.clientX)} onPointerUp={() => finish()} onPointerCancel={() => finish(true)} onLostPointerCapture={() => { if (gesture.current) finish(true); }} onKeyDown={event => { if (event.key === 'Escape' && gesture.current) { event.preventDefault(); finish(true); } }}>
+        onPointerMove={event => applyPointer(event.clientX, event.clientY)} onPointerUp={() => finish()} onPointerCancel={() => finish(true)} onLostPointerCapture={() => { if (gesture.current) finish(true); }} onKeyDown={event => { if (event.key === 'Escape' && gesture.current) { event.preventDefault(); finish(true); } }}>
         <div className="timeline-canvas" style={{ width: trackWidth }}>
           <div className="timeline-ruler" onClick={seek}>{ticks.map(frame => <span key={frame} style={{ left: frame * scale }}>{(frame / fps).toFixed(tickSeconds < 1 ? 1 : 0)}s</span>)}<span className="timeline-end" style={{ left: trackWidth }}>{time(scene.duration_in_frames, fps)}</span></div>
           <div className="audio-track" onClick={seek}><AudioWaveform file={scene.audio_file} version={scene.audio_version} /><span className="audio-track-caption">Audio · {time(scene.duration_in_frames, fps)} · Giữ nguyên</span></div>
@@ -156,11 +162,11 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
             {beats.map((beat, index) => {
               const width = beat.duration_in_frames * scale;
               const image = `/images/${beat.image_file}?v=${beat.image_version || ''}`;
-              return <div key={beat.id} className={`timeline-clip ${selected.id === beat.id ? 'selected' : ''} ${dragging && gesture.current?.id === beat.id ? 'moving' : ''}`} style={{ width }} data-beat-id={beat.id} data-frames={beat.duration_in_frames}>
-                <button className="clip-body" disabled={locked} aria-label={`Chọn ảnh ${index + 1}, ${time(beat.duration_in_frames, fps)}`} aria-pressed={selected.id === beat.id} onPointerDown={event => start(event, beat, 'move')}
+              return <div key={beat.id} className={`timeline-clip ${selected.id === beat.id ? 'selected' : ''} ${dragPreview?.beat.id === beat.id ? 'moving' : ''}`} style={{ width }} data-beat-id={beat.id} data-frames={beat.duration_in_frames}>
+                <button className="clip-body" disabled={locked} aria-label={`Chọn ảnh ${beat.display_number ?? beat.sub_index}, ${time(beat.duration_in_frames, fps)}`} aria-pressed={selected.id === beat.id} onPointerDown={event => start(event, beat, 'move')}
                   onClick={() => { if (!dragging) onSelect(beat); }} onKeyDown={event => { if (event.altKey && ['ArrowLeft','ArrowRight'].includes(event.key)) { event.preventDefault(); const target = index + (event.key === 'ArrowLeft' ? -1 : 1); if (target >= 0 && target < beats.length) void commit(reorderBeat(scene, beat.id, target, fps)); } }}>
-                  <span className="clip-caption"><GripVertical size={13} /><strong>Ảnh {index + 1}</strong><span>{time(beat.duration_in_frames, fps)}</span></span>
-                  <span className="clip-filmstrip">{Array.from({ length: Math.min(30, Math.max(1, Math.floor(width / 180))) }, (_, i) => <img key={i} src={image} alt={i ? '' : `Nội dung ảnh ${index + 1}`} draggable={false} />)}</span>
+                  <span className="clip-caption"><GripVertical size={13} /><strong>Ảnh {beat.display_number ?? beat.sub_index}</strong><span>{time(beat.duration_in_frames, fps)}</span></span>
+                  <span className="clip-filmstrip">{Array.from({ length: Math.min(30, Math.max(1, Math.floor(width / 180))) }, (_, i) => <img key={i} src={image} alt={i ? '' : `Nội dung ảnh ${beat.display_number ?? beat.sub_index}`} draggable={false} />)}</span>
                 </button>
                 {index > 0 && resizeHandle(beat, index - 1, 'left')}
                 {index < beats.length - 1 && resizeHandle(beat, index, 'right')}
@@ -172,9 +178,9 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
       </div>
     </div>
     <div className="timeline-selection">
-      <img className="selected-image-preview" src={`/images/${selected.image_file}?v=${selected.image_version || ''}`} alt={`Ảnh ${selectedIndex + 1} đang chọn`} />
+      <img className="selected-image-preview" src={`/images/${selected.image_file}?v=${selected.image_version || ''}`} alt={`Ảnh ${selected.display_number ?? selected.sub_index} đang chọn`} />
       <div className="selection-details">
-        <div className="selection-heading"><strong>Ảnh {selectedIndex + 1}</strong><span>{time(selected.start_frame_offset, fps)} → {time(selected.start_frame_offset + selected.duration_in_frames, fps)}</span></div>
+        <div className="selection-heading"><strong>Ảnh {selected.display_number ?? selected.sub_index}</strong><span>{time(selected.start_frame_offset, fps)} → {time(selected.start_frame_offset + selected.duration_in_frames, fps)}</span></div>
         <p>{selected.caption || selected.title}</p>
         <div className="selection-controls">
           <label htmlFor="clip-duration">Thời lượng <span className="duration-input"><input id="clip-duration" type="number" step={1 / fps} min={1 / fps} value={duration} disabled={locked || beats.length < 2} onChange={event => setDuration(event.target.value)} onBlur={editDuration} onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }} /> giây</span></label>
@@ -182,12 +188,16 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
             <IconButton label="Đưa ảnh sang trái" disabled={locked || selectedIndex === 0} onClick={() => void commit(reorderBeat(scene, selected.id, selectedIndex - 1, fps))}><ArrowLeft size={17} /></IconButton>
             <IconButton label="Đưa ảnh sang phải" disabled={locked || selectedIndex === beats.length - 1} onClick={() => void commit(reorderBeat(scene, selected.id, selectedIndex + 1, fps))}><ArrowRight size={17} /></IconButton>
             <IconButton label="Tạo lại ảnh" disabled={locked} onClick={() => onRegenerate(selected)}><RefreshCw size={17} /></IconButton>
-            <IconButton label={`Xóa ảnh ${selectedIndex + 1}`} disabled={locked || beats.length < 2} onClick={() => onDelete(selected)}><Trash2 size={17} /></IconButton>
+            <IconButton label={`Xóa ảnh ${selected.display_number ?? selected.sub_index}`} disabled={locked || beats.length < 2} onClick={() => onDelete(selected)}><Trash2 size={17} /></IconButton>
           </div>
         </div>
         <small>{beats.length < 2 ? 'Thêm ảnh để chia thời gian của cảnh này.' : 'Thời gian lấy từ ảnh liền kề; tổng thời lượng audio không đổi.'}</small>
       </div>
     </div>
+    {dragPreview && createPortal(<div className="timeline-drag-preview" aria-hidden="true" style={{ left: dragPreview.left, top: dragPreview.top, width: dragPreview.width, height: dragPreview.height }}>
+      <span className="clip-caption"><GripVertical size={13} /><strong>Ảnh {dragPreview.beat.display_number ?? dragPreview.beat.sub_index}</strong><span>{time(dragPreview.beat.duration_in_frames, fps)}</span></span>
+      <img src={`/images/${dragPreview.beat.image_file}?v=${dragPreview.beat.image_version || ''}`} alt="" draggable={false} />
+    </div>, document.body)}
     <div className="timeline-status" role="status">{dragging ? `${gesture.current?.kind === 'resize' ? 'Đang chỉnh thời gian' : 'Đang đổi vị trí'} · Thả để lưu, Esc để hủy` : saving ? 'Đang lưu timeline…' : announcement || `${scene.duration_in_frames} frame · ${fps} fps`}</div>
   </div>;
 }
