@@ -284,6 +284,7 @@ export default function App() {
               <span className="scene-item-copy"><strong>Cảnh {scene.id} <span>{scene.duration_in_seconds.toFixed(1)}s</span></strong><span>{scene.text}</span><small>{scene.beats?.length || 1} ảnh</small></span>
             </button>)}
           </div>
+          <details className="timeline-narration"><summary>Lời thoại của cảnh</summary><p>{selectedScene.text}</p></details>
         </section>
         <section ref={editorRef} className="studio-section timeline-section" aria-labelledby="timeline-title">
           <div className="studio-section-heading timeline-heading">
@@ -301,7 +302,6 @@ export default function App() {
             onSelect={beat => { setSelectedBeatId(beat.id); seekTimeline(beat.start_frame_offset); }} onSeek={seekTimeline}
             onCommit={edited => persistProject({ metadata, scenes: scenes.map(scene => scene.id === edited.id ? edited : scene) }, false, true, true)}
             onRegenerate={beat => handleOpenRegenerate(selectedScene, beat)} onDelete={handleDeleteBeat} />
-          <details className="timeline-narration"><summary>Lời thoại của cảnh</summary><p>{selectedScene.text}</p></details>
         </section>
       </main>
       {showCreatorDrawer && <div className="creator-fullscreen-overlay"><CreatorPanel currentScenes={scenes} currentMetadata={metadata} onGenerateNewVideo={handleGenerateNewVideo} onCancel={() => setShowCreatorDrawer(false)} /></div>}

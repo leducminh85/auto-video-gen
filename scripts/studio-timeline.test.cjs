@@ -89,6 +89,20 @@ async function main() {
       assert.equal(await page.locator('.selected-image-preview').evaluate(img => getComputedStyle(img).objectFit), 'contain');
       const image = await page.locator('.selected-image-preview').boundingBox(); assert.ok(image.width >= 200);
     }
+    for (const [width, height] of [[900,600], [1024,768], [1366,768], [1440,900], [1920,1080]]) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(() => scrollTo(0,0));
+      const layout = await page.evaluate(() => {
+        const selectors = ['.studio-player', '.studio-scene-list', '.timeline-tools', '.audio-track', '.image-track', '.timeline-status'];
+        return selectors.map(selector => {
+          const rect = document.querySelector(selector).getBoundingClientRect();
+          return { selector, top: rect.top, bottom: rect.bottom, height: rect.height, viewport: innerHeight };
+        });
+      });
+      for (const rect of layout) assert.ok(rect.top >= 0 && rect.bottom <= height && rect.height > 0, `${width}x${height}: ${JSON.stringify(rect)}`);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollHeight > innerHeight), false);
+    }
+    await page.setViewportSize({ width: 1366, height: 768 });
     await page.evaluate(() => scrollTo(0,0)); await page.screenshot({ path: '/tmp/timeline-verified-desktop.png', fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 }); await page.screenshot({ path: '/tmp/timeline-verified-mobile.png', fullPage: true });
     assert.deepEqual(errors, []);

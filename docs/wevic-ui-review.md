@@ -47,10 +47,17 @@ Kiểm tra: TypeScript, production build, các bài backend với FFmpeg trong t
 
 ## Timeline trong Studio
 
-Bố cục hiện tại gồm ba section có tiêu đề và số thứ tự: preview, danh sách cảnh, chi tiết cảnh. Desktop đặt danh sách cạnh preview và timeline toàn chiều ngang bên dưới; mobile xếp dọc, danh sách cảnh và timeline cuộn riêng.
+Bố cục hiện tại gồm ba section có tiêu đề và số thứ tự: preview, danh sách cảnh, chi tiết cảnh. Desktop đặt danh sách cạnh preview và timeline bên dưới trong cùng chiều cao cửa sổ. Danh sách cảnh cuộn riêng; phần ảnh chọn nằm bên phải timeline. Mobile xếp dọc, giữ preview ở phía trên khi cuộn, danh sách cảnh và timeline cuộn ngang riêng.
 
 Track audio dùng waveform giải mã từ tệp thật, có trạng thái tải/lỗi. Track ảnh có thumbnail rõ nội dung, viền amber cho ảnh chọn và ảnh xem lớn phía dưới. Kéo thân ảnh đổi thứ tự; kéo mép đổi thời lượng giữa hai ảnh liền kề, bảo toàn tổng frame. Các nút zoom giúp chỉnh chính xác mà không ép toàn bộ ảnh vào một vùng quá nhỏ. Preview hiển thị rõ ngay frame đầu thay vì gần đen khi dừng.
 
 Các thao tác đơn giản dùng icon với tên truy cập và tooltip: phát/dừng, nghe audio, thêm/xóa ảnh, hoàn tác, zoom, nhập tệp, đóng và khôi phục prompt. Các thao tác tạo/lưu ảnh nhiều bước giữ nhãn mô tả.
 
 Bài `studio-timeline.test.cjs` kiểm tra waveform thật từ WAV thử, kéo đổi thứ tự bằng chuột, kéo mép bằng chuột và cảm ứng, chỉnh bằng phím, nhập thời lượng, hủy bằng Escape, hoàn tác, lưu lỗi và tải lại. Kiểm tra 320/390/768/1440px không có tràn ngang trang; thumbnail dùng contain và ảnh được chọn có vùng xem lớn. API ghi dữ liệu được giả lập. Ảnh chụp desktop/mobile đã được xem lại.
+
+
+## Giữ preview và timeline trong cùng vùng nhìn
+
+Bố cục cũ tính chiều cao preview theo chiều rộng rồi đặt ảnh chọn bên dưới timeline, khiến việc chỉnh ảnh phải cuộn khỏi preview. Desktop từ 900px và cao từ 600px hiện dùng workspace vừa cửa sổ, hai hàng có chiều cao giới hạn. Preview co theo vùng còn lại, cảnh cuộn trong danh sách, waveform và ảnh luôn nằm trong hàng timeline. Cửa sổ thấp dùng khoảng cách và track gọn hơn. Thông tin ảnh chọn nằm ở cột bên phải timeline; lời thoại chuyển vào phần danh sách cảnh.
+
+Đã kiểm tra vị trí preview, danh sách, waveform, ảnh và trạng thái timeline trong viewport ở 900×600, 1024×768, 1366×768, 1440×900 và 1920×1080. Trên mobile, đã xem ảnh chụp khi cuộn tới track ảnh để xác nhận preview vẫn nhìn thấy. Lint, build và bốn bài browser regression đều đạt; build còn advisory bundle lớn đã có trước.
