@@ -110,21 +110,12 @@ function distributeIntoBuckets(items, bucketCount) {
  * Visual Beat Segmentation (Cinematic explainer pacing: 4.5s - 8.0s per beat)
  * Reduces visual noise, avoids rapid image flipping, gives viewers time to absorb the visual idea.
  */
-function segmentSceneIntoBeats(scene, durationInSeconds, totalFrames) {
+function segmentSceneIntoBeats(scene, durationInSeconds, totalFrames, density = 'balanced') {
   const text = (scene.text || scene.narration || '').trim();
-
-  // Natural Explainer Pacing:
-  // - Scenes under 7.5s: 1 focused visual beat (1 complete illustration per sentence)
-  // - Scenes 7.5s - 14.0s: 2 balanced visual beats (e.g. Context/Problem -> Action/Resolution)
-  // - Scenes over 14.0s: 3 visual beats (average ~5s - 7s per beat)
-  let targetBeatCount = 1;
-  if (durationInSeconds <= 7.5) {
-    targetBeatCount = 1;
-  } else if (durationInSeconds <= 14.0) {
-    targetBeatCount = 2;
-  } else {
-    targetBeatCount = Math.min(3, Math.max(2, Math.round(durationInSeconds / 6.0)));
-  }
+  const targetSeconds = { sparse: 6, balanced: 4, dense: 2.5 }[density];
+  if (!targetSeconds) throw new Error('Mật độ ảnh không hợp lệ.');
+  const wordCount = text.split(/\s+/).length;
+  const targetBeatCount = Math.max(1, Math.min(Math.round(durationInSeconds / targetSeconds), Math.floor(wordCount / 4), Math.floor(totalFrames / 30)));
 
   // If only 1 beat needed, use full text directly (eliminates visual fragmentation)
   if (targetBeatCount === 1) {
@@ -143,25 +134,9 @@ function segmentSceneIntoBeats(scene, durationInSeconds, totalFrames) {
   }
 
   // For multi-beat scenes (> 7.5s): Split by major idea transition, NOT micro-commas
-  const masked = text.replace(/(\d)[.,](\d)/g, '$1___NUMSEP___$2');
-
-  // Split only on strong clause transitions or sentence boundaries
-  const majorSplitRegex = /(?<=[.!?;\n])\s+|\s+(?:tuy nhiên|ngược lại|trong khi đó|thay vì|nhưng|mặc dù|để rồi|dẫn đến|chính vì vậy|đồng thời|bên cạnh đó)\s+/i;
-  let rawClauses = masked
-    .split(majorSplitRegex)
-    .map((s) => s.replace(/___NUMSEP___/g, '.').trim())
-    .filter((s) => s.length > 8 && s.split(/\s+/).length >= 3);
-
-  // If no major split found, split by comma ONLY if both halves have >= 4 words
+  let rawClauses = text.split(/(?<=[.!?;])\s+|\n+/u).filter(Boolean);
   if (rawClauses.length < targetBeatCount) {
-    const commaSplit = masked
-      .split(/(?<=[,])\s+/)
-      .map((s) => s.replace(/___NUMSEP___/g, '.').trim())
-      .filter((s) => s.length > 8 && s.split(/\s+/).length >= 4);
-
-    if (commaSplit.length >= targetBeatCount) {
-      rawClauses = commaSplit;
-    }
+    rawClauses = text.split(/(?<=[.!?;,])\s+|\n+/u).filter(Boolean);
   }
 
   let parts = [];

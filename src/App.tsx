@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
 import { Play, Pause, Download, CheckCircle2, Code2, Eye, Copy, Check, PlusCircle, Undo2, Loader2 } from 'lucide-react';
 import { MainVideo } from './remotion/MainVideo';
@@ -23,6 +23,7 @@ const initialMultiBeatScenes = buildMultiBeatScenes(initialProductionData.scenes
 export default function App() {
   const [activeTab, setActiveTab] = useState<'preview' | 'data'>('preview');
   const [scenes, setScenes] = useState<SceneData[]>(initialMultiBeatScenes);
+  const playerInputProps = useMemo(() => ({ scenes }), [scenes]);
   const [metadata, setMetadata] = useState<VideoMetadata>({
     ...initialProductionData.metadata,
     max_image_duration_sec: 5.0,
@@ -274,7 +275,7 @@ export default function App() {
             <IconButton label="JSON" aria-pressed={activeTab === 'data'} onClick={() => setActiveTab('data')}><Code2 size={17} /></IconButton>
             {activeTab === 'data' && <IconButton label="Sao chép JSON" onClick={copyJsonToClipboard}>{copiedJson ? <Check size={17} /> : <Copy size={17} />}</IconButton>}
           </div></div>
-          {activeTab === 'preview' ? <div className="studio-player"><Player key={videoTimestamp} ref={remotionPlayerRef} component={MainVideo} inputProps={{ scenes }} durationInFrames={metadata.total_duration_in_frames} compositionWidth={metadata.width} compositionHeight={metadata.height} fps={metadata.fps} style={{ width: '100%', height: '100%' }} controls autoPlay={false} loop acknowledgeRemotionLicense /></div> : <pre className="studio-json">{JSON.stringify({ metadata, scenes }, null, 2)}</pre>}
+          {activeTab === 'preview' ? <div className="studio-player"><Player key={videoTimestamp} ref={remotionPlayerRef} component={MainVideo} inputProps={playerInputProps} durationInFrames={metadata.total_duration_in_frames} compositionWidth={metadata.width} compositionHeight={metadata.height} fps={metadata.fps} style={{ width: '100%', height: '100%' }} controls autoPlay={false} loop acknowledgeRemotionLicense /></div> : <pre className="studio-json">{JSON.stringify({ metadata, scenes }, null, 2)}</pre>}
           <div className="preview-caption"><span>{(currentFrame / metadata.fps).toFixed(2)} / {totalDuration.toFixed(2)} giây</span></div>
         </section>
         <section className="studio-section scenes-section" aria-labelledby="scenes-title">

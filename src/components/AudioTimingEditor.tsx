@@ -44,7 +44,7 @@ export function AudioTimingEditor({ audio, scenes, boundaries, onChange }: Props
           </div>
         </div>)}
         {cuts.length !== scenes.length - 1 && <p role="alert">Số cảnh đã thay đổi. Hãy kiểm tra lại các mốc kết thúc.</p>}
-      </div> : <p className="editor-help">Tự chia audio cho {scenes.length} cảnh theo độ dài lời thoại. Bật tùy chỉnh nếu bạn muốn chuyển ảnh đúng lúc kết thúc câu.</p>}
+      </div> : <p className="editor-help">Tự nhận diện lời đọc và căn {scenes.length} cảnh theo thời gian trong audio khi tạo video. Bạn có thể đặt mốc cảnh thủ công.</p>}
     </> : <p className="editor-help">Toàn bộ audio dùng cho một cảnh. Tách kịch bản bằng dòng trống nếu cần nhiều cảnh.</p>}
   </div>;
 }

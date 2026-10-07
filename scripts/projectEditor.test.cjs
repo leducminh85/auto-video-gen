@@ -74,6 +74,7 @@ test('generation uses imported audio and custom style through the full pipeline 
         if (name === 'child_process') return { execSync() { throw new Error('TTS subprocess must not run'); } };
         if (name === 'google-tts-api') return { getAudioBase64() { throw new Error('TTS must not run'); } };
         if (name === './storyboardGenerator.cjs') return { generateStoryboardFromContent() { throw new Error('Imported script must retain its scene boundaries'); } };
+        if (name === './audioAlignment.cjs') return { ...require('./audioAlignment.cjs'), alignAudio: async (_audio, chunks, range = {}) => chunks.map((_, i) => ({ start: (range.start || 0) + i * 0.4, end: (range.start || 0) + (i + 1) * 0.4, confidence: 1 })) };
         if (name === './visualBeatPlanner.cjs') return { ...planner, planVisualBeatsWithAI: async () => null };
         if (name === './fluxImageGenerator.cjs') return { generateFluxImage: async ({ prompt, outputPath }) => {
           prompts.push(prompt);
@@ -85,13 +86,16 @@ test('generation uses imported audio and custom style through the full pipeline 
     };
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'videoGenerator.cjs'), 'utf8'), context);
     const result = await context.module.exports.generateVideo({
-      title: 'Audio fixture', importedAudio: imported.file, audioBoundaries: [0.5], imageStylePrompt: 'Watercolor on textured paper',
+      title: 'Audio fixture', importedAudio: imported.file, imageDensity: 'dense', imageStylePrompt: 'Watercolor on textured paper',
       scenes: [{ title: 'One', text: 'A bird carries a twig.' }, { title: 'Two', text: 'It builds a nest.' }],
     });
     assert.equal(result.metadata.total_duration_in_frames, 30);
     assert.equal(result.metadata.audio_source, 'import');
     assert.equal(result.scenes.length, 2);
-    assert.ok(result.scenes.every(scene => scene.duration_in_frames === 15 && scene.audio_file.endsWith('.wav')));
+    assert.deepEqual(Array.from(result.scenes, scene => scene.duration_in_frames), [12, 18]);
+    assert.equal(result.metadata.image_density, 'dense');
+    assert.equal(result.metadata.timing_source, 'speech_alignment');
+    assert.ok(result.scenes.every(scene => scene.audio_file.endsWith('.wav')));
     assert.ok(prompts.every(prompt => prompt.startsWith('Watercolor on textured paper')));
     assert.ok(fs.statSync(path.join(root, 'public', 'final-video.mp4')).size > 0);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }

@@ -5,6 +5,7 @@ export interface CreatorDraft {
   title: string;
   subtitle: string;
   imageStylePrompt: string;
+  imageDensity?: 'sparse' | 'balanced' | 'dense';
   audioMode?: 'tts' | 'import';
   importedAudio?: { file: string; duration: number; name: string } | null;
   audioBoundaries?: string;
@@ -17,6 +18,7 @@ export function readCreatorDraft(fallback: CreatorDraft): CreatorDraft {
     const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
     if (!saved || typeof saved !== 'object') return fallback;
     return {
+      imageDensity: ['sparse', 'balanced', 'dense'].includes(saved.imageDensity) ? saved.imageDensity : (fallback.imageDensity || 'balanced'),
       audioMode: saved.audioMode === 'import' ? 'import' : 'tts',
       importedAudio: saved.importedAudio && /^import_[\w-]+\.wav$/.test(saved.importedAudio.file) && Number.isFinite(saved.importedAudio.duration) && saved.importedAudio.duration > 0 && typeof saved.importedAudio.name === 'string' ? saved.importedAudio : null,
       audioBoundaries: typeof saved.audioBoundaries === 'string' ? saved.audioBoundaries : '',

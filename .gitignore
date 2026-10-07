@@ -22,3 +22,6 @@ data/google-ai-studio-profile/
 data/
 playwright-auth/
 scratch/
+
+# Python audio alignment
+__pycache__/

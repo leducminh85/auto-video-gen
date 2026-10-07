@@ -1434,6 +1434,7 @@ async function generateVideo({
   imageStylePrompt,
   importedAudio,
   audioBoundaries,
+  imageDensity = 'balanced',
   onProgress,
 }) {
   if (preferredImageProvider) {
@@ -1477,6 +1478,8 @@ async function generateVideo({
   // Store full data reference for downstream DALL-E 3 access
   const data = { openaiApiKey };
 
+  if (!['sparse', 'balanced', 'dense'].includes(imageDensity)) throw new Error('Mật độ ảnh không hợp lệ.');
+  const { alignAudio, applyBeatTiming } = require('./audioAlignment.cjs');
   const selectedVoice = voice || 'vi-VN-Standard-A';
   const playbackSpeed = Number(speed) || 1.0;
   const styleGuide = createVideoStyleGuide(title);
@@ -1509,7 +1512,13 @@ async function generateVideo({
   });
 
   const totalScenes = plannedScenes.length;
-  const audioFrames = importedPath ? editor.allocateAudioFrames(plannedScenes, Math.round(importedDuration * 30), audioBoundaries) : null;
+  let importedTiming = null;
+  if (importedPath) {
+    notify('tts', 12, 'Đang nhận diện lời đọc và căn mốc cảnh theo audio…');
+    importedTiming = await alignAudio(importedPath, plannedScenes.map(s => s.narration || s.text));
+  }
+  const alignedCuts = importedTiming?.slice(1).map(t => t.start);
+  const audioFrames = importedPath ? editor.allocateAudioFrames(plannedScenes, Math.round(importedDuration * 30), audioBoundaries ?? alignedCuts) : null;
   let importedOffset = 0;
   // Clean up all existing scene images and audio so no stale assets from previous runs remain
   try {
@@ -1605,11 +1614,15 @@ async function generateVideo({
     });
 
     console.log(`[Bước 3/5] Phân chia thành các Visual Beats theo diễn tiến câu chuyện...`);
-    const segmentedBeats = segmentSceneIntoBeats(
+    let segmentedBeats = segmentSceneIntoBeats(
       { id: sceneId, title: sceneTitle, text: sceneText },
       durationInSeconds,
-      durationInFrames
+      durationInFrames,
+      imageDensity
     );
+    const audioOffset = importedPath ? (importedOffset - audioFrames[i]) / 30 : 0;
+    const timing = await alignAudio(importedPath || audioPath, segmentedBeats.map(b => b.text), importedPath ? { start: audioOffset, end: importedOffset / 30 } : {});
+    segmentedBeats = applyBeatTiming(segmentedBeats, timing, durationInFrames, audioOffset);
     console.log(`✓ Cảnh ${sceneId} được chia thành ${segmentedBeats.length} visual beats (trung bình ${(durationInSeconds / segmentedBeats.length).toFixed(1)}s/beat)`);
 
     const dynamicDomain = videoDomain;
@@ -1997,6 +2010,8 @@ async function generateVideo({
     image_style_prompt: resolvedStyle,
     audio_source: importedPath ? 'import' : 'tts',
     imported_audio: importedAudio || undefined,
+    image_density: imageDensity,
+    timing_source: 'speech_alignment',
     quality_report: qualityReport,
   };
 

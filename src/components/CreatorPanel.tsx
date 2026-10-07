@@ -230,6 +230,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     text: currentScenes.map(scene => scene.text).join('\n\n'),
     title: currentMetadata.title || '',
     subtitle: currentMetadata.subtitle || '',
+    imageDensity: currentMetadata.image_density || 'balanced',
     imageStylePrompt: currentMetadata.image_style_prompt || defaultPrompt,
   }));
   const [selectedVoice, setSelectedVoice] = useState<string>(draft.voice);
@@ -238,6 +239,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [textContent, setTextContent] = useState<string>(draft.text);
   const [scriptTitle, setScriptTitle] = useState<string>(draft.title);
   const [scriptSubtitle, setScriptSubtitle] = useState<string>(draft.subtitle);
+  const [imageDensity, setImageDensity] = useState<'sparse' | 'balanced' | 'dense'>(draft.imageDensity || 'balanced');
   const [imageStylePrompt, setImageStylePrompt] = useState(draft.imageStylePrompt);
   const [audioMode, setAudioMode] = useState<'tts' | 'import'>(draft.audioMode || 'tts');
   const [importedAudio, setImportedAudio] = useState<{ file: string; duration: number; name: string } | null>(draft.importedAudio || null);
@@ -272,8 +274,8 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const dialogRef = useDialog(onCancel, !isCreating && !audioUploading);
   useEffect(() => {
-    setDraftSaved(saveCreatorDraft({ voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle, imageStylePrompt, audioMode, importedAudio, audioBoundaries }));
-  }, [selectedVoice, speed, textContent, scriptTitle, scriptSubtitle, imageStylePrompt, audioMode, importedAudio, audioBoundaries]);
+    setDraftSaved(saveCreatorDraft({ voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries }));
+  }, [selectedVoice, speed, textContent, scriptTitle, scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries]);
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [currentStepKey, setCurrentStepKey] = useState<string>('storyboard');
   const [currentMessage, setCurrentMessage] = useState<string>('');
@@ -583,6 +585,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           openaiApiKey: openaiApiKey.trim() || undefined,
           preferredImageProvider: selectedImageProvider,
           imageStylePrompt,
+          imageDensity,
           importedAudio: audioMode === 'import' ? importedAudio?.file : undefined,
           audioBoundaries: cuts,
         }),
@@ -1039,6 +1042,16 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           </div>
 
           </>}
+          <section className="card editor-settings">
+            <h3>Mật độ hình ảnh</h3>
+            <label className="label" htmlFor="image-density">Nhịp đổi ảnh</label>
+            <select id="image-density" className="input" value={imageDensity} onChange={event => setImageDensity(event.target.value as 'sparse' | 'balanced' | 'dense')}>
+              <option value="sparse">Thưa · khoảng 6 giây/ảnh</option>
+              <option value="balanced">Vừa · khoảng 4 giây/ảnh</option>
+              <option value="dense">Dày · khoảng 2,5 giây/ảnh</option>
+            </select>
+            <p className="editor-help">Ảnh đổi theo lời đọc thực tế. Mốc trên là nhịp mục tiêu; nhiều ảnh hơn sẽ mất thêm thời gian tạo.</p>
+          </section>
           <details className="card style-settings">
             <summary><span>Phong cách hình ảnh</span><span className="editor-help">Xem và sửa prompt</span></summary>
             <div className="editor-settings">

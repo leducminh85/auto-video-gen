@@ -194,6 +194,8 @@ export interface VideoMetadata {
   speed?: number;
   max_image_duration_sec?: number;
   image_style_prompt?: string;
+  image_density?: 'sparse' | 'balanced' | 'dense';
+  timing_source?: 'speech_alignment';
   audio_source?: 'tts' | 'import';
   imported_audio?: string;
   render_dirty?: boolean;
