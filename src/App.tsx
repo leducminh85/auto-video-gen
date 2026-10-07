@@ -63,6 +63,7 @@ export default function App() {
   const [beatToRegenerate, setBeatToRegenerate] = useState<VisualBeat | null>(null);
 
   const remotionPlayerRef = useRef<PlayerRef>(null);
+  const pendingPlayback = useRef(false);
   const playerSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -95,6 +96,11 @@ export default function App() {
   };
 
   const togglePlay = () => {
+    if (!remotionPlayerRef.current) {
+      pendingPlayback.current = true;
+      setActiveTab('preview');
+      return;
+    }
     if (remotionPlayerRef.current?.isPlaying()) {
       remotionPlayerRef.current.pause();
       setIsPlaying(false);
@@ -103,6 +109,29 @@ export default function App() {
       setIsPlaying(true);
     }
   };
+
+  const playbackShortcut = useRef(togglePlay);
+  playbackShortcut.current = togglePlay;
+  useEffect(() => {
+    const handleSpace = (event: KeyboardEvent) => {
+      if ((event.code !== 'Space' && event.key !== ' ') || event.isComposing) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (event.type === 'keydown' && !event.repeat) playbackShortcut.current();
+    };
+    window.addEventListener('keydown', handleSpace, true);
+    window.addEventListener('keyup', handleSpace, true);
+    return () => {
+      window.removeEventListener('keydown', handleSpace, true);
+      window.removeEventListener('keyup', handleSpace, true);
+    };
+  }, []);
+  useEffect(() => {
+    if (activeTab === 'preview' && pendingPlayback.current && remotionPlayerRef.current) {
+      pendingPlayback.current = false;
+      remotionPlayerRef.current.play();
+    }
+  }, [activeTab]);
 
   const handleOpenRegenerate = (scene: SceneData, beat?: VisualBeat) => {
     if (projectBusy || projectLoading) return;
