@@ -15,6 +15,8 @@ const ERROR_CODES = {
   BROWSER_ERROR: 'BROWSER_ERROR',
   UI_UNRECOGNIZED: 'UI_UNRECOGNIZED',
   UNAVAILABLE: 'UNAVAILABLE',
+  QUOTA_EXCEEDED: 'QUOTA_EXCEEDED',
+  MODEL_UNAVAILABLE: 'MODEL_UNAVAILABLE',
 };
 
 function createSuccessResult({ provider, requestId, imagePath, metadata = {} }) {

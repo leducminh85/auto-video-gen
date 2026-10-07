@@ -87,10 +87,6 @@ const AI_STUDIO_SELECTORS = {
     'button:has-text("Images")',
     '[role="tab"]:has-text("Images")',
   ],
-  nanoBananaModelOption: [
-    'text="Nano Banana 2 Lite"',
-    ':has-text("gemini-3.1-flash-lite-image")',
-  ],
 
   // Output format & Aspect Ratio
   imagesOnlyButton: [
@@ -108,6 +104,14 @@ const AI_STUDIO_SELECTORS = {
   ],
 
   // Safety / Error messages
+  errorMessages: [
+    '[role="alert"]',
+    '.error-message',
+    '.error-container',
+    'ms-error-message',
+    'ms-callout',
+    '.mat-mdc-snack-bar-container',
+  ],
   safetyViolationText: /safety policy|violate|cannot generate|harmful|blocked|restricted|content guidelines|permission denied|internal error/i,
 };
 

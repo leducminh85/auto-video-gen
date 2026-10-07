@@ -6,6 +6,7 @@ const { AI_STUDIO_URLS, AI_STUDIO_SELECTORS } = require('../selectors/aiStudioSe
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const { IMAGE_MODELS, isQuotaError, withModelFallback } = require('../modelFallback.cjs');
 
 /**
  * Google AI Studio Image Provider
@@ -53,7 +54,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       tabId = (input.imageIndex % 2 === 0) ? 1 : 2;
     }
     return this.queue.enqueue(
-      () => this._executeGeneration({ ...input, requestId, tabId }),
+      () => withModelFallback(model => this._executeGeneration({ ...input, requestId, tabId, model })),
       `Request ${requestId} (Tab ${tabId || 'auto'})`
     );
   }
@@ -61,7 +62,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
   /**
    * Internal generation execution on an acquired tab from the 2-tab pool
    */
-  async _executeGeneration({ prompt, diegeticLabel, outputPath, requestId, aspectRatio = '16:9', imageIndex, tabId }) {
+  async _executeGeneration({ prompt, diegeticLabel, outputPath, requestId, aspectRatio = '16:9', imageIndex, tabId, model = IMAGE_MODELS[0] }) {
     const parityLabel = typeof imageIndex === 'number' ? (imageIndex % 2 === 0 ? 'EVEN' : 'ODD') : 'AUTO';
     console.log(`[AI Studio] Request queued: ${requestId} (Assigned Tab: ${tabId || 'auto'}, Parity: ${parityLabel}, Index: ${imageIndex ?? 'N/A'})`);
     const fullPrompt = this.preparePrompt(prompt, { diegeticLabel, aspectRatio });
@@ -76,9 +77,10 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       console.log(`[AI Studio Tab ${tab.id}] Acquired for request: ${requestId} [Index ${imageIndex ?? 'N/A'} - ${parityLabel}]`);
 
       // 2. Chat reuse check: If tab is not initialized or chat is too long (> 15 turns), reset it
-      if (!tab.isInitialized || tab.turnCount >= 15 || tab.hasError) {
-        await this.browserWorker.resetTab(tab);
+      if (!tab.isInitialized || tab.turnCount >= 15 || tab.hasError || tab.modelId !== model.id) {
+        await this.browserWorker.resetTab(tab, model);
       } else {
+        await this.browserWorker.selectImageModel(tab, model);
         console.log(`[AI Studio Tab ${tab.id}] ⚡ Reusing existing chat session (turn ${tab.turnCount + 1}) without reloading!`);
       }
 
@@ -96,7 +98,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
           }
           try {
             const body = await res.text();
-            if (body.includes('user has exceeded quota') || body.includes('quota for the day') || body.includes('out of free generations')) {
+            if (isQuotaError(body)) {
               isQuotaExceeded = true;
               return;
             }
@@ -122,7 +124,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
 
       if (!inputLocator) {
         console.log(`[AI Studio Tab ${tab.id}] Input not found, resetting tab...`);
-        await this.browserWorker.resetTab(tab);
+        await this.browserWorker.resetTab(tab, model);
         inputLocator = page.locator('textarea').first();
       }
 
@@ -163,8 +165,8 @@ class GoogleAIStudioProvider extends BaseImageProvider {
           return createErrorResult({
             provider: this.name,
             requestId,
-            code: ERROR_CODES.GENERATION_FAILED,
-            message: 'Google AI Studio daily quota exceeded: "You\'ve reached your quota for the day". Please wait for reset or use Flux Local.',
+            code: ERROR_CODES.QUOTA_EXCEEDED,
+            message: `${model.name} đã hết hạn mức tạo ảnh.`,
           });
         }
 
@@ -176,13 +178,14 @@ class GoogleAIStudioProvider extends BaseImageProvider {
 
         // Check for UI error text
         const bodyContent = await page.textContent('body').catch(() => '');
-        if (bodyContent.includes('user has exceeded quota') || bodyContent.includes('out of free generations') || bodyContent.includes('quota for the day')) {
+        const quotaMessages = await page.locator(AI_STUDIO_SELECTORS.errorMessages.join(', ')).allTextContents();
+        if (quotaMessages.some(isQuotaError)) {
           tab.hasError = true;
           return createErrorResult({
             provider: this.name,
             requestId,
-            code: ERROR_CODES.GENERATION_FAILED,
-            message: 'Google AI Studio daily quota exceeded: "You are out of free generations for the day".',
+            code: ERROR_CODES.QUOTA_EXCEEDED,
+            message: `${model.name} đã hết hạn mức tạo ảnh.`,
           });
         }
 
@@ -279,7 +282,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       return createErrorResult({
         provider: this.name,
         requestId,
-        code: ERROR_CODES.BROWSER_ERROR,
+        code: err.code === ERROR_CODES.MODEL_UNAVAILABLE ? ERROR_CODES.MODEL_UNAVAILABLE : ERROR_CODES.BROWSER_ERROR,
         message: err.message,
       });
     } finally {

@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const EventEmitter = require('events');
 const { AI_STUDIO_URLS, AI_STUDIO_SELECTORS } = require('../selectors/aiStudioSelectors.cjs');
+const { IMAGE_MODELS, selectedModel } = require('../modelFallback.cjs');
 
 /**
  * Singleton Browser Worker for Google AI Studio
@@ -246,32 +247,13 @@ class GoogleAIStudioBrowser extends EventEmitter {
   /**
    * Reset a tab to a fresh chat with verified image model and 16:9 ratio
    */
-  async resetTab(tab) {
+  async resetTab(tab, model = IMAGE_MODELS[0]) {
     console.log(`[AI Studio Tab ${tab.id}] Resetting to fresh chat session...`);
     const page = tab.page;
     await page.goto(AI_STUDIO_URLS.NEW_CHAT, { waitUntil: 'domcontentloaded', timeout: 45000 });
     await page.waitForTimeout(1500);
 
-    // Ensure model is Nano Banana 2 Lite
-    try {
-      const modelBtn = page.locator(AI_STUDIO_SELECTORS.modelSelectorButton.join(', ')).first();
-      const modelText = await modelBtn.innerText().catch(() => '');
-      if (!modelText.includes('Nano Banana') && !modelText.includes('image')) {
-        console.log(`[AI Studio Tab ${tab.id}] Switching to Nano Banana 2 Lite...`);
-        await modelBtn.click();
-        await page.waitForTimeout(800);
-        const imgTab = page.locator(AI_STUDIO_SELECTORS.modelImagesTab.join(', ')).first();
-        if (await imgTab.isVisible().catch(() => false)) {
-          await imgTab.click();
-          await page.waitForTimeout(500);
-        }
-        const nanoModel = page.locator(AI_STUDIO_SELECTORS.nanoBananaModelOption.join(', ')).first();
-        if (await nanoModel.isVisible().catch(() => false)) {
-          await nanoModel.click();
-          await page.waitForTimeout(800);
-        }
-      }
-    } catch (_) {}
+    await this.selectImageModel(tab, model);
 
     // Ensure Images only
     try {
@@ -305,6 +287,38 @@ class GoogleAIStudioBrowser extends EventEmitter {
     tab.turnCount = 0;
     tab.hasError = false;
     console.log(`[AI Studio Tab ${tab.id}] Ready for image generation.`);
+  }
+
+  async selectImageModel(tab, model) {
+    const page = tab.page;
+    const button = page.locator(AI_STUDIO_SELECTORS.modelSelectorButton.join(', ')).first();
+    await button.waitFor({ state: 'visible', timeout: 10000 });
+    if (selectedModel(await button.innerText())?.id !== model.id) {
+      await button.click();
+      const imagesTab = page.locator(AI_STUDIO_SELECTORS.modelImagesTab.join(', ')).first();
+      if (await imagesTab.isVisible()) await imagesTab.click();
+      const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const names = [model.name, ...model.aliases, model.id].map(escape).join('|');
+      const option = page.getByText(new RegExp(`^(?:${names})$`, 'i')).filter({ visible: true }).first();
+      try {
+        await option.waitFor({ state: 'visible', timeout: 5000 });
+      } catch {
+        await page.keyboard.press('Escape');
+        const error = new Error(`Model không có trong Google AI Studio: ${model.name}`);
+        error.code = 'MODEL_UNAVAILABLE';
+        throw error;
+      }
+      await option.click();
+      for (let retry = 0; retry < 30; retry++) {
+        if (selectedModel(await button.innerText())?.id === model.id) break;
+        await page.waitForTimeout(100);
+      }
+      if (selectedModel(await button.innerText())?.id !== model.id) {
+        throw new Error(`Không xác nhận được model đã chọn: ${model.name}`);
+      }
+    }
+    tab.modelId = model.id;
+    console.log(`[AI Studio Tab ${tab.id}] Model: ${model.name} (${model.id})`);
   }
 
   /**
@@ -377,4 +391,3 @@ class GoogleAIStudioBrowser extends EventEmitter {
 }
 
 module.exports = GoogleAIStudioBrowser;
-
