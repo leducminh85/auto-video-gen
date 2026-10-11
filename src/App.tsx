@@ -115,6 +115,7 @@ export default function App() {
   playbackShortcut.current = togglePlay;
   useEffect(() => {
     const handleSpace = (event: KeyboardEvent) => {
+      if (showCreatorDrawer || regenerateModalOpen) return;
       if ((event.code !== 'Space' && event.key !== ' ') || event.isComposing) return;
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -126,7 +127,7 @@ export default function App() {
       window.removeEventListener('keydown', handleSpace, true);
       window.removeEventListener('keyup', handleSpace, true);
     };
-  }, []);
+  }, [showCreatorDrawer, regenerateModalOpen]);
   useEffect(() => {
     if (activeTab === 'preview' && pendingPlayback.current && remotionPlayerRef.current) {
       pendingPlayback.current = false;
@@ -266,7 +267,7 @@ export default function App() {
         </div>
       </header>
       {(projectError || projectLoading || metadata.render_dirty) && <div className="project-notice" inert={showCreatorDrawer || regenerateModalOpen} role={projectError ? 'alert' : 'status'}>
-        {projectError || (projectLoading ? 'Đang mở dự án…' : 'Đã lưu chỉnh sửa. Xuất MP4 để tải video với timeline mới.')}
+        {/* {projectError || (projectLoading ? 'Đang mở dự án…' : 'Đã lưu chỉnh sửa. Xuất MP4 để tải video với timeline mới.')} */}
       </div>}
       <main className="studio-workspace" inert={showCreatorDrawer || regenerateModalOpen}>
         <section ref={playerSectionRef} className="studio-section preview-section" aria-labelledby="preview-title">

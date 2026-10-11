@@ -787,7 +787,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
               {/* Action tools: File Upload & Clear */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <IconButton label="Nhập tệp kịch bản" onClick={() => fileInputRef.current?.click()}><Upload size={17} /></IconButton>
+                <button type="button" className="btn btn-secondary creator-file-button" onClick={() => fileInputRef.current?.click()}><Upload size={16} /> Nhập tệp kịch bản</button>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -806,7 +806,8 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             <label className="label" htmlFor="script-title">Tên video</label>
             <input id="script-title" className="input" value={scriptTitle} onChange={event => setScriptTitle(event.target.value)} placeholder="Đặt tên cho video" />
             <label className="label" htmlFor="script-content">Nội dung lời thoại</label>
-            <textarea id="script-content"
+            <p id="script-help" className="editor-help creator-script-help">{audioMode === 'import' ? 'Nhập lời thoại khớp với audio; mỗi đoạn cách một dòng trống là một cảnh. Audio chưa tự điền lời thoại vào ô này.' : 'Nhập lời thoại cho video. Tách các ý bằng một dòng trống để gợi ý phân cảnh.'}</p>
+            <textarea id="script-content" aria-describedby="script-help"
               value={textContent}
               onChange={(e) => {
                 setTextContent(e.target.value);
@@ -848,7 +849,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 </span>
                 <span>•</span>
                 <span>
-                  Thời lượng dự kiến: <strong style={{ color: 'var(--accent)' }}>≈{estimatedSeconds.toFixed(0)}s</strong> ({Math.ceil(estimatedSeconds / 60)} phút)
+                  {audioMode === 'import' ? 'Thời lượng audio: ' : 'Thời lượng dự kiến: '}<strong style={{ color: 'var(--accent)' }}>{estimatedSeconds > 0 ? `${audioMode === 'tts' ? '≈' : ''}${Math.floor(Math.round(estimatedSeconds) / 60)}:${String(Math.round(estimatedSeconds) % 60).padStart(2, '0')}` : '—'}</strong>
                 </span>
                 <span>•</span>
                 <span>
@@ -863,11 +864,11 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           <section className="card editor-settings">
             <h3>Âm thanh</h3>
             <div className="audio-source-options" role="group" aria-label="Nguồn âm thanh">
-              <label><input type="radio" name="audio-source" checked={audioMode === 'tts'} onChange={() => setAudioMode('tts')} /> Tạo giọng đọc</label>
-              <label><input type="radio" name="audio-source" checked={audioMode === 'import'} onChange={() => { audioPreviewManager.stop(); setPlayingVoiceId(null); setAudioMode('import'); }} /> Nhập audio có sẵn</label>
+              <label><input type="radio" name="audio-source" checked={audioMode === 'tts'} onChange={() => setAudioMode('tts')} aria-label="Tạo giọng đọc" aria-describedby="tts-source-help" /> <span>Tạo giọng đọc<small id="tts-source-help">Chọn giọng và tốc độ từ lời thoại của bạn.</small></span></label>
+              <label><input type="radio" name="audio-source" checked={audioMode === 'import'} onChange={() => { audioPreviewManager.stop(); setPlayingVoiceId(null); setAudioMode('import'); }} aria-label="Nhập audio có sẵn" aria-describedby="import-source-help" /> <span>Nhập audio có sẵn<small id="import-source-help">Dùng bản thu của bạn, giữ nguyên giọng và tốc độ.</small></span></label>
             </div>
             {audioMode === 'import' && <>
-              <div className="editor-actions"><IconButton label={importedAudio ? 'Đổi tệp audio' : 'Chọn tệp audio'} disabled={audioUploading} onClick={() => audioFileInput.current?.click()}>{audioUploading ? <Loader2 className="animate-spin" size={17} /> : <Upload size={17} />}</IconButton><span className="editor-help">{audioUploading ? 'Đang nhập audio…' : importedAudio ? 'Đổi tệp âm thanh' : 'Chọn tệp âm thanh'}</span></div>
+              <div className="editor-actions"><button type="button" className="btn btn-secondary creator-file-button" disabled={audioUploading} onClick={() => audioFileInput.current?.click()}>{audioUploading ? <Loader2 className="animate-spin" size={17} /> : <Upload size={17} />}{audioUploading ? 'Đang nhập audio…' : importedAudio ? 'Đổi tệp audio' : 'Chọn tệp audio'}</button></div>
               <input ref={audioFileInput} id="audio-upload" aria-label="Tệp audio" type="file" accept="audio/*,.m4a,.flac" hidden disabled={audioUploading} onChange={event => void handleImportAudio(event.target.files?.[0])} />
               <p className="editor-help">MP3, WAV, M4A, OGG, FLAC · Tối đa 100 MB</p>
               {audioUploading && <p role="status">Đang nhập và kiểm tra audio…</p>}
@@ -1044,24 +1045,29 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           </>}
           <section className="card editor-settings">
             <h3>Mật độ hình ảnh</h3>
-            <label className="label" htmlFor="image-density">Nhịp đổi ảnh</label>
-            <select id="image-density" className="input" value={imageDensity} onChange={event => setImageDensity(event.target.value as 'sparse' | 'balanced' | 'dense')}>
-              <option value="sparse">Thưa · khoảng 6 giây/ảnh</option>
-              <option value="balanced">Vừa · khoảng 4 giây/ảnh</option>
-              <option value="dense">Dày · khoảng 2,5 giây/ảnh</option>
-            </select>
-            <p className="editor-help">Ảnh đổi theo lời đọc thực tế. Mốc trên là nhịp mục tiêu; nhiều ảnh hơn sẽ mất thêm thời gian tạo.</p>
+            <fieldset className="density-options" aria-describedby="density-help">
+              <legend>Nhịp đổi ảnh</legend>
+              {([
+                { value: 'sparse', label: 'Thưa', seconds: '≈6 giây/ảnh' },
+                { value: 'balanced', label: 'Vừa', seconds: '≈4 giây/ảnh' },
+                { value: 'dense', label: 'Dày', seconds: '≈2,5 giây/ảnh' },
+              ] as const).map(option => <label key={option.value}>
+                <input type="radio" name="image-density" value={option.value} checked={imageDensity === option.value} onChange={() => setImageDensity(option.value)} />
+                <strong>{option.label}</strong><span>{option.seconds}</span>
+              </label>)}
+            </fieldset>
+            <p id="density-help" className="editor-help">{imageDensity === 'sparse' ? 'Ít ảnh, có thêm thời gian xem chi tiết.' : imageDensity === 'dense' ? 'Nhiều ảnh trong mỗi cảnh, nhịp nhanh hơn. Tốn thêm thời gian tạo ảnh.' : 'Cân bằng số ảnh và thời gian xem.'} Mốc đổi ảnh được căn theo lời đọc.</p>
           </section>
           <details className="card style-settings">
-            <summary><span>Phong cách hình ảnh</span><span className="editor-help">Xem và sửa prompt</span></summary>
+            <summary><span>Phong cách hình ảnh</span><span className="editor-help">{imageStylePrompt === defaultPrompt ? 'Minh họa nét vẽ đơn giản · Mặc định' : imageStylePrompt.trim() ? 'Đang dùng phong cách tùy chỉnh' : 'Chưa có mô tả phong cách'}</span></summary>
             <div className="editor-settings">
               <label htmlFor="image-style">Prompt phong cách</label>
               <textarea id="image-style" className="input" rows={10} maxLength={10000} value={imageStylePrompt} onChange={event => setImageStylePrompt(event.target.value)} />
               <p className="editor-help">Lưu cho video mới và áp dụng chung cho mọi ảnh. Bạn có thể viết bằng tiếng Việt hoặc tiếng Anh.</p>
-              <IconButton label="Khôi phục phong cách mặc định" onClick={() => setImageStylePrompt(defaultPrompt)}><RotateCcw size={17} /></IconButton>
+              <button type="button" className="btn btn-secondary creator-file-button" onClick={() => setImageStylePrompt(defaultPrompt)}><RotateCcw size={16} /> Khôi phục phong cách mặc định</button>
             </div>
           </details>
-          <p className="style-preview editor-help">{imageStylePrompt || 'Chưa nhập phong cách hình ảnh.'}</p>
+
 
           </aside>
         </div>
