@@ -517,20 +517,40 @@ function Dashboard() {
   );
 }
 
+function navigateProject(path: string) {
+  window.history.pushState(null, '', path);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
 export default function ProjectPages() {
-  const path = window.location.pathname.replace(/\/$/, '') || '/';
+  const [path, setPath] = useState(() => window.location.pathname.replace(/\/$/, '') || '/');
+  useEffect(() => {
+    const update = () => { setPath(window.location.pathname.replace(/\/$/, '') || '/'); window.scrollTo(0, 0); };
+    const followLink = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = (event.target as Element).closest<HTMLAnchorElement>('a[href]');
+      if (!link || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
+      const url = new URL(link.href);
+      if (url.origin !== window.location.origin || url.search || url.hash || !/^\/(?:project\/[a-zA-Z0-9-]+)?$/.test(url.pathname)) return;
+      event.preventDefault();
+      navigateProject(url.pathname);
+    };
+    window.addEventListener('popstate', update);
+    document.addEventListener('click', followLink);
+    return () => { window.removeEventListener('popstate', update); document.removeEventListener('click', followLink); };
+  }, []);
   if (path === '/') return <Dashboard />;
   if (path === '/project/new')
     return (
       <CreatorPanel
         currentScenes={[]}
         currentMetadata={emptyMetadata}
-        onCancel={() => window.location.assign('/')}
-        onGenerateNewVideo={(_, metadata) => window.location.assign(`/project/${metadata.project_id}`)}
+        onCancel={() => navigateProject('/')}
+        onGenerateNewVideo={(_, metadata) => navigateProject(`/project/${metadata.project_id}`)}
       />
     );
   const match = path.match(/^\/project\/([a-zA-Z0-9-]+)$/);
-  if (match) return <App projectId={match[1]} />;
+  if (match) return <App key={match[1]} projectId={match[1]} />;
   return (
     <main className="dashboard">
       <div className="dashboard-state-card">

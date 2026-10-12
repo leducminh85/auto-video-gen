@@ -233,7 +233,7 @@ export default function App({ projectId }: { projectId: string }) {
   const totalDuration = parseFloat(metadata.total_duration_in_seconds);
   const durationDisplay = `${Math.floor(totalDuration / 60)}:${String(Math.floor(totalDuration % 60)).padStart(2, '0')}`;
 
-  if (projectLoading || (projectError && !metadata.project_id)) return <main className="dashboard"><a href="/">Về dự án</a><p role={projectError ? 'alert' : 'status'}>{projectError || 'Đang mở dự án…'}</p></main>;
+  if (projectLoading || (projectError && !metadata.project_id)) return <div className="studio-shell"><header className="studio-topbar"><div className="header-identity"><StudioBrand /></div><a className="dashboard-back" href="/">Dự án</a></header><main className="dashboard"><p role={projectError ? 'alert' : 'status'}>{projectError || 'Đang mở dự án…'}</p></main></div>;
   return (
     <div className="studio-shell">
       <header className="studio-topbar" inert={regenerateModalOpen}>

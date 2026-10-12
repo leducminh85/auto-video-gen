@@ -1992,3 +1992,5 @@ button, a, summary {
   .header-page-title { max-width: 24vw; font-size: 12px; }
   .creator-title { font-size: 13px; }
 }
+
+.library-topbar, .studio-topbar, .creator-header { flex-shrink: 0; box-sizing: border-box; }
