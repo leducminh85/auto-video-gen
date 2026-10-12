@@ -5,50 +5,50 @@
    Refactored according to miqdadbadjuber/anti-slop principles:
    - Filter, not a template: purpose-tested UI
    - Solid, authentic studio surfaces (no excessive blur or glow)
-   - One intentional studio accent (Amber/Gold #f59e0b)
+   - One intentional studio accent (Amber/Gold #efba58)
    - High contrast, architectural radius & purposeful typography
    ================================================================ */
 
 :root {
   /* Surfaces — Solid, deep architectural studio dark */
-  --bg-base: #090a0f;
-  --bg-surface: #111218;
-  --bg-elevated: #171822;
-  --bg-card: #1c1d28;
-  --bg-hover: #252635;
-  --bg-input: #0d0e14;
+  --bg-base: #101112;
+  --bg-surface: #181a1c;
+  --bg-elevated: #222528;
+  --bg-card: #26292c;
+  --bg-hover: #303437;
+  --bg-input: #121416;
 
   /* Accent — Studio Amber/Gold (Classic Director/Video Editor Monitor Color) */
-  --accent: #f59e0b;
-  --accent-hover: #fbbf24;
-  --accent-muted: rgba(245, 158, 11, 0.12);
-  --accent-border: rgba(245, 158, 11, 0.3);
+  --accent: #efba58;
+  --accent-hover: #f5cb7f;
+  --accent-muted: rgba(239, 186, 88, 0.12);
+  --accent-border: rgba(239, 186, 88, 0.3);
 
   /* Functional Status */
   --success: #10b981;
   --success-muted: rgba(16, 185, 129, 0.12);
   --success-border: rgba(16, 185, 129, 0.28);
 
-  --warning: #f59e0b;
-  --warning-muted: rgba(245, 158, 11, 0.12);
+  --warning: #efba58;
+  --warning-muted: rgba(239, 186, 88, 0.12);
 
   --error: #ef4444;
   --error-muted: rgba(239, 68, 68, 0.12);
 
   /* Typography Colors — High Contrast */
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --text-muted: #a0a6b3;
-  --text-inverse: #090a0f;
+  --text-primary: #f2f2ee;
+  --text-secondary: #b3b6b9;
+  --text-muted: #a1a5a9;
+  --text-inverse: #101112;
 
   /* Borders — Crisp, subtle architectural dividers */
   --border: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.16);
-  --border-active: rgba(245, 158, 11, 0.45);
+  --border-active: rgba(239, 186, 88, 0.45);
 
   /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, monospace;
 
   /* Architectural Radii — Deliberate hierarchy, no generic pills everywhere */
   --radius-xs: 3px;

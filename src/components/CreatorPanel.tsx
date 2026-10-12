@@ -42,36 +42,36 @@ export const PIPELINE_STEPS: PipelineStepDef[] = [
   {
     key: 'storyboard',
     number: 1,
-    title: 'Phân tích Kịch bản & Cấu trúc Phân cảnh',
-    desc: 'Bóc tách nội dung, xây dựng cấu trúc visual explainer và dàn ý cảnh',
+    title: 'Chia nội dung thành cảnh',
+    desc: 'Xác định nội dung và ý chính cho từng cảnh.',
     icon: FileText,
   },
   {
     key: 'tts',
     number: 2,
-    title: 'Tổng hợp Giọng đọc AI (Voiceover)',
-    desc: 'Thu âm giọng đọc Neural, chuẩn hóa cao độ & đo thời lượng từng cảnh',
+    title: 'Chuẩn bị giọng đọc',
+    desc: 'Tạo lời đọc và xác định thời lượng.',
     icon: Mic,
   },
   {
     key: 'beat_plan',
     number: 3,
-    title: 'Lập Kế hoạch Nhịp Thị Giác (Visual Beats)',
-    desc: 'AI chia nhịp ảnh theo lời đọc, lên ý tưởng và kiểm tra từng prompt',
+    title: 'Lên ý tưởng cho từng ảnh',
+    desc: 'Chia ảnh theo lời đọc, viết và kiểm tra mô tả.',
     icon: Layers,
   },
   {
     key: 'images',
     number: 4,
-    title: 'Tạo Hình ảnh Minh họa Đa dạng',
-    desc: 'Sinh hình 1080p theo kịch bản (Local FLUX.1 M4 / DALL-E 3 / Vector Art)',
+    title: 'Tạo hình minh họa',
+    desc: 'Tạo ảnh theo nội dung và phong cách đã chọn.',
     icon: ImageIcon,
   },
   {
     key: 'render',
     number: 5,
-    title: 'Dựng Chuyển động & Xuất Video MP4',
-    desc: 'Hiệu ứng Ken-Burns zoom/pan mượt mà, đồng bộ lồng tiếng Remotion',
+    title: 'Ghép và xuất video',
+    desc: 'Ghép ảnh với audio và xuất file MP4.',
     icon: Film,
   },
 ];
@@ -642,7 +642,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               setCurrentMessage('Đã tạo xong. Đang mở video để xem trước…');
               setCreationLogs((prev) => [
                 ...prev,
-                `[${new Date().toLocaleTimeString()}] 🎉 Hoàn tất xuất sắc! Video đã sẵn sàng phát.`,
+                `[${new Date().toLocaleTimeString()}] Video đã sẵn sàng phát.`,
               ]);
             } else if (event.type === 'error') {
               throw new Error(event.error || 'Lỗi trong quá trình tạo video');
@@ -754,27 +754,19 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       )}
 
       {/* Main Scrollable Content */}
-      <div inert={isCreating} style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 140px' }}>
+      <div className="creator-scroll" inert={isCreating}>
+        <div className="creator-intro"><h1>Bắt đầu một video mới</h1><p>Chuẩn bị nội dung, chọn âm thanh và định hình phong cách.</p></div>
         <div className="creator-workspace">
 
           {/* Section 2: Script Content (Hero section - Only 1 Textarea) */}
           <div
-            className="card"
-            style={{
-              padding: 18,
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
+            className="card script-card"
           >
             {/* Header with Presets & Upload */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <FileText style={{ width: 16, height: 16, color: 'var(--accent)' }} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+                <span className="creator-section-title" style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
                   Kịch bản
                 </span>
 
@@ -815,7 +807,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 width: '100%',
                 resize: 'vertical',
                 lineHeight: 1.65,
-                fontSize: 13.5,
+                fontSize: 14,
                 fontFamily: 'inherit',
                 minHeight: 320,
                 padding: '14px 16px',
@@ -1124,429 +1116,22 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
       {/* Creation Progress Modal & Real-Time Pipeline Checklist */}
       {isCreating && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 70,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            background: 'rgba(5, 6, 10, 0.82)',
-          }}
-          className="animate-fade-in"
-        >
-          <div className="creation-progress" aria-label="Tiến độ tạo video"
-            style={{
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-hover)',
-              borderRadius: 'var(--radius-xl)',
-              padding: '24px 28px',
-              maxWidth: 'min(640px, 95vw)',
-              width: '100%',
-              maxHeight: '92vh',
-              overflowY: 'auto',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06)',
-            }}
-          >
-            {/* Top Modal Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: '1 1 220px' }}>
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 'var(--radius-xl)',
-                    background: creationSuccess ? 'var(--success-muted)' : 'var(--accent-muted)',
-                    border: `1px solid ${creationSuccess ? 'var(--success-border)' : 'var(--accent-border)'}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  {creationSuccess ? (
-                    <CheckCircle2 style={{ width: 26, height: 26, color: 'var(--success)' }} />
-                  ) : (
-                    <Film style={{ width: 24, height: 24, color: 'var(--accent)' }} />
-                  )}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                      {creationSuccess ? 'Video đã sẵn sàng' : 'Đang tạo video'}
-                    </h3>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                        padding: '2px 8px',
-                        borderRadius: 99,
-                        background: creationSuccess ? 'var(--success-muted)' : 'var(--accent-muted)',
-                        color: creationSuccess ? 'var(--success)' : 'var(--accent)',
-                        border: `1px solid ${creationSuccess ? 'var(--success-border)' : 'var(--accent-border)'}`,
-                      }}
-                    >
-                      {creationSuccess ? 'Hoàn tất' : 'Đang xử lý'}
-                    </span>
-                  </div>
-                  <p role="status"
-                    style={{
-                      fontSize: 12,
-                      color: 'var(--text-secondary)',
-                      margin: '4px 0 0',
-                      maxWidth: 380,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {creationSuccess
-                      ? 'Video đã sẵn sàng để xem và tải xuống'
-                      : currentMessage || 'Hệ thống đang tiến hành xử lý kịch bản...'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Exact Percentage Badge */}
-              <div
-                style={{
-                  textAlign: 'right',
-                  padding: '8px 16px',
-                  background: 'var(--bg-elevated)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  minWidth: 96,
-                }}
-              >
-                <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>
-                  Tiến độ
-                </div>
-                <div
-                  className="mono"
-                  style={{
-                    fontSize: 26,
-                    fontWeight: 900,
-                    lineHeight: 1.1,
-                    color: creationSuccess ? 'var(--success)' : 'var(--accent)',
-                  }}
-                >
-                  {progressPercent}%
-                </div>
-              </div>
-            </div>
-
-            {/* Shimmering Animated Progress Bar */}
-            <div style={{ marginBottom: 20 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: 11,
-                  color: 'var(--text-secondary)',
-                  marginBottom: 8,
-                }}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {!creationSuccess && <span className="pulse-dot" />}
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {creationSuccess
-                      ? 'Đã hoàn tất 5/5 bước xử lý'
-                      : `Bước ${Math.min(5, Math.max(1, currentStepIndex + 1))}/5: ${PIPELINE_STEPS[Math.min(4, Math.max(0, currentStepIndex))]?.title}`}
-                  </span>
-                </span>
-                <span className="mono" style={{ color: creationSuccess ? 'var(--success)' : 'var(--accent)', fontWeight: 700 }}>
-                  {progressPercent}%
-                </span>
-              </div>
-
-              <div
-                style={{
-                  width: '100%',
-                  height: 10,
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 99,
-                  overflow: 'hidden',
-                  padding: 1,
-                  position: 'relative',
-                }}
-              >
-                <div
-                  className={creationSuccess ? '' : 'progress-striped'}
-                  style={{
-                    height: '100%',
-                    width: `${progressPercent}%`,
-                    background: creationSuccess
-                      ? 'var(--success)'
-                      : 'var(--accent)',
-                    borderRadius: 99,
-                    transition: 'width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Checklist: 5 Detailed Pipeline Steps */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
-              {PIPELINE_STEPS.map((step, idx) => {
-                const status = getStepStatus(step.key, idx);
-                const IconComponent = step.icon;
-                const isActive = status === 'active';
-                const isCompleted = status === 'completed';
-
-                return (
-                  <div
-                    key={step.key}
-                    className="step-card"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '10px 14px',
-                      borderRadius: 'var(--radius-lg)',
-                      border: isActive
-                        ? '1px solid var(--accent-border)'
-                        : isCompleted
-                        ? '1px solid rgba(52, 211, 153, 0.2)'
-                        : '1px solid var(--border)',
-                      background: isActive
-                        ? 'var(--accent-muted)'
-                        : isCompleted
-                        ? 'rgba(52, 211, 153, 0.04)'
-                        : 'var(--bg-input)',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-                      {/* Step Indicator Circle */}
-                      <div
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          background: isCompleted
-                            ? 'rgba(52, 211, 153, 0.15)'
-                            : isActive
-                            ? 'var(--accent-muted)'
-                            : 'var(--bg-surface)',
-                          border: `1.5px solid ${
-                            isCompleted
-                              ? 'var(--success)'
-                              : isActive
-                              ? 'var(--accent)'
-                              : 'var(--border)'
-                          }`,
-                        }}
-                      >
-                        {isCompleted ? (
-                          <Check style={{ width: 14, height: 14, color: 'var(--success)', strokeWidth: 3 }} />
-                        ) : isActive ? (
-                          <Loader2 style={{ width: 14, height: 14, color: 'var(--accent)' }} className="animate-spin" />
-                        ) : (
-                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>
-                            {step.number}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Step Title & Sub-detail */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span
-                            style={{
-                              fontSize: 13,
-                              fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
-                              color: isActive
-                                ? 'var(--accent-hover)'
-                                : isCompleted
-                                ? 'var(--text-primary)'
-                                : 'var(--text-secondary)',
-                            }}
-                          >
-                            Bước {step.number}: {step.key === 'tts' && audioMode === 'import' ? 'Cắt audio theo cảnh' : step.title}
-                          </span>
-                        </div>
-
-                        {/* Dynamic Step Status Description */}
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-                            marginTop: 2,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          {isActive ? (
-                            <span style={{ color: 'var(--accent-hover)', fontWeight: 500 }}>
-                              ▶ {currentMessage || step.desc}
-                            </span>
-                          ) : isCompleted ? (
-                            <span style={{ color: 'var(--success)' }}>
-                              ✓ Hoàn thành: {step.desc}
-                            </span>
-                          ) : (
-                            <span>{step.desc}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Step Status Badge on the Right */}
-                    <div style={{ marginLeft: 12, flexShrink: 0 }}>
-                      {isCompleted ? (
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            color: 'var(--success)',
-                            background: 'rgba(52, 211, 153, 0.12)',
-                            border: '1px solid var(--success-border)',
-                            borderRadius: 99,
-                            padding: '3px 10px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                          }}
-                        >
-                          <Check style={{ width: 10, height: 10, strokeWidth: 3 }} />
-                          Xong
-                        </span>
-                      ) : isActive ? (
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: 'var(--accent)',
-                            background: 'var(--accent-muted)',
-                            border: '1px solid var(--accent-border)',
-                            borderRadius: 99,
-                            padding: '3px 10px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 6,
-                          }}
-                        >
-                          <span className="pulse-dot" />
-                          Đang chạy
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            fontSize: 11,
-                            color: 'var(--text-muted)',
-                            background: 'var(--bg-surface)',
-                            border: '1px solid var(--border)',
-                            borderRadius: 99,
-                            padding: '3px 10px',
-                          }}
-                        >
-                          Chờ
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Collapsible Real-Time System Log Terminal */}
-            <div
-              style={{
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-lg)',
-                background: 'var(--bg-input)',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                onClick={() => setShowTerminalLogs(!showTerminalLogs)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 12px',
-                  background: 'var(--bg-surface)',
-                  borderBottom: showTerminalLogs ? '1px solid var(--border)' : 'none',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Terminal style={{ width: 13, height: 13, color: 'var(--accent)' }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                    Nhật ký chi tiết thời gian thực ({creationLogs.length})
-                  </span>
-                  {creationLogs.length > 0 && (
-                    <span
-                      className="mono"
-                      style={{
-                        fontSize: 10,
-                        padding: '1px 6px',
-                        borderRadius: 4,
-                        background: 'var(--bg-elevated)',
-                        color: 'var(--accent)',
-                        border: '1px solid var(--border)',
-                      }}
-                    >
-                      stream active
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)' }}>
-                  <span>{showTerminalLogs ? 'Thu gọn' : 'Mở rộng'}</span>
-                  {showTerminalLogs ? (
-                    <ChevronUp style={{ width: 13, height: 13 }} />
-                  ) : (
-                    <ChevronDown style={{ width: 13, height: 13 }} />
-                  )}
-                </div>
-              </div>
-
-              {showTerminalLogs && (
-                <div
-                  className="mono"
-                  style={{
-                    padding: '10px 14px',
-                    maxHeight: 120,
-                    overflowY: 'auto',
-                    fontSize: 11,
-                    lineHeight: 1.6,
-                    background: '#090a0f',
-                  }}
-                >
-                  {creationLogs.map((log, idx) => {
-                    const isLatest = idx === creationLogs.length - 1;
-                    return (
-                      <div
-                        key={idx}
-                        style={{
-                          color: isLatest ? 'var(--accent-hover)' : 'var(--text-muted)',
-                          fontWeight: isLatest ? 600 : 400,
-                          display: 'flex',
-                          gap: 6,
-                        }}
-                      >
-                        <span style={{ color: 'var(--text-muted)', opacity: 0.5, flexShrink: 0 }}>›</span>
-                        <span style={{ wordBreak: 'break-word' }}>{log}</span>
-                      </div>
-                    );
-                  })}
-                  <div ref={logsEndRef} />
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="generation-overlay">
+          <section className="creation-progress" aria-labelledby="generation-heading" aria-busy={!creationSuccess}>
+            <div className="generation-heading"><div className="generation-symbol">{creationSuccess ? <CheckCircle2 size={26} /> : <Film size={26} />}</div><div><h2 id="generation-heading">{creationSuccess ? 'Video đã sẵn sàng' : 'Đang tạo video của bạn'}</h2><p>{scriptTitle || 'Video mới'}</p></div><strong>{progressPercent}%</strong></div>
+            <progress className="generation-meter" max={100} value={progressPercent} aria-label="Tiến độ tạo video" />
+            <p className="generation-message" role="status">{creationSuccess ? 'Hoàn tất. Đang mở trình chỉnh sửa…' : currentMessage || 'Đang chuẩn bị nội dung…'}</p>
+            <ol className="generation-steps">{PIPELINE_STEPS.map((step, index) => {
+              const status = getStepStatus(step.key, index);
+              return <li key={step.key} className={`generation-step ${status}`} aria-current={status === 'active' ? 'step' : undefined}>
+                <span className="generation-step-number">{status === 'completed' ? <Check size={16} /> : status === 'active' ? <Loader2 size={16} className="animate-spin" /> : step.number}</span>
+                <div><h3>{step.key === 'tts' && audioMode === 'import' ? 'Chuẩn bị audio đã nhập' : step.title}</h3><p>{step.key === 'tts' && audioMode === 'import' ? 'Giữ nguyên giọng đọc và căn thời gian cho từng cảnh.' : step.desc}</p></div>
+                <span className="generation-step-state">{status === 'completed' ? 'Xong' : status === 'active' ? 'Đang chạy' : 'Chờ'}</span>
+              </li>;
+            })}</ol>
+            <details className="generation-logs" open={showTerminalLogs} onToggle={event => setShowTerminalLogs(event.currentTarget.open)}><summary>Chi tiết xử lý</summary><div>{creationLogs.map((log, index) => <p key={index}>{log}</p>)}<div ref={logsEndRef} /></div></details>
+            <p className="generation-footnote">Giữ trang này mở trong khi video đang được tạo.</p>
+          </section>
         </div>
       )}
     </div>

@@ -236,7 +236,7 @@ export default function App({ projectId }: { projectId: string }) {
   return (
     <div className="studio-shell">
       <header className="studio-topbar" inert={regenerateModalOpen}>
-        <div className="studio-identity"><img src="/favicon.svg" alt="" width={34} height={34} /><div><h1>Wevic Video Studio</h1><p>{metadata.title}</p></div></div>
+        <div className="studio-identity"><img src="/favicon.svg" alt="" width={34} height={34} /><div><h1>Wevic Video Studio</h1><p title={metadata.title}>{metadata.title}</p></div></div>
         <div className="toolbar-actions">
           <span className="studio-project-summary">{scenes.length} cảnh · {totalImagesCount} ảnh · {durationDisplay}</span>
           <a className="dashboard-back" href="/">Dự án</a>
@@ -248,16 +248,16 @@ export default function App({ projectId }: { projectId: string }) {
       </div>}
       <main className="studio-workspace" inert={regenerateModalOpen}>
         <section ref={playerSectionRef} className="studio-section preview-section" aria-labelledby="preview-title">
-          <div className="studio-section-heading"><h2 id="preview-title"><span>01</span> Xem trước</h2><div className="toolbar-actions">
+          <div className="studio-section-heading"><h2 id="preview-title">Xem trước</h2><div className="toolbar-actions">
             <IconButton label="Xem trước" aria-pressed={activeTab === 'preview'} onClick={() => setActiveTab('preview')}><Eye size={17} /></IconButton>
             <IconButton label="JSON" aria-pressed={activeTab === 'data'} onClick={() => setActiveTab('data')}><Code2 size={17} /></IconButton>
             {activeTab === 'data' && <IconButton label="Sao chép JSON" onClick={copyJsonToClipboard}>{copiedJson ? <Check size={17} /> : <Copy size={17} />}</IconButton>}
           </div></div>
           {activeTab === 'preview' ? <div className="studio-player"><Player key={videoTimestamp} ref={remotionPlayerRef} component={MainVideo} inputProps={playerInputProps} durationInFrames={metadata.total_duration_in_frames} compositionWidth={metadata.width} compositionHeight={metadata.height} fps={metadata.fps} style={{ width: '100%', height: '100%' }} controls autoPlay={false} loop acknowledgeRemotionLicense /></div> : <pre className="studio-json">{JSON.stringify({ metadata, scenes }, null, 2)}</pre>}
-          <div className="preview-caption"><span>{(currentFrame / metadata.fps).toFixed(2)} / {totalDuration.toFixed(2)} giây</span></div>
+          <div className="preview-caption"><span className="preview-format">{metadata.width} × {metadata.height} · {metadata.fps} fps</span><span className="preview-time">{(currentFrame / metadata.fps).toFixed(2)} / {totalDuration.toFixed(2)} giây</span></div>
         </section>
         <section className="studio-section scenes-section" aria-labelledby="scenes-title">
-          <div className="studio-section-heading"><h2 id="scenes-title"><span>02</span> Phân cảnh</h2><span className="section-meta">{scenes.length} cảnh</span></div>
+          <div className="studio-section-heading"><h2 id="scenes-title">Phân cảnh</h2><span className="section-meta">{scenes.length} cảnh</span></div>
           <div className="studio-scene-list">
             {scenes.map(scene => <button key={scene.id} className={`studio-scene-item ${selectedScene.id === scene.id ? 'active' : ''}`} aria-label={`Chọn cảnh ${scene.id}: ${scene.title}`} aria-pressed={selectedScene.id === scene.id} disabled={projectBusy} onClick={() => selectScene(scene)}>
               <img src={`/images/${scene.beats?.[0]?.image_file || scene.image_file}?v=${scene.beats?.[0]?.image_version || scene.image_version || ''}`} alt="" />
@@ -268,7 +268,7 @@ export default function App({ projectId }: { projectId: string }) {
         </section>
         <section className="studio-section timeline-section" aria-labelledby="timeline-title">
           <div className="studio-section-heading timeline-heading">
-            <div><h2 id="timeline-title"><span>03</span> Chi tiết cảnh</h2><p>Cảnh {selectedScene.id} · {selectedSceneBeats.length} ảnh · {selectedScene.duration_in_seconds.toFixed(2)} giây</p></div>
+            <div><h2 id="timeline-title">Chi tiết cảnh</h2><p>Cảnh {selectedScene.id} · {selectedSceneBeats.length} ảnh · {selectedScene.duration_in_seconds.toFixed(2)} giây</p></div>
             <div className="toolbar-actions">
               <IconButton label={isPlaying ? 'Tạm dừng' : 'Phát'} onClick={togglePlay}>{isPlaying ? <Pause size={18} /> : <Play size={18} />}</IconButton>
               <IconButton label="Thêm ảnh vào cảnh" disabled={projectBusy || projectLoading || !selectedSceneBeats.some(beat => beat.duration_in_frames >= 2)} onClick={handleAddBeat}><PlusCircle size={18} /></IconButton>

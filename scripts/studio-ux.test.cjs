@@ -52,7 +52,7 @@ async function main() {
     await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/fixture`);
     await open();
     const script = await page.locator('#script-content').boundingBox();
-    assert.ok(script.y < 350 && script.x < 300, 'Script is visible on opening, in the main column');
+    assert.ok(script.y < 500 && script.x < 300, 'Script remains visible below the page introduction, in the main column');
     assert.equal(await page.locator('.style-settings').getAttribute('open'), null);
     await page.getByRole('radio', { name: 'Nhập audio có sẵn' }).check();
     await page.locator('#audio-upload').setInputFiles({ name: 'my-voice.wav', mimeType: 'audio/wav', buffer: audioFixture() });

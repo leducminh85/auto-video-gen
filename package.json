@@ -11,6 +11,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@fontsource/be-vietnam-pro": "^5.3.0",
     "@google/genai": "^2.4.0",
     "@remotion/bundler": "^4.0.530",
     "@remotion/cli": "^4.0.530",

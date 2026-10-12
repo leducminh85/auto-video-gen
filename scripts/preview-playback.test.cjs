@@ -22,7 +22,7 @@ const { chromium } = require('playwright');
     const started = Date.now();
     await page.waitForTimeout(20000);
     const sample = await page.evaluate(() => ({
-      frameTime: Number(document.querySelector('.preview-caption').textContent.split('/')[0]),
+      frameTime: Number(document.querySelector('.preview-time').textContent.split('/')[0]),
       audio: [...document.querySelectorAll('audio')].filter(a => !a.paused && a.currentSrc).map(a => ({ src: a.currentSrc, time: a.currentTime })),
       seeks: window.audioSeeks,
     }));
@@ -33,17 +33,17 @@ const { chromium } = require('playwright');
     assert.ok(Math.abs(sample.audio[0].time + scene.start_frame / project.metadata.fps - sample.frameTime) < 0.3, 'Audio and image clocks stay aligned');
     assert.ok(sample.seeks.length <= 1, `Unexpected repeated audio corrections: ${sample.seeks}`);
     await page.getByRole('button', { name: 'Tạm dừng', exact: true }).click();
-    const paused = await page.locator('.preview-caption').innerText();
+    const paused = await page.locator('.preview-time').innerText();
     await page.waitForTimeout(500);
-    assert.equal(await page.locator('.preview-caption').innerText(), paused);
+    assert.equal(await page.locator('.preview-time').innerText(), paused);
     await page.getByRole('button', { name: /^Chọn cảnh 2:/ }).click();
-    const seekTime = Number((await page.locator('.preview-caption').innerText()).split('/')[0]);
+    const seekTime = Number((await page.locator('.preview-time').innerText()).split('/')[0]);
     assert.ok(Math.abs(seekTime - project.scenes[1].start_frame / project.metadata.fps) < 0.04);
     await page.getByRole('button', { name: 'Phát', exact: true }).click();
     await page.waitForTimeout(1000);
-    const resumedStart = Number((await page.locator('.preview-caption').innerText()).split('/')[0]);
+    const resumedStart = Number((await page.locator('.preview-time').innerText()).split('/')[0]);
     await page.waitForTimeout(2000);
-    const resumed = Number((await page.locator('.preview-caption').innerText()).split('/')[0]);
+    const resumed = Number((await page.locator('.preview-time').innerText()).split('/')[0]);
     assert.ok(Math.abs(resumed - resumedStart - 2) < 0.4, `Resuming after seek retains the playback clock: ${seekTime} -> ${resumed}`);
     assert.deepEqual(errors, []);
     console.log('PASS: real project playback, no repeated audio seeking, audio/image clock alignment, pause, scene seek and resume.');
