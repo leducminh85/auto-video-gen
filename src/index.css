@@ -554,7 +554,7 @@ a[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .scene-item-copy > small { color: var(--text-muted); }
 .timeline-heading { flex-wrap: wrap; }
 .timeline-heading select { width: 110px; height: 40px; font-size: 12px; }
-.timeline-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 16px; }
+.timeline-tools { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 16px; }
 .timeline-tools p { color: var(--text-muted); font-size: 12px; margin: 0; }
 .timeline-zoom { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); flex-shrink: 0; }
 .timeline-zoom input { width: clamp(72px, 14vw, 160px); min-height: 36px; accent-color: var(--accent); cursor: pointer; }
@@ -743,7 +743,7 @@ a[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .project-open { color: inherit; text-decoration: none; display: block; border-radius: 8px; }
 .project-thumbnail { aspect-ratio: 16 / 9; background: #22252b; display: flex; justify-content: center; align-items: center; position: relative; border-radius: 8px 8px 0 0; overflow: hidden; }
 .project-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
-.project-thumbnail span { position: absolute; right: 10px; bottom: 10px; background: #15171ced; color: #fff; padding: 3px 7px; font-size: 12px; border-radius: 3px; }
+.project-thumbnail > span { position: absolute; right: 10px; bottom: 10px; background: #15171ced; color: #fff; padding: 3px 7px; font-size: 12px; border-radius: 3px; }
 .project-card h2 { font-size: 17px; line-height: 1.4; margin: 16px 16px 0; overflow-wrap: anywhere; }
 .project-card-footer { padding: 6px 12px 12px 16px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
 .project-menu { position: relative; }

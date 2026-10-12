@@ -20,6 +20,10 @@ import {
   Terminal,
   ChevronDown,
   ChevronUp,
+  ArrowLeft,
+  Sparkles,
+  Sliders,
+  Palette,
 } from 'lucide-react';
 import { VoiceOption, SceneData, VideoMetadata } from '../types/scenes';
 import { buildMultiBeatScenes } from '../utils/stickmanArtGenerator';
@@ -116,12 +120,12 @@ export const VOICE_OPTIONS: VoiceOption[] = [
 ];
 
 export const SPEED_PRESETS = [
-  { value: 0.75, label: '0.75×', desc: 'Chậm' },
-  { value: 0.9, label: '0.9×', desc: 'Khoan thai' },
-  { value: 1.0, label: '1.0×', desc: 'Chuẩn' },
-  { value: 1.15, label: '1.15×', desc: 'Shorts' },
-  { value: 1.25, label: '1.25×', desc: 'Nhanh' },
-  { value: 1.5, label: '1.5×', desc: 'Siêu tốc' },
+  { value: 0.75, label: '0.75×' },
+  { value: 0.9, label: '0.9×' },
+  { value: 1.0, label: '1.0×' },
+  { value: 1.15, label: '1.15×' },
+  { value: 1.25, label: '1.25×' },
+  { value: 1.5, label: '1.5×' },
 ];
 
 export const SAMPLE_SCRIPTS = [
@@ -685,96 +689,93 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const selectedVoiceObj = VOICE_OPTIONS.find((v) => v.id === selectedVoice) || { ...VOICE_OPTIONS[0], id: selectedVoice, name: selectedVoice };
 
   return (
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="creator-title" tabIndex={-1} className="creator-panel" style={{ display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%', background: 'var(--bg-base)', position: 'relative', overflow: 'hidden' }}>
-      {/* Top Navbar */}
-      <div className="creator-header" inert={isCreating}
-        style={{
-          padding: '12px 24px',
-          borderBottom: '1px solid var(--border)',
-          background: 'var(--bg-surface)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexShrink: 0,
-          zIndex: 10,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--accent)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="creator-title"
+      tabIndex={-1}
+      className="creator-panel"
+    >
+      {/* Studio Top Navigation Bar */}
+      <header className="creator-header" inert={isCreating}>
+        <div className="creator-header-left">
+          <button
+            type="button"
+            className="creator-back-btn"
+            onClick={onCancel}
+            disabled={isCreating || audioUploading}
+            aria-label="Quay lại danh sách dự án"
           >
-            <img src="/favicon.svg" alt="" width={36} height={36} />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h2 id="creator-title" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                Tạo video mới
-              </h2>
-            </div>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-              Wevic Video Studio
-            </p>
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>Dự án</span>
+          </button>
+          <div className="creator-header-divider" aria-hidden="true" />
+          <div className="creator-header-titles">
+            <h1 id="creator-title" className="creator-title">
+              Tạo video mới
+            </h1>
+
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <IconButton label="Đóng trình tạo video" onClick={onCancel} disabled={isCreating || audioUploading}><X size={18} /></IconButton>
+        <div className="creator-header-right">
+          <div className="creator-save-pill" title="Trạng thái bản nháp">
+            <span className={`save-dot ${draftSaved ? 'saved' : ''}`} aria-hidden="true" />
+            <span>{draftSaved ? 'Đã lưu nháp' : 'Chưa lưu nháp'}</span>
+          </div>
+          <IconButton
+            label="Đóng trình tạo video"
+            onClick={onCancel}
+            disabled={isCreating || audioUploading}
+          >
+            <X size={18} />
+          </IconButton>
         </div>
-      </div>
+      </header>
 
-      {/* Error banner */}
+      {/* Global Error Banner */}
       {errorMessage && (
-        <div role="alert"
-          style={{
-            maxWidth: 1040,
-            margin: '12px auto 0',
-            width: 'calc(100% - 40px)',
-            padding: '10px 14px',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--error-muted)',
-            border: '1px solid rgba(248,113,113,0.2)',
-            color: 'var(--error)',
-            fontSize: 12,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <AlertCircle style={{ width: 14, height: 14, flexShrink: 0 }} />
-          {errorMessage}
+        <div className="creator-alert-banner" role="alert">
+          <AlertCircle size={16} className="alert-icon" aria-hidden="true" />
+          <span>{errorMessage}</span>
+          <button
+            type="button"
+            className="alert-dismiss"
+            onClick={() => setErrorMessage(null)}
+            aria-label="Đóng thông báo lỗi"
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
 
-      {/* Main Scrollable Content */}
+      {/* Main Studio Scroll Canvas */}
       <div className="creator-scroll" inert={isCreating}>
-        <div className="creator-intro"><h1>Bắt đầu một video mới</h1><p>Chuẩn bị nội dung, chọn âm thanh và định hình phong cách.</p></div>
+        <div className="creator-intro">
+          <h2>Thiết lập kịch bản và phong cách video</h2>
+        </div>
+
         <div className="creator-workspace">
-
-          {/* Section 2: Script Content (Hero section - Only 1 Textarea) */}
-          <div
-            className="card script-card"
-          >
-            {/* Header with Presets & Upload */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <FileText style={{ width: 16, height: 16, color: 'var(--accent)' }} />
-                <span className="creator-section-title" style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Kịch bản
-                </span>
-
+          {/* Left Column: Script Canvas */}
+          <div className="script-studio-card">
+            {/* Header row with Tools */}
+            <div className="studio-card-header">
+              <div className="card-badge-title">
+                <FileText size={16} className="title-icon" aria-hidden="true" />
+                <span>Kịch bản video</span>
               </div>
 
-              {/* Action tools: File Upload & Clear */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <button type="button" className="btn btn-secondary creator-file-button" onClick={() => fileInputRef.current?.click()}><Upload size={16} /> Nhập tệp kịch bản</button>
+              <div className="script-tools">
+                <button
+                  type="button"
+                  className="btn btn-secondary tool-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Nhập tệp .txt, .md hoặc .srt"
+                >
+                  <Upload size={14} aria-hidden="true" />
+                  <span>Nhập tệp</span>
+                </button>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -784,353 +785,475 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 />
 
                 {textContent && (
-                  <IconButton label="Xóa kịch bản" onClick={() => { setTextContent(''); setSelectedPresetId(null); setUploadedFileName(null); }}><Trash2 size={17} /></IconButton>
+                  <button
+                    type="button"
+                    className="btn btn-ghost tool-btn text-danger"
+                    onClick={() => {
+                      setTextContent('');
+                      setSelectedPresetId(null);
+                      setUploadedFileName(null);
+                    }}
+                    title="Xóa toàn bộ nội dung kịch bản"
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                    <span>Xóa</span>
+                  </button>
                 )}
               </div>
             </div>
 
-            {/* ONLY ONE CLEAN TEXTAREA - NO PRESETS */}
-            <label className="label" htmlFor="script-title">Tên video</label>
-            <input id="script-title" className="input" value={scriptTitle} onChange={event => setScriptTitle(event.target.value)} placeholder="Đặt tên cho video" />
-            <label className="label" htmlFor="script-content">{audioMode === 'import' ? 'Kịch bản tham khảo (không bắt buộc)' : 'Nội dung lời thoại'}</label>
-            <p id="script-help" className="editor-help creator-script-help">{audioMode === 'import' ? 'Audio quyết định lời thoại, cảnh và nhịp ảnh. Kịch bản ở đây chỉ giúp AI hiểu chủ đề; không cần khớp từng câu với bản thu.' : 'Nhập toàn bộ lời thoại. AI sẽ chia cảnh, chia nhịp ảnh và viết prompt theo phong cách bạn chọn.'}</p>
-            <textarea id="script-content" aria-describedby="script-help"
-              value={textContent}
-              onChange={(e) => {
-                setTextContent(e.target.value);
-                setSelectedPresetId(null);
-                setErrorMessage(null);
-              }}
-              rows={17}
-              className="input"
-              style={{
-                width: '100%',
-                resize: 'vertical',
-                lineHeight: 1.65,
-                fontSize: 14,
-                fontFamily: 'inherit',
-                minHeight: 320,
-                padding: '14px 16px',
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-base)',
-                border: '1px solid var(--border)',
-              }}
-              placeholder="Nhập toàn bộ kịch bản phân cảnh tại đây "
-            />
+            {/* Quick Inspiration Templates */}
+            <div className="preset-chips-bar" aria-label="Kịch bản mẫu">
+              <span className="preset-label">Mẫu gợi ý:</span>
+              <div className="preset-chips-scroll">
+                {SAMPLE_SCRIPTS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    className={`preset-chip ${selectedPresetId === preset.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedPresetId(preset.id);
+                      setScriptTitle(preset.title);
+                      setTextContent(preset.content);
+                      setErrorMessage(null);
+                    }}
+                  >
+                    <Sparkles size={12} aria-hidden="true" />
+                    <span>{preset.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Title Input */}
+            <div className="form-group">
+              <label htmlFor="script-title" className="field-label">
+                Tiêu đề video
+              </label>
+              <input
+                id="script-title"
+                className="input script-title-input"
+                value={scriptTitle}
+                onChange={(event) => setScriptTitle(event.target.value)}
+                placeholder="Đặt tên cho video của bạn (ví dụ: Kinh Tế Học Phòng Gym)…"
+              />
+            </div>
+
+            {/* Script Textarea */}
+            <div className="form-group script-body-group">
+              <div className="field-label-row">
+                <label htmlFor="script-content" className="field-label">
+                  {audioMode === 'import' ? 'Kịch bản tham khảo (tùy chọn)' : 'Nội dung lời thoại phân cảnh'}
+                </label>
+                {audioMode === 'import' && <span className="field-hint">Audio sẽ quyết định thời lượng và cảnh.</span>}
+              </div>
+              <textarea
+                id="script-content"
+                value={textContent}
+                onChange={(e) => {
+                  setTextContent(e.target.value);
+                  setSelectedPresetId(null);
+                  setErrorMessage(null);
+                }}
+                rows={16}
+                className="input script-editor-textarea"
+                placeholder="Nhập toàn bộ kịch bản phân cảnh tại đây… CẢNH 1: Tiêu đề cảnh, Lời thoại…"
+              />
+            </div>
 
             {/* Textarea Footer Stats */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: 11,
-                color: 'var(--text-muted)',
-                flexWrap: 'wrap',
-                gap: 8,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <span>
-                  <strong style={{ color: 'var(--text-primary)' }}>{wordCount}</strong> từ
-                </span>
-                <span>•</span>
-                <span>
-                  {audioMode === 'import' ? 'Thời lượng audio: ' : 'Thời lượng dự kiến: '}<strong style={{ color: 'var(--accent)' }}>{estimatedSeconds > 0 ? `${audioMode === 'tts' ? '≈' : ''}${Math.floor(Math.round(estimatedSeconds) / 60)}:${String(Math.round(estimatedSeconds) % 60).padStart(2, '0')}` : '—'}</strong>
-                </span>
-                <span>•</span>
-                <span>
-                  {audioMode === 'import' && audioBoundaries.trim() ? `${parseContentToScenes(textContent).length} cảnh theo mốc thủ công` : 'Số cảnh do AI quyết định'}
-                </span>
+            <div className="script-stats-bar">
+              <div className="stat-item">
+                <span className="stat-label">Từ:</span>
+                <strong className="stat-value">{wordCount}</strong>
+              </div>
+              <div className="stat-separator">•</div>
+              <div className="stat-item">
+                <span className="stat-label">Thời lượng dự kiến:</span>
+                <strong className="stat-value stat-accent">
+                  {estimatedSeconds > 0
+                    ? `${audioMode === 'tts' ? '≈ ' : ''}${Math.floor(Math.round(estimatedSeconds) / 60)}:${String(Math.round(estimatedSeconds) % 60).padStart(2, '0')}`
+                    : '0:00'}
+                </strong>
               </div>
 
             </div>
           </div>
 
-          <aside className="creator-options">
-          <section className="card editor-settings">
-            <h3>Âm thanh</h3>
-            <div className="audio-source-options" role="group" aria-label="Nguồn âm thanh">
-              <label><input type="radio" name="audio-source" checked={audioMode === 'tts'} onChange={() => setAudioMode('tts')} aria-label="Tạo giọng đọc" aria-describedby="tts-source-help" /> <span>Tạo giọng đọc<small id="tts-source-help">Chọn giọng và tốc độ từ lời thoại của bạn.</small></span></label>
-              <label><input type="radio" name="audio-source" checked={audioMode === 'import'} onChange={() => { audioPreviewManager.stop(); setPlayingVoiceId(null); setAudioMode('import'); }} aria-label="Nhập audio có sẵn" aria-describedby="import-source-help" /> <span>Nhập audio có sẵn<small id="import-source-help">Dùng bản thu của bạn, giữ nguyên giọng và tốc độ.</small></span></label>
-            </div>
-            {audioMode === 'import' && <>
-              <div className="editor-actions"><button type="button" className="btn btn-secondary creator-file-button" disabled={audioUploading} onClick={() => audioFileInput.current?.click()}>{audioUploading ? <Loader2 className="animate-spin" size={17} /> : <Upload size={17} />}{audioUploading ? 'Đang nhập audio…' : importedAudio ? 'Đổi tệp audio' : 'Chọn tệp audio'}</button></div>
-              <input ref={audioFileInput} id="audio-upload" aria-label="Tệp audio" type="file" accept="audio/*,.m4a,.flac" hidden disabled={audioUploading} onChange={event => void handleImportAudio(event.target.files?.[0])} />
-              <p className="editor-help">MP3, WAV, M4A, OGG, FLAC · Tối đa 100 MB</p>
-              {audioUploading && <p role="status">Đang nhập và kiểm tra audio…</p>}
-              {importedAudio && <AudioTimingEditor audio={importedAudio} scenes={[]} boundaries={audioBoundaries} onChange={value => { setAudioBoundaries(value); setErrorMessage(null); }} />}
-              <p className="editor-help">AI lấy lời thoại từ audio để chia cảnh và lên ý tưởng ảnh. Bản thu giữ nguyên giọng và tốc độ.</p>
-            </>}
-          </section>
-          {audioMode === 'tts' && <>
-          {/* Section 1: Voice & Speed (Collapsible) */}
-          <div
-            className="card"
-            style={{
-              padding: 0,
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Collapsible Header */}
-            <button type="button" aria-expanded={isVoiceSectionOpen} className="voice-toggle"
-              onClick={() => setIsVoiceSectionOpen(!isVoiceSectionOpen)}
-              style={{
-                padding: '14px 18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                background: isVoiceSectionOpen ? 'var(--bg-elevated)' : 'transparent',
-                transition: 'background 0.15s ease',
-                width: '100%',
-                textAlign: 'left',
-                border: 'none',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <Mic style={{ width: 16, height: 16, color: 'var(--accent)' }} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Giọng đọc và tốc độ
-                </span>
-                <span className="badge badge-accent" style={{ fontSize: 11, padding: '2px 8px' }}>
-                  {selectedVoiceObj.name} ({selectedVoiceObj.gender === 'female' ? 'Nữ' : 'Nam'} · {selectedVoiceObj.tag})
-                </span>
-                <span className="badge badge-secondary" style={{ fontSize: 11, padding: '2px 8px' }}>
-                  {speed}×
-                </span>
+          {/* Right Column: Studio Inspector */}
+          <aside className="creator-inspector">
+            {/* Section 1: Audio Configuration */}
+            <div className="inspector-card">
+              <div className="inspector-card-header">
+                <div className="card-badge-title">
+                  <Mic size={16} className="title-icon" aria-hidden="true" />
+                  <span>Nguồn âm thanh</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 12, fontWeight: 500 }}>
-                <span>{isVoiceSectionOpen ? 'Thu gọn' : 'Tùy chỉnh'}</span>
-                {isVoiceSectionOpen ? (
-                  <ChevronUp style={{ width: 16, height: 16 }} />
-                ) : (
-                  <ChevronDown style={{ width: 16, height: 16 }} />
-                )}
-              </div>
-            </button>
 
-            {/* Collapsible Body */}
-            {isVoiceSectionOpen && (
-              <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                    Chọn giọng đọc AI:
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 10 }}>
+              {/* Segmented Switch */}
+              <div className="segmented-tab-group" role="tablist" aria-label="Chọn nguồn âm thanh">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={audioMode === 'tts'}
+                  className={`segmented-tab ${audioMode === 'tts' ? 'active' : ''}`}
+                  onClick={() => setAudioMode('tts')}
+                >
+                  <Mic size={14} aria-hidden="true" />
+                  <span>Giọng đọc AI</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={audioMode === 'import'}
+                  className={`segmented-tab ${audioMode === 'import' ? 'active' : ''}`}
+                  onClick={() => {
+                    audioPreviewManager.stop();
+                    setPlayingVoiceId(null);
+                    setAudioMode('import');
+                  }}
+                >
+                  <Upload size={14} aria-hidden="true" />
+                  <span>Nhập file audio</span>
+                </button>
+              </div>
+
+              {/* TTS Voice Selector */}
+              {audioMode === 'tts' && (
+                <div className="tts-controls">
+                  <div className="sub-label">Chọn giọng đọc:</div>
+                  <div className="voice-grid">
                     {VOICE_OPTIONS.map((voice) => {
                       const isSelected = selectedVoice === voice.id;
                       const isPlayingThis = playingVoiceId === voice.id;
                       return (
                         <div
                           key={voice.id}
+                          className={`voice-tile ${isSelected ? 'active' : ''}`}
                           onClick={() => setSelectedVoice(voice.id)}
-                          className={`card ${isSelected ? 'card-active' : ''}`}
-                          style={{
-                            padding: '12px 14px',
-                            cursor: 'pointer',
-                            border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
-                            background: isSelected ? 'var(--accent-muted)' : 'var(--bg-elevated)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 12,
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              setSelectedVoice(voice.id);
+                            }
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <input type="radio" name="voice" aria-label={voice.name} checked={isSelected} onChange={() => setSelectedVoice(voice.id)} style={{ accentColor: 'var(--accent)', width: 16, height: 16 }} />
-                            <div
-                              style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: 'var(--radius-sm)',
-                                background: isSelected ? 'var(--accent)' : 'var(--bg-surface)',
-                                color: isSelected ? 'var(--text-inverse)' : 'var(--text-secondary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 11,
-                                fontWeight: 700,
-                              }}
-                            >
+                          <div className="voice-tile-left">
+                            <span className={`voice-avatar-badge ${voice.gender}`}>
                               {voice.gender === 'female' ? 'Nữ' : 'Nam'}
-                            </div>
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                                {voice.name}
-                              </div>
-                              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                                {voice.tag} · {voice.gender === 'female' ? 'Nữ' : 'Nam'}
-                              </div>
+                            </span>
+                            <div className="voice-info">
+                              <span className="voice-name">{voice.name}</span>
+                              <span className="voice-tag">
+                                {voice.tag} · {voice.region}
+                              </span>
                             </div>
                           </div>
 
                           <IconButton
                             onClick={(e) => handleTogglePlayVoice(voice, e)}
-                            className={`btn ${isPlayingThis ? 'btn-primary' : 'btn-secondary'}`}
+                            className={`btn-preview ${isPlayingThis ? 'playing' : ''}`}
                             label={`${isPlayingThis ? 'Dừng' : 'Nghe thử'} giọng ${voice.name}`}
                           >
-                            {isPlayingThis ? <VolumeX style={{ width: 13, height: 13 }} /> : <Volume2 style={{ width: 13, height: 13 }} />}
+                            {isPlayingThis ? <VolumeX size={14} /> : <Volume2 size={14} />}
                           </IconButton>
                         </div>
                       );
                     })}
                   </div>
-                </div>
 
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                      Tốc độ phát âm:
-                    </span>
-                    <span className="mono" style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 12 }}>
-                      {speed}×
-                    </span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(64px, 1fr))', gap: 6 }}>
-                    {SPEED_PRESETS.map((preset) => {
-                      const isActive = speed === preset.value;
-                      return (
-                        <button
-                          key={preset.value}
-                          onClick={() => {
-                            setSpeed(preset.value);
-                            if (playingVoiceId) {
-                              const v = VOICE_OPTIONS.find((vo) => vo.id === playingVoiceId);
-                              if (v) {
-                                audioPreviewManager.playVoicePreview(v, preset.value, () => setPlayingVoiceId(null), () => setPlayingVoiceId(null));
+                  {/* Speed Controls */}
+                  <div className="speed-section">
+                    <div className="speed-header">
+                      <span className="sub-label">Tốc độ đọc:</span>
+                      <strong className="speed-value">{speed}×</strong>
+                    </div>
+                    <div className="speed-pills">
+                      {SPEED_PRESETS.map((preset) => {
+                        const isActive = speed === preset.value;
+                        return (
+                          <button
+                            key={preset.value}
+                            type="button"
+                            className={`speed-pill ${isActive ? 'active' : ''}`}
+                            onClick={() => {
+                              setSpeed(preset.value);
+                              if (playingVoiceId) {
+                                const v = VOICE_OPTIONS.find((vo) => vo.id === playingVoiceId);
+                                if (v) {
+                                  audioPreviewManager.playVoicePreview(
+                                    v,
+                                    preset.value,
+                                    () => setPlayingVoiceId(null),
+                                    () => setPlayingVoiceId(null)
+                                  );
+                                }
                               }
-                            }
-                          }}
-                          style={{
-                            padding: '8px 4px',
-                            borderRadius: 'var(--radius-md)',
-                            border: `1px solid ${isActive ? 'var(--accent-border)' : 'var(--border)'}`,
-                            background: isActive ? 'var(--accent)' : 'var(--bg-elevated)',
-                            color: isActive ? 'var(--text-inverse)' : 'var(--text-secondary)',
-                            cursor: 'pointer',
-                            textAlign: 'center',
-                            transition: 'all 0.15s',
-                            fontSize: 11,
-                            fontWeight: isActive ? 700 : 500,
-                          }}
-                        >
-                          <div>{preset.label}</div>
-                          <div style={{ fontSize: 11, marginTop: 2 }}>{preset.desc}</div>
-                        </button>
-                      );
-                    })}
+                            }}
+                          >
+                            <span className="preset-label">{preset.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
+                </div>
+              )}
+
+              {/* Imported Audio Controls */}
+              {audioMode === 'import' && (
+                <div className="import-audio-controls">
+                  <button
+                    type="button"
+                    className="btn btn-secondary upload-audio-btn"
+                    disabled={audioUploading}
+                    onClick={() => audioFileInput.current?.click()}
+                  >
+                    {audioUploading ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <Upload size={16} />
+                    )}
+                    <span>
+                      {audioUploading
+                        ? 'Đang nhập audio…'
+                        : importedAudio
+                        ? 'Đổi file audio khác'
+                        : 'Chọn file audio từ máy'}
+                    </span>
+                  </button>
+                  <input
+                    ref={audioFileInput}
+                    id="audio-upload"
+                    type="file"
+                    accept="audio/*,.m4a,.flac"
+                    hidden
+                    disabled={audioUploading}
+                    onChange={(event) => void handleImportAudio(event.target.files?.[0])}
+                  />
+                  <p className="field-hint text-center">
+                    Hỗ trợ MP3, WAV, M4A, OGG, FLAC · Tối đa 100 MB
+                  </p>
+                  {importedAudio && (
+                    <div className="imported-timing-wrapper">
+                      <AudioTimingEditor
+                        audio={importedAudio}
+                        scenes={[]}
+                        boundaries={audioBoundaries}
+                        onChange={(value) => {
+                          setAudioBoundaries(value);
+                          setErrorMessage(null);
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Section 2: Pacing & Density */}
+            <div className="inspector-card">
+              <div className="inspector-card-header">
+                <div className="card-badge-title">
+                  <Gauge size={16} className="title-icon" aria-hidden="true" />
+                  <span>Mật độ hình ảnh</span>
                 </div>
               </div>
-            )}
-          </div>
 
-          </>}
-          <section className="card editor-settings">
-            <h3>Mật độ hình ảnh</h3>
-            <fieldset className="density-options" aria-describedby="density-help">
-              <legend>Nhịp đổi ảnh</legend>
-              {([
-                { value: 'sparse', label: 'Thưa', seconds: '≈6 giây/ảnh' },
-                { value: 'balanced', label: 'Vừa', seconds: '≈4 giây/ảnh' },
-                { value: 'dense', label: 'Dày', seconds: '≈2,5 giây/ảnh' },
-              ] as const).map(option => <label key={option.value}>
-                <input type="radio" name="image-density" value={option.value} checked={imageDensity === option.value} onChange={() => setImageDensity(option.value)} />
-                <strong>{option.label}</strong><span>{option.seconds}</span>
-              </label>)}
-            </fieldset>
-            <p id="density-help" className="editor-help">{imageDensity === 'sparse' ? 'Ít ảnh, có thêm thời gian xem chi tiết.' : imageDensity === 'dense' ? 'Nhiều ảnh trong mỗi cảnh, nhịp nhanh hơn. Tốn thêm thời gian tạo ảnh.' : 'Cân bằng số ảnh và thời gian xem.'} Mốc đổi ảnh được căn theo lời đọc.</p>
-          </section>
-          <details className="card style-settings">
-            <summary><span>Phong cách hình ảnh</span><span className="editor-help">{imageStylePrompt === defaultPrompt ? 'Minh họa nét vẽ đơn giản · Mặc định' : imageStylePrompt.trim() ? 'Đang dùng phong cách tùy chỉnh' : 'Chưa có mô tả phong cách'}</span></summary>
-            <div className="editor-settings">
-              <label htmlFor="image-style">Prompt phong cách</label>
-              <textarea id="image-style" className="input" rows={10} maxLength={10000} value={imageStylePrompt} onChange={event => setImageStylePrompt(event.target.value)} />
-              <p className="editor-help">Lưu cho video mới và áp dụng chung cho mọi ảnh. Bạn có thể viết bằng tiếng Việt hoặc tiếng Anh.</p>
-              <button type="button" className="btn btn-secondary creator-file-button" onClick={() => setImageStylePrompt(defaultPrompt)}><RotateCcw size={16} /> Khôi phục phong cách mặc định</button>
+              <div className="density-selector" role="radiogroup" aria-label="Nhịp đổi ảnh">
+                {[
+                  { value: 'sparse', label: 'Thưa', seconds: '≈6 giây / ảnh' },
+                  { value: 'balanced', label: 'Cân bằng', seconds: '≈4 giây / ảnh' },
+                  { value: 'dense', label: 'Dày', seconds: '≈2,5 giây / ảnh' },
+                ].map((option) => {
+                  const isChecked = imageDensity === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={isChecked}
+                      className={`density-pill ${isChecked ? 'active' : ''}`}
+                      onClick={() => setImageDensity(option.value as any)}
+                    >
+                      <strong className="density-title">{option.label}</strong>
+                      <span className="density-meta">{option.seconds}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </details>
 
-
+            {/* Section 3: Visual Style Prompt */}
+            <details className="inspector-card style-details">
+              <summary className="style-summary">
+                <div className="summary-left">
+                  <Palette size={16} className="title-icon" aria-hidden="true" />
+                  <span>Phong cách hình ảnh</span>
+                </div>
+                <span className="summary-status">
+                  {imageStylePrompt === defaultPrompt
+                    ? 'Mặc định'
+                    : 'Tùy chỉnh'}
+                </span>
+              </summary>
+              <div className="style-body">
+                <label htmlFor="image-style" className="field-label">
+                  Prompt phong cách hình ảnh:
+                </label>
+                <textarea
+                  id="image-style"
+                  className="input style-prompt-textarea"
+                  rows={6}
+                  maxLength={10000}
+                  value={imageStylePrompt}
+                  onChange={(event) => setImageStylePrompt(event.target.value)}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-reset-style"
+                  onClick={() => setImageStylePrompt(defaultPrompt)}
+                >
+                  <RotateCcw size={14} />
+                  <span>Khôi phục phong cách mặc định</span>
+                </button>
+              </div>
+            </details>
           </aside>
         </div>
       </div>
 
-      {/* Sticky Bottom Action Bar */}
-      <div className="creator-actions" inert={isCreating}
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 68,
-          background: 'var(--bg-surface)',
-          borderTop: '1px solid var(--border)',
-          padding: '0 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          zIndex: 40,
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.25)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
-            <span role="status">{audioMode === 'tts' && !textContent.trim() ? 'Nhập lời thoại để tạo video.' : audioUploading ? 'Đang nhập audio…' : audioMode === 'import' && !importedAudio ? 'Chọn tệp audio để tiếp tục.' : !imageStylePrompt.trim() ? 'Mở Phong cách hình ảnh để nhập prompt.' : draftSaved ? 'Đã lưu bản nháp' : 'Không thể lưu bản nháp'}</span>
+      {/* Sticky Bottom Studio Dock */}
+      <footer className="creator-dock" inert={isCreating}>
+        <div className="dock-container">
+          <div className="dock-actions">
+            <button
+              type="button"
+              className="btn btn-secondary btn-dock-cancel"
+              onClick={onCancel}
+              disabled={isCreating || audioUploading}
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary btn-dock-create"
+              onClick={handleCreateVideo}
+              disabled={
+                isCreating ||
+                audioUploading ||
+                (audioMode === 'tts' && !textContent.trim()) ||
+                !imageStylePrompt.trim() ||
+                (audioMode === 'import' && !importedAudio)
+              }
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Đang tạo video ({progressPercent}%)…</span>
+                </>
+              ) : (
+                <>
+                  <Film size={16} />
+                  <span>Tạo video ngay</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
+      </footer>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            className="btn btn-primary"
-            onClick={handleCreateVideo}
-            disabled={isCreating || audioUploading || (audioMode === 'tts' && !textContent.trim()) || !imageStylePrompt.trim() || (audioMode === 'import' && !importedAudio)}
-            style={{
-              padding: '10px 24px',
-              fontSize: 14,
-              fontWeight: 700,
-              opacity: isCreating ? 0.7 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            {isCreating ? (
-              <>
-                <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
-                <span>Đang tạo video ({progressPercent}%)...</span>
-              </>
-            ) : (
-              <>
-                <Film style={{ width: 16, height: 16 }} />
-                <span>Tạo video</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Creation Progress Modal & Real-Time Pipeline Checklist */}
+      {/* Generation Progress Modal */}
       {isCreating && (
         <div className="generation-overlay">
-          <section className="creation-progress" aria-labelledby="generation-heading" aria-busy={!creationSuccess}>
-            <div className="generation-heading"><div className="generation-symbol">{creationSuccess ? <CheckCircle2 size={26} /> : <Film size={26} />}</div><div><h2 id="generation-heading">{creationSuccess ? 'Video đã sẵn sàng' : 'Đang tạo video của bạn'}</h2><p>{scriptTitle || 'Video mới'}</p></div><strong>{progressPercent}%</strong></div>
-            <progress className="generation-meter" max={100} value={progressPercent} aria-label="Tiến độ tạo video" />
-            <p className="generation-message" role="status">{creationSuccess ? 'Hoàn tất. Đang mở trình chỉnh sửa…' : currentMessage || 'Đang chuẩn bị nội dung…'}</p>
-            <ol className="generation-steps">{PIPELINE_STEPS.map((step, index) => {
-              const status = getStepStatus(step.key, index);
-              return <li key={step.key} className={`generation-step ${status}`} aria-current={status === 'active' ? 'step' : undefined}>
-                <span className="generation-step-number">{status === 'completed' ? <Check size={16} /> : status === 'active' ? <Loader2 size={16} className="animate-spin" /> : step.number}</span>
-                <div><h3>{step.key === 'tts' && audioMode === 'import' ? 'Chuẩn bị audio đã nhập' : step.title}</h3><p>{step.key === 'tts' && audioMode === 'import' ? 'Giữ nguyên giọng đọc và căn thời gian cho từng cảnh.' : step.desc}</p></div>
-                <span className="generation-step-state">{status === 'completed' ? 'Xong' : status === 'active' ? 'Đang chạy' : 'Chờ'}</span>
-              </li>;
-            })}</ol>
-            <details className="generation-logs" open={showTerminalLogs} onToggle={event => setShowTerminalLogs(event.currentTarget.open)}><summary>Chi tiết xử lý</summary><div>{creationLogs.map((log, index) => <p key={index}>{log}</p>)}<div ref={logsEndRef} /></div></details>
-            <p className="generation-footnote">Giữ trang này mở trong khi video đang được tạo.</p>
+          <section
+            className="creation-progress"
+            aria-labelledby="generation-heading"
+            aria-busy={!creationSuccess}
+          >
+            <div className="generation-heading">
+              <div className="generation-symbol">
+                {creationSuccess ? <CheckCircle2 size={26} /> : <Film size={26} />}
+              </div>
+              <div className="generation-title-wrap">
+                <h2 id="generation-heading">
+                  {creationSuccess ? 'Video đã sẵn sàng' : 'Đang khởi tạo video'}
+                </h2>
+                <p>{scriptTitle || 'Video mới'}</p>
+              </div>
+              <strong className="generation-percent">{progressPercent}%</strong>
+            </div>
+
+            <progress
+              className="generation-meter"
+              max={100}
+              value={progressPercent}
+              aria-label="Tiến độ tạo video"
+            />
+
+            <p className="generation-message" role="status">
+              {creationSuccess
+                ? 'Hoàn tất. Đang chuyển tới trình phát video…'
+                : currentMessage || 'Đang khởi tạo tiến trình xử lý…'}
+            </p>
+
+            <ol className="generation-steps">
+              {PIPELINE_STEPS.map((step, index) => {
+                const status = getStepStatus(step.key, index);
+                return (
+                  <li
+                    key={step.key}
+                    className={`generation-step ${status}`}
+                    aria-current={status === 'active' ? 'step' : undefined}
+                  >
+                    <span className="generation-step-number">
+                      {status === 'completed' ? (
+                        <Check size={14} />
+                      ) : status === 'active' ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        step.number
+                      )}
+                    </span>
+                    <div className="step-info">
+                      <h3>
+                        {step.key === 'tts' && audioMode === 'import'
+                          ? 'Chuẩn bị audio đã nhập'
+                          : step.title}
+                      </h3>
+                      <p>
+                        {step.key === 'tts' && audioMode === 'import'
+                          ? 'Giữ nguyên giọng đọc và căn thời gian cho từng cảnh.'
+                          : step.desc}
+                      </p>
+                    </div>
+                    <span className="generation-step-state">
+                      {status === 'completed' ? 'Xong' : status === 'active' ? 'Đang chạy' : 'Chờ'}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+
+            <details
+              className="generation-logs"
+              open={showTerminalLogs}
+              onToggle={(event) => setShowTerminalLogs(event.currentTarget.open)}
+            >
+              <summary>Chi tiết xử lý và tiến trình</summary>
+              <div>
+                {creationLogs.map((log, index) => (
+                  <p key={index}>{log}</p>
+                ))}
+                <div ref={logsEndRef} />
+              </div>
+            </details>
+
+            <p className="generation-footnote">
+              Vui lòng giữ trang này mở trong khi video đang được xử lý.
+            </p>
           </section>
         </div>
       )}

@@ -24,13 +24,12 @@ function ImageDialog({ scene, selectedBeat, adding, imageStylePrompt, insertAfte
   const initialPrompt = adding ? selectedBeat?.caption || scene.text : selectedBeat?.plan?.imageGenerationPrompt || selectedBeat?.prompt || scene.prompt;
   const [style, setStyle] = useState(imageStylePrompt || defaultPrompt);
   const [prompt, setPrompt] = useState(initialPrompt);
-  const [label, setLabel] = useState(selectedBeat?.plan?.diegeticText || '');
-  const [generated, setGenerated] = useState<{ file: string; version: number; prompt: string; label: string } | null>(null);
+  const [generated, setGenerated] = useState<{ file: string; version: number; prompt: string } | null>(null);
   const [busy, setBusy] = useState<'generate' | 'save' | null>(null);
   const [error, setError] = useState('');
   const dialogRef = useDialog(onClose, !busy);
   const fullPrompt = adding ? `${style.trim()}\n\nScene content: ${prompt.trim()}` : prompt.trim();
-  const changed = generated && (fullPrompt !== generated.prompt || label.trim() !== generated.label);
+  const changed = generated && (fullPrompt !== generated.prompt);
   const source = generated ? `/images/${generated.file}?v=${generated.version}` : !adding ? `/images/${selectedBeat?.image_file || scene.image_file}?v=${selectedBeat?.image_version || scene.image_version || ''}` : null;
   const [imageFailed, setImageFailed] = useState(false);
   const anchor = scene.beats?.find(beat => beat.id === insertAfterId);
@@ -40,11 +39,11 @@ function ImageDialog({ scene, selectedBeat, adding, imageStylePrompt, insertAfte
     try {
       const response = await fetch('/api/regenerate-beat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sceneId: scene.id, subIndex: selectedBeat?.sub_index || 1, prompt: fullPrompt, diegeticLabel: label.trim() }),
+        body: JSON.stringify({ sceneId: scene.id, subIndex: selectedBeat?.sub_index || 1, prompt: fullPrompt }),
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || 'Không tạo được ảnh. Thử lại hoặc sửa mô tả.');
-      setGenerated({ file: result.imageFile, version: result.timestamp || Date.now(), prompt: fullPrompt, label: label.trim() });
+      setGenerated({ file: result.imageFile, version: result.timestamp || Date.now(), prompt: fullPrompt });
       setImageFailed(false);
     } catch (error: any) { setError(error.message); }
     finally { setBusy(null); }
@@ -70,7 +69,7 @@ function ImageDialog({ scene, selectedBeat, adding, imageStylePrompt, insertAfte
             {source && !imageFailed ? <img src={source} alt={generated ? 'Ảnh vừa tạo' : 'Ảnh hiện tại'} onError={() => setImageFailed(true)} /> : <div className="image-empty"><ImageIcon size={32} /><p>{imageFailed ? 'Không tải được ảnh xem trước.' : 'Ảnh mới sẽ xuất hiện ở đây'}</p><span>Viết mô tả rồi bấm Tạo ảnh mới.</span></div>}
             {busy === 'generate' && <div className="image-progress" role="status"><Loader2 className="animate-spin" /> Đang tạo ảnh…</div>}
           </div>
-          <p className="editor-help">{generated ? 'Kiểm tra ảnh trước khi lưu vào cảnh.' : adding ? 'Ảnh chỉ được chèn sau khi bạn bấm Thêm vào cảnh.' : 'Ảnh hiện tại được giữ cho đến khi bạn lưu ảnh mới.'}</p>
+          {(generated || adding) && <p className="editor-help">{generated ? 'Kiểm tra ảnh trước khi lưu vào cảnh.' : 'Ảnh chỉ được chèn sau khi bạn bấm Thêm vào cảnh.'}</p>}
           <details className="image-narration"><summary>Lời thoại của cảnh</summary><p>{scene.text}</p></details>
         </div>
         <div className="image-dialog-controls">
@@ -83,7 +82,6 @@ function ImageDialog({ scene, selectedBeat, adding, imageStylePrompt, insertAfte
           </div>}
           <div><label htmlFor="image-prompt">Mô tả hình ảnh</label><textarea id="image-prompt" className="input" rows={9} maxLength={20000} value={prompt} disabled={!!busy} onChange={event => setPrompt(event.target.value)} /></div>
           {adding && <details><summary>Phong cách cho ảnh mới</summary><label htmlFor="new-image-style" className="sr-only">Phong cách cho ảnh mới</label><textarea id="new-image-style" className="input" rows={5} value={style} maxLength={10000} disabled={!!busy} onChange={event => setStyle(event.target.value)} /></details>}
-          <details><summary>Chữ cần xuất hiện trong ảnh (tùy chọn)</summary><label htmlFor="image-label" className="sr-only">Chữ trong ảnh</label><input id="image-label" className="input" value={label} disabled={!!busy} onChange={event => setLabel(event.target.value)} /></details>
           {error && <p className="editor-error" role="alert">{error}</p>}
           {changed && <p className="editor-help" role="status">Mô tả đã thay đổi. Hãy tạo lại ảnh trước khi lưu.</p>}
           {generated && !changed && <IconButton label="Tạo ảnh khác" disabled={!!busy} onClick={() => void generate()}><RefreshCw size={17} /></IconButton>}
