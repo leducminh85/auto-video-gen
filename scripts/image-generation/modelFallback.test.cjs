@@ -143,7 +143,7 @@ test('unavailable models are skipped without submitting to a different unverifie
   assert.equal(result.metadata.model, IMAGE_MODELS[2].id);
 });
 
-test('provider switches models in order for RPC and UI quota, resends prompt and releases tabs', async () => {
+test('provider returns quota immediately for local fallback and releases its tab', async () => {
   const browser = await chromium.launch({ headless: true });
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'wevic-model-test-'));
   try {
@@ -175,13 +175,12 @@ test('provider switches models in order for RPC and UI quota, resends prompt and
       selectImageModel: select,
     };
     const result = await provider.generate({ prompt: 'A bird carries a twig.', outputPath: path.join(directory, 'image.png'), requestId: 'fixture', tabId: 1 });
-    assert.equal(result.success, true, JSON.stringify(result));
-    assert.deepEqual(submissions.map(item => item.model), IMAGE_MODELS.map(model => model.name));
+    assert.equal(result.success, false);
+    assert.equal(result.error.code, ERROR_CODES.QUOTA_EXCEEDED);
+    assert.deepEqual(submissions.map(item => item.model), [IMAGE_MODELS[0].name]);
     assert.ok(submissions.every(item => item.prompt === 'A bird carries a twig.'));
-    assert.equal(released, 4);
+    assert.equal(released, 1);
     assert.equal(page.listenerCount('response'), 0);
-    assert.equal(result.metadata.model, IMAGE_MODELS[3].id);
-    assert.ok((await fs.stat(result.imagePath)).size > 5000);
 
     await page.goto('http://studio.test/');
     await page.locator('#models button').filter({ hasText: 'gemini-2.5-flash-image' }).evaluate(element => element.remove());

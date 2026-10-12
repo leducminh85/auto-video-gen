@@ -143,17 +143,7 @@ class ImageGenerationManager {
         } catch (_) {}
       }
 
-      // DEBUG MODE: Disable Flux fallback so user can debug Google AI Studio directly
-      const isFluxDisabled = true;
-      if (isFluxDisabled) {
-        console.log(`   ⛔ [ImageManager] Flux Local đang bị TẮT (chế độ Debug Google AI Studio). Trả về kết quả trực tiếp của Google AI Studio.`);
-        return primaryRes || createErrorResult({
-          provider: primaryProviderName,
-          requestId: reqId,
-          code: ERROR_CODES.GENERATION_FAILED,
-          message: 'Google AI Studio generation did not complete and Flux fallback is disabled.',
-        });
-      }
+      if (primaryProviderName !== PROVIDERS.GOOGLE_AI_STUDIO || primaryRes.error?.code !== ERROR_CODES.QUOTA_EXCEEDED) return primaryRes;
     } catch (primaryErr) {
       console.warn(`   ⚠️ [ImageManager] Primary provider exception:`, primaryErr.message);
       return createErrorResult({
@@ -164,7 +154,6 @@ class ImageGenerationManager {
       });
     }
 
-    // Step 2: Fallback to Secondary Provider (Disabled during debug)
     console.log(`   🔄 [ImageManager] Falling back to ${fallbackProviderName}...`);
     try {
       const fallbackRes = await fallbackProvider.generate({

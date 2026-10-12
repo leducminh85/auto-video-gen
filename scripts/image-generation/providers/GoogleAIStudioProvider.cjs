@@ -74,7 +74,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       tabId = (input.imageIndex % 2 === 0) ? 1 : 2;
     }
     return this.queue.enqueue(
-      () => withModelFallback(model => this._executeGeneration({ ...input, requestId, tabId, model })),
+      () => withModelFallback(model => this._executeGeneration({ ...input, requestId, tabId, model }), { stopOnQuota: true }),
       `Request ${requestId} (Tab ${tabId || 'auto'})`
     );
   }

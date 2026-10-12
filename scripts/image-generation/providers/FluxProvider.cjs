@@ -44,16 +44,6 @@ class FluxProvider extends BaseImageProvider {
    * Generate image via Flux Local
    */
   async generate({ prompt, diegeticLabel, outputPath, requestId }) {
-    if (process.env.ENABLE_FLUX !== 'true') {
-      console.log(`   ⛔ [FluxProvider] Flux local đang bị TẮT để debug Google AI Studio.`);
-      return createErrorResult({
-        provider: this.name,
-        requestId,
-        code: ERROR_CODES.UNAVAILABLE,
-        message: 'Flux local is disabled for Google AI Studio debugging.',
-      });
-    }
-
     const fullPrompt = this.preparePrompt(prompt, { diegeticLabel });
 
     // 1. Try Local Draw Things / SD WebUI Server on Mac M4 Metal (127.0.0.1:7860) if running

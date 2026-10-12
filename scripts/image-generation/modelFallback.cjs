@@ -20,7 +20,7 @@ function selectedModel(text) {
   return IMAGE_MODELS.find(model => [model.name, ...model.aliases].some(alias => alias.toLowerCase() === name));
 }
 
-async function withModelFallback(attempt) {
+async function withModelFallback(attempt, { stopOnQuota = false } = {}) {
   let result;
   const attempts = [];
   for (const model of IMAGE_MODELS) {
@@ -28,6 +28,7 @@ async function withModelFallback(attempt) {
       result = await attempt(model);
       attempts.push({ model: model.name, code: result.error?.code || 'SUCCESS' });
       if (result.success) return { ...result, metadata: { ...result.metadata, model: model.id, modelName: model.name, attempts } };
+      if (stopOnQuota && result.error?.code === ERROR_CODES.QUOTA_EXCEEDED) return result;
       if (![ERROR_CODES.TIMEOUT, ERROR_CODES.SERVICE_ERROR].includes(result.error?.code)) break;
       if (retry === 0) console.warn(`[AI Studio] ${model.name}: ${result.error.message}. Retrying in a fresh chat.`);
     }
