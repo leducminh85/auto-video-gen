@@ -48,11 +48,11 @@ function videoApiPlugin(): Plugin {
             if (req.url === '/api/projects' && req.method === 'GET') result = store.list();
             else if (projectRoute && req.method === 'GET' && !projectRoute[2]) result = store.read(projectRoute[1]);
             else if (projectRoute && req.method === 'DELETE' && !projectRoute[2]) result = await editor.exclusive(() => { store.remove(projectRoute[1]); return { success: true }; });
-            else if (projectRoute && req.method === 'POST') {
+            else if (projectRoute && (req.method === 'POST' || (req.method === 'PATCH' && !projectRoute[2]))) {
               const chunks: Buffer[] = []; let bytes = 0;
               for await (const chunk of req) { bytes += chunk.length; if (bytes > 10 * 1024 * 1024) throw new Error('Dữ liệu quá lớn.'); chunks.push(Buffer.from(chunk)); }
               const input = JSON.parse(Buffer.concat(chunks).toString());
-              result = await editor.exclusive(() => store.save(projectRoute[1], input, !!projectRoute[2]));
+              result = await editor.exclusive(() => req.method === 'PATCH' ? store.rename(projectRoute[1], input.title) : store.save(projectRoute[1], input, !!projectRoute[2]));
             } else { res.statusCode = 405; result = { error: 'Phương thức không hỗ trợ.' }; }
             res.end(JSON.stringify(result));
           } catch (error: any) { res.statusCode = error.status || 400; res.end(JSON.stringify({ error: error.message })); }

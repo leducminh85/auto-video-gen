@@ -134,7 +134,6 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
   if (!selected) return null;
   return <div className="scene-timeline">
     <div className="timeline-tools">
-      <p id="timeline-help">Kéo thân ảnh để đổi vị trí · Kéo mép để chỉnh thời gian</p>
       <label className="timeline-zoom">
         <Search size={16} aria-hidden="true" />
         <Minus size={14} aria-hidden="true" />
@@ -147,7 +146,7 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
     </div>
     <div className="timeline-track-layout">
       <div className="track-labels" aria-hidden="true"><span /><span><Music size={16} /> Audio</span><span><ImageIcon size={16} /> Ảnh</span></div>
-      <div className={`timeline-scroll ${dragging ? 'is-dragging' : ''}`} ref={viewport} tabIndex={0} aria-label="Timeline cảnh, cuộn ngang để xem các ảnh" aria-describedby="timeline-help"
+      <div className={`timeline-scroll ${dragging ? 'is-dragging' : ''}`} ref={viewport} tabIndex={0} aria-label="Timeline cảnh, cuộn ngang để xem các ảnh"
         onPointerMove={event => applyPointer(event.clientX, event.clientY)} onPointerUp={() => finish()} onPointerCancel={() => finish(true)} onLostPointerCapture={() => { if (gesture.current) finish(true); }} onKeyDown={event => { if (event.key === 'Escape' && gesture.current) { event.preventDefault(); finish(true); } }}>
         <div className="timeline-canvas" style={{ width: trackWidth }}>
           <div className="timeline-ruler" onClick={seek}>{ticks.map(frame => <span key={frame} style={{ left: frame * scale }}>{(frame / fps).toFixed(tickSeconds < 1 ? 1 : 0)}s</span>)}<span className="timeline-end" style={{ left: trackWidth }}>{time(scene.duration_in_frames, fps)}</span></div>

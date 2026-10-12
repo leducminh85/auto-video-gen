@@ -55,7 +55,15 @@ function createStore(publicRoot) {
     editor.saveProject(project, directory(id));
     return project;
   }
+  function rename(id, title) {
+    if (typeof title !== 'string' || !title.trim() || title.trim().length > 160) throw new Error('Tên dự án cần từ 1 đến 160 ký tự.');
+    const project = read(id);
+    project.metadata.title = title.trim();
+    project.metadata.updated_at = new Date().toISOString();
+    editor.saveProject(project, directory(id));
+    return project;
+  }
   function remove(id) { read(id); fs.rmSync(directory(id), { recursive: true }); }
-  return { read, create, migrate, list, save, remove };
+  return { read, create, migrate, list, save, rename, remove };
 }
 module.exports = { createStore };
