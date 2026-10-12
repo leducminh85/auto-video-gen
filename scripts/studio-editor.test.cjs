@@ -7,7 +7,8 @@ function wavFixture() {
 }
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
-const production = require('../src/data/scenes.json');
+const production = structuredClone(require('../src/data/scenes.json'));
+production.metadata.project_id = 'fixture';
 
 async function main() {
   const browser = await chromium.launch({ headless: true });
@@ -22,14 +23,14 @@ async function main() {
     await page.route('**/api/**', async route => {
       const url = new URL(route.request().url()).pathname;
       const body = () => route.request().postDataJSON();
-      if (url === '/api/project') {
+      if (url === '/api/projects/fixture') {
         if (route.request().method() === 'POST') {
           if (failSave) return route.fulfill({ status: 500, json: { error: 'Không ghi được dự án thử nghiệm.' } });
           project = body(); project.metadata.render_dirty = true;
         }
         return route.fulfill({ json: project });
       }
-      if (url === '/api/project/render') {
+      if (url === '/api/projects/fixture/render') {
         if (failRender) return route.fulfill({ status: 500, json: { error: 'Ghép thử nghiệm thất bại.' } });
         project = body(); project.metadata.render_dirty = false;
         return route.fulfill({ json: project });
@@ -46,7 +47,7 @@ async function main() {
       }
       throw new Error(`Unexpected API request ${url}`);
     });
-    await page.goto(process.env.STUDIO_URL || 'http://localhost:3000');
+    await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/fixture`);
     const deleteButtons = () => page.getByRole('button', { name: /^Xóa ảnh \d+$/ });
     const startCount = project.scenes[0].beats.length;
     const frames = project.scenes[0].duration_in_frames;
@@ -58,7 +59,7 @@ async function main() {
     assert.equal(await page.getByRole('button', { name: 'Xuất và tải MP4' }).count(), 1);
     await page.reload();
     await page.getByRole('button', { name: 'Thêm ảnh vào cảnh', exact: true }).waitFor();
-    await page.waitForFunction(() => !document.querySelector('[aria-label="Tạo video mới"]').disabled);
+    await page.waitForFunction(() => !document.querySelector('[aria-label="Thêm ảnh vào cảnh"]').disabled);
     assert.equal(await page.locator('.timeline-clip').count(), startCount - 1);
     await page.getByRole('button', { name: 'Thêm ảnh vào cảnh', exact: true }).click();
     await page.getByLabel('Mô tả hình ảnh', { exact: true }).fill('Watercolor bird with a twig');
@@ -69,7 +70,7 @@ async function main() {
     assert.equal(await page.locator('.timeline-clip').count(), startCount);
     assert.equal(project.scenes[0].beats.reduce((sum, beat) => sum + beat.duration_in_frames, 0), frames);
     await page.getByRole('button', { name: 'Hoàn tác', exact: true }).click();
-    await page.waitForFunction(() => document.querySelector('[aria-label="Hoàn tác"]').disabled && !document.querySelector('[aria-label="Tạo video mới"]').disabled);
+    await page.waitForFunction(() => document.querySelector('[aria-label="Hoàn tác"]').disabled && !document.querySelector('[aria-label="Thêm ảnh vào cảnh"]').disabled);
     assert.equal(await page.locator('.timeline-clip').count(), startCount - 1);
     failSave = true;
     const oldCount = await page.locator('.timeline-clip').count();
@@ -86,7 +87,7 @@ async function main() {
     failRender = false;
     await page.getByRole('button', { name: 'Xuất và tải MP4', exact: true }).click();
     await page.getByRole('button', { name: 'Tải MP4', exact: true }).waitFor();
-    await page.getByRole('button', { name: 'Tạo video mới', exact: true }).click();
+    await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/new`);
     await page.locator('.style-settings summary').click();
     assert.ok((await page.getByLabel('Prompt phong cách', { exact: true }).inputValue()).length > 0);
     await page.getByLabel('Prompt phong cách', { exact: true }).fill('Watercolor on paper');
@@ -108,7 +109,7 @@ async function main() {
     assert.equal(submitted.audioBoundaries, undefined);
     assert.equal(submitted.scenes.length, 2);
     assert.equal(submitted.imageStylePrompt, 'Watercolor on paper');
-    await page.getByRole('button', { name: 'Tạo video mới', exact: true }).click();
+    await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/new`);
     await page.locator('.style-settings summary').click();
     assert.equal(await page.getByLabel('Prompt phong cách', { exact: true }).inputValue(), 'Watercolor on paper');
     await page.getByRole('button', { name: 'Khôi phục phong cách mặc định' }).click();

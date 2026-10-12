@@ -25,3 +25,5 @@ scratch/
 
 # Python audio alignment
 __pycache__/
+
+public/projects/

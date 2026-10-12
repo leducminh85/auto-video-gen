@@ -10,7 +10,6 @@ import { MainVideo } from './remotion/MainVideo';
 import scenesDataJson from './data/scenes.json';
 import { ProductionData, SceneData, VisualBeat, VideoMetadata } from './types/scenes';
 import { buildMultiBeatScenes } from './utils/stickmanArtGenerator';
-import { CreatorPanel } from './components/CreatorPanel';
 import { RegenerateImageModal } from './components/RegenerateImageModal';
 import { insertBeat, removeBeat } from './utils/beatEditing';
 import { SceneTimeline } from './components/SceneTimeline';
@@ -20,7 +19,7 @@ import { defaultPrompt } from './config/imageStyle.json';
 const initialProductionData = scenesDataJson as ProductionData;
 const initialMultiBeatScenes = buildMultiBeatScenes(initialProductionData.scenes);
 
-export default function App() {
+export default function App({ projectId }: { projectId: string }) {
   const [activeTab, setActiveTab] = useState<'preview' | 'data'>('preview');
   const [scenes, setScenes] = useState<SceneData[]>(initialMultiBeatScenes);
   const playerInputProps = useMemo(() => ({ scenes }), [scenes]);
@@ -33,7 +32,6 @@ export default function App() {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [copiedJson, setCopiedJson] = useState<boolean>(false);
-  const [showCreatorDrawer, setShowCreatorDrawer] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [projectBusy, setProjectBusy] = useState(false);
   const [projectLoading, setProjectLoading] = useState(true);
@@ -44,7 +42,7 @@ export default function App() {
   const [undoProject, setUndoProject] = useState<ProductionData | null>(null);
   useEffect(() => {
     let active = true;
-    fetch('/api/project').then(async response => {
+    fetch(`/api/projects/${projectId}`).then(async response => {
       if (!response.ok) throw new Error('Không đọc được dự án đã lưu.');
       return response.json();
     }).then(project => {
@@ -115,7 +113,7 @@ export default function App() {
   playbackShortcut.current = togglePlay;
   useEffect(() => {
     const handleSpace = (event: KeyboardEvent) => {
-      if (showCreatorDrawer || regenerateModalOpen) return;
+      if (regenerateModalOpen || (event.target instanceof HTMLElement && event.target.closest('input, textarea, select, button, a, [contenteditable]'))) return;
       if ((event.code !== 'Space' && event.key !== ' ') || event.isComposing) return;
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -127,7 +125,7 @@ export default function App() {
       window.removeEventListener('keydown', handleSpace, true);
       window.removeEventListener('keyup', handleSpace, true);
     };
-  }, [showCreatorDrawer, regenerateModalOpen]);
+  }, [regenerateModalOpen]);
   useEffect(() => {
     if (activeTab === 'preview' && pendingPlayback.current && remotionPlayerRef.current) {
       pendingPlayback.current = false;
@@ -150,7 +148,7 @@ export default function App() {
     setIsPlaying(false);
     const restoreFrame = remotionPlayerRef.current?.getCurrentFrame() || selectedScene.start_frame;
     try {
-      const response = await fetch(render ? '/api/project/render' : '/api/project', {
+      const response = await fetch(`/api/projects/${projectId}${render ? '/render' : ''}`,  {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next),
       });
       const saved = await response.json();
@@ -172,7 +170,7 @@ export default function App() {
     try {
       if (metadata.render_dirty && !await persistProject({ scenes, metadata }, true)) return;
       const link = document.createElement('a');
-      link.href = `/final-video.mp4?t=${Date.now()}`;
+      link.href = `/projects/${projectId}/final-video.mp4?t=${Date.now()}`;
       link.download = `${(metadata.title || 'video').replace(/[^\p{L}\p{N} -]/gu, '')}.mp4`;
       document.body.appendChild(link); link.click(); link.remove();
     } finally { setExporting(false); }
@@ -221,28 +219,6 @@ export default function App() {
     if (!await persistProject({ metadata, scenes: next })) throw new Error('Không lưu được ảnh. Vui lòng thử áp dụng lại.');
   };
 
-  const handleGenerateNewVideo = (newScenes: SceneData[], newMetadata: VideoMetadata) => {
-    setUndoProject(null);
-    setProjectError(null);
-    setScenes(newScenes);
-    setMetadata(newMetadata);
-    setSelectedSceneId(newScenes[0]?.id || 1);
-    setActiveTab('preview');
-    setShowCreatorDrawer(false);
-    setVideoTimestamp(Date.now());
-
-    const totalImages = newScenes.reduce((acc, sc) => acc + (sc.beats?.length || 1), 0);
-    showToast(`✓ Video mới: ${newScenes.length} cảnh, ${totalImages} hình ảnh`, 6000);
-
-    setTimeout(() => {
-      if (remotionPlayerRef.current) {
-        remotionPlayerRef.current.seekTo(0);
-        remotionPlayerRef.current.play();
-        setIsPlaying(true);
-      }
-      playerSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 150);
-  };
 
   const copyJsonToClipboard = async () => {
     const exportData: ProductionData = { metadata, scenes };
@@ -256,20 +232,21 @@ export default function App() {
   const totalDuration = parseFloat(metadata.total_duration_in_seconds);
   const durationDisplay = `${Math.floor(totalDuration / 60)}:${String(Math.floor(totalDuration % 60)).padStart(2, '0')}`;
 
+  if (projectLoading || (projectError && !metadata.project_id)) return <main className="dashboard"><a href="/">Về dự án</a><p role={projectError ? 'alert' : 'status'}>{projectError || 'Đang mở dự án…'}</p></main>;
   return (
     <div className="studio-shell">
-      <header className="studio-topbar" inert={showCreatorDrawer || regenerateModalOpen}>
+      <header className="studio-topbar" inert={regenerateModalOpen}>
         <div className="studio-identity"><img src="/favicon.svg" alt="" width={34} height={34} /><div><h1>Wevic Video Studio</h1><p>{metadata.title}</p></div></div>
         <div className="toolbar-actions">
           <span className="studio-project-summary">{scenes.length} cảnh · {totalImagesCount} ảnh · {durationDisplay}</span>
-          <IconButton label="Tạo video mới" disabled={projectBusy || projectLoading} onClick={() => setShowCreatorDrawer(true)}><PlusCircle size={20} /></IconButton>
+          <a className="dashboard-back" href="/">Dự án</a>
           <IconButton label={exporting ? 'Đang xuất MP4' : metadata.render_dirty ? 'Xuất và tải MP4' : 'Tải MP4'} className="icon-accent" disabled={projectBusy || projectLoading || exporting} onClick={() => void downloadVideo()}>{exporting ? <Loader2 className="animate-spin" size={20} /> : <Download size={20} />}</IconButton>
         </div>
       </header>
-      {(projectError || projectLoading || metadata.render_dirty) && <div className="project-notice" inert={showCreatorDrawer || regenerateModalOpen} role={projectError ? 'alert' : 'status'}>
+      {(projectError || projectLoading || metadata.render_dirty) && <div className="project-notice" inert={regenerateModalOpen} role={projectError ? 'alert' : 'status'}>
         {projectError || (projectLoading ? 'Đang mở dự án…' : 'Đã lưu chỉnh sửa. Xuất MP4 để tải video với timeline mới.')}
       </div>}
-      <main className="studio-workspace" inert={showCreatorDrawer || regenerateModalOpen}>
+      <main className="studio-workspace" inert={regenerateModalOpen}>
         <section ref={playerSectionRef} className="studio-section preview-section" aria-labelledby="preview-title">
           <div className="studio-section-heading"><h2 id="preview-title"><span>01</span> Xem trước</h2><div className="toolbar-actions">
             <IconButton label="Xem trước" aria-pressed={activeTab === 'preview'} onClick={() => setActiveTab('preview')}><Eye size={17} /></IconButton>
@@ -304,7 +281,6 @@ export default function App() {
             onRegenerate={beat => handleOpenRegenerate(selectedScene, beat)} onDelete={handleDeleteBeat} />
         </section>
       </main>
-      {showCreatorDrawer && <div className="creator-fullscreen-overlay"><CreatorPanel currentScenes={scenes} currentMetadata={metadata} onGenerateNewVideo={handleGenerateNewVideo} onCancel={() => setShowCreatorDrawer(false)} /></div>}
       {sceneToRegenerate && <RegenerateImageModal isOpen={regenerateModalOpen} onClose={() => setRegenerateModalOpen(false)} scene={sceneToRegenerate} selectedBeat={beatToRegenerate} onSaveImage={handleSaveRegeneratedImage} adding={addingBeat} imageStylePrompt={metadata.image_style_prompt} insertAfterId={insertAfterId} onInsertAfterChange={setInsertAfterId} />}
       {toastMessage && <div className="toast toast-success" role="status"><CheckCircle2 size={16} /><span>{toastMessage}</span></div>}
     </div>

@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
-const production = require('../src/data/scenes.json');
+const production = structuredClone(require('../src/data/scenes.json'));
+production.metadata.project_id = 'fixture';
 
 async function main() {
   const browser = await chromium.launch({ headless: true });
@@ -10,7 +11,7 @@ async function main() {
     page.on('pageerror', error => errors.push(error.message));
     await page.route('**/api/image-provider/status', route => route.fulfill({ json: { preferredProvider: 'google_ai_studio' } }));
     let currentProject = structuredClone(production);
-    await page.route('**/api/project', route => {
+    await page.route('**/api/projects/fixture', route => {
       if (route.request().method() === 'POST') currentProject = route.request().postDataJSON();
       return route.fulfill({ json: currentProject });
     });
@@ -23,12 +24,12 @@ async function main() {
         : route.fulfill({ contentType: 'application/x-ndjson', body: JSON.stringify({ type: 'complete', result: production }) + '\n' });
     });
     await page.route('**/api/regenerate-beat', route => route.fulfill({ json: { success: true, imageFile: production.scenes[0].beats[0].image_file, timestamp: Date.now() } }));
-    await page.goto(process.env.STUDIO_URL || 'http://localhost:3000');
+    await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/fixture`);
     assert.equal(await page.title(), 'Wevic Video Studio');
     assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'), '/favicon.svg');
-    const openCreator = () => page.getByRole('button', { name: 'Tạo video mới', exact: true }).click();
+    const openCreator = () => page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/new`);
     await openCreator();
-    assert.ok((await page.getByLabel('Nội dung lời thoại').inputValue()).length > 0);
+    assert.equal(await page.getByLabel('Nội dung lời thoại').inputValue(), '');
     await page.getByLabel('Tên video', { exact: true }).fill('Kiểm tra bản nháp');
     await page.getByLabel('Nội dung lời thoại').fill('Một con chim mang cành cây về tổ. Nó xây tổ để bảo vệ chim non.');
     await page.getByRole('button', { name: /Giọng đọc và tốc độ/ }).click();
@@ -57,6 +58,7 @@ async function main() {
     await page.waitForFunction(() => document.querySelector('#script-content').value.includes('nhập từ tệp'));
     assert.match(await page.getByLabel('Nội dung lời thoại').inputValue(), /nhập từ tệp/);
     await page.keyboard.press('Escape');
+    await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/fixture`);
     for (const name of ['JSON', 'Xem trước']) {
       await page.getByRole('button', { name, exact: true }).click();
     }
@@ -80,7 +82,7 @@ async function main() {
       await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => !!document.activeElement.closest('[role="dialog"]')), true);
       await page.keyboard.press('Escape');
-      assert.match(await page.locator(':focus').getAttribute('aria-label'), /Tạo video mới/);
+      await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/fixture`);
       await page.getByRole('button', { name: 'Tạo lại ảnh', exact: true }).first().click();
       assert.equal(await page.getByRole('dialog').evaluate(element => [...element.querySelectorAll('button, input, textarea')].some(control => control.getBoundingClientRect().right > innerWidth + 1)), false);
       await page.keyboard.press('Escape');

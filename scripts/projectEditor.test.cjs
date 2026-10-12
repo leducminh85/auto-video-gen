@@ -46,6 +46,11 @@ test('import, slice, render and re-render preserve audio and exact frame count',
     assert.equal(edited.scenes[0].image_file, 'blue.png');
     assert.equal(Number(videoInfo().streams.find(s => s.codec_type === 'video').nb_frames), 30);
     const before = fs.readFileSync(path.join(root, 'final-video.mp4'));
+    const projectRoot = path.join(root, 'project-test');
+    fs.mkdirSync(projectRoot);
+    await editor.renderProject(edited, projectRoot, root);
+    assert.ok(fs.statSync(path.join(projectRoot, 'final-video.mp4')).size > 0);
+    assert.deepEqual(fs.readFileSync(path.join(root, 'final-video.mp4')), before);
     edited.scenes[0].beats[0].image_file = 'missing.png';
     await assert.rejects(editor.renderProject(edited, root), /Không tìm thấy/);
     assert.deepEqual(fs.readFileSync(path.join(root, 'final-video.mp4')), before);

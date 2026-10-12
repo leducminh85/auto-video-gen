@@ -111,13 +111,13 @@ function allocateAudioFrames(scenes, totalFrames, boundaries) {
 async function sliceAudio(source, target, startFrames, frames) {
   await run(binary('ffmpeg'), ['-v', 'error', '-y', '-i', source, '-ss', String(startFrames / 30), '-t', String(frames / 30), '-ac', '2', '-ar', '48000', target]);
 }
-async function renderProject(input, root) {
+async function renderProject(input, root, assetRoot = root) {
   const project = normalizeProject(input);
   const { fps, width, height } = project.metadata;
   if (![width, height].every(n => Number.isInteger(n) && n >= 2 && n <= 3840 && n % 2 === 0)) throw new Error('Kích thước video không hợp lệ.');
   for (const scene of project.scenes) {
-    asset(root, 'audio', scene.audio_file);
-    scene.beats.forEach(b => asset(root, 'images', b.image_file));
+    asset(assetRoot, 'audio', scene.audio_file);
+    scene.beats.forEach(b => asset(assetRoot, 'images', b.image_file));
   }
   const temp = fs.mkdtempSync(path.join(root, 'render-'));
   const ffmpeg = args => run(binary('ffmpeg'), ['-v', 'error', '-y', ...args], { maxBuffer: 1024 * 1024 });
@@ -127,13 +127,13 @@ async function renderProject(input, root) {
       const beats = [];
       for (const [i, beat] of scene.beats.entries()) {
         const file = path.join(temp, `s${sceneIndex}b${i}.mp4`);
-        await ffmpeg(['-loop', '1', '-i', asset(root, 'images', beat.image_file), '-vf', `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:white,setsar=1,zoompan=z='min(zoom+0.0003,1.015)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${width}x${height}:fps=${fps}`, '-frames:v', String(beat.duration_in_frames), '-r', String(fps), '-c:v', 'libx264', '-preset', 'fast', '-pix_fmt', 'yuv420p', '-an', file]);
+        await ffmpeg(['-loop', '1', '-i', asset(assetRoot, 'images', beat.image_file), '-vf', `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:white,setsar=1,zoompan=z='min(zoom+0.0003,1.015)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${width}x${height}:fps=${fps}`, '-frames:v', String(beat.duration_in_frames), '-r', String(fps), '-c:v', 'libx264', '-preset', 'fast', '-pix_fmt', 'yuv420p', '-an', file]);
         beats.push(file);
       }
       const list = path.join(temp, `s${sceneIndex}.txt`);
       fs.writeFileSync(list, beats.map(file => `file '${path.basename(file)}'`).join('\n'));
       const clip = path.join(temp, `scene${sceneIndex}.mp4`);
-      await ffmpeg(['-f', 'concat', '-safe', '0', '-i', list, '-i', asset(root, 'audio', scene.audio_file), '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-af', 'apad', '-c:a', 'aac', '-ar', '48000', '-ac', '2', '-t', String(scene.duration_in_frames / fps), clip]);
+      await ffmpeg(['-f', 'concat', '-safe', '0', '-i', list, '-i', asset(assetRoot, 'audio', scene.audio_file), '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-af', 'apad', '-c:a', 'aac', '-ar', '48000', '-ac', '2', '-t', String(scene.duration_in_frames / fps), clip]);
       clips.push(clip);
     }
     const list = path.join(temp, 'all.txt');

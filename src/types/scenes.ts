@@ -221,6 +221,8 @@ export interface SceneData {
 }
 
 export interface VideoMetadata {
+  project_id?: string;
+  updated_at?: string;
   title: string;
   subtitle: string;
   fps: number;

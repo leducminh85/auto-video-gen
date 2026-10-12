@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
-const production = require('../src/data/scenes.json');
+const production = structuredClone(require('../src/data/scenes.json'));
+production.metadata.project_id = 'fixture';
 const { normalizeProject } = require('./projectEditor.cjs');
 function audioFixture() {
   const wav = Buffer.alloc(44 + 160000);
@@ -27,7 +28,7 @@ async function main() {
     await page.route('**/audio/timeline.wav*', route => route.fulfill({ contentType: 'audio/wav', body: audioFixture() }));
     await page.route('**/api/**', route => {
       const url = new URL(route.request().url()).pathname;
-      if (url === '/api/project') {
+      if (url === '/api/projects/fixture') {
         if (route.request().method() === 'POST') {
           saves++;
           if (failSave) return route.fulfill({ status: 500, json: { error: 'Không lưu được timeline thử nghiệm.' } });
@@ -39,8 +40,8 @@ async function main() {
       throw new Error(`Unexpected API ${url}`);
     });
     const durations = () => project.scenes[0].beats.map(b => b.duration_in_frames);
-    const saved = async count => { await page.waitForFunction(count => Number(document.querySelectorAll('.timeline-clip').length) === count, project.scenes[0].beats.length); await page.getByRole('button', { name: 'Tạo video mới', exact: true }).waitFor({ state: 'visible' }); await page.waitForFunction(() => !document.querySelector('[aria-label="Tạo video mới"]').disabled); assert.equal(saves, count); };
-    await page.goto(process.env.STUDIO_URL || 'http://localhost:3000');
+    const saved = async count => { await page.waitForFunction(count => Number(document.querySelectorAll('.timeline-clip').length) === count, project.scenes[0].beats.length); await page.waitForFunction(() => !document.querySelector('[aria-label="Thêm ảnh vào cảnh"]').disabled); assert.equal(saves, count); };
+    await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/fixture`);
     await page.locator('.audio-waveform[data-status="ready"]').waitFor();
     assert.equal(await page.locator('.studio-workspace > section').count(), 3);
     const unnamed = await page.locator('.studio-workspace .icon-button, .studio-topbar .icon-button').evaluateAll(buttons => buttons.filter(b => !b.getAttribute('aria-label') || !b.getAttribute('title') || b.textContent.trim()).length);

@@ -46,3 +46,13 @@ node scripts/previewAIPlan.cjs public/scenes.json /tmp/ai-plan-review.json
 ```
 
 This preview estimates per-scene timing. Production checks the actual speech timestamps. A completed preview report has `complete: true`; interrupted runs may contain only the scenes reviewed so far.
+
+## Project pages
+
+- `/`: project dashboard with thumbnails, creation and confirmed deletion.
+- `/project/new`: the video creation form. Successful generation opens the new project.
+- `/project/:id`: video editor, with project-scoped saves and MP4 export.
+
+Project JSON and exports live in `public/projects/<id>/`. The existing video is migrated once on first use. Deleting a project removes its JSON and MP4; shared source images and audio are retained. These generated project files are ignored by Git. `/api/projects` lists projects; `/api/projects/:id` reads, saves or deletes one, and `/api/projects/:id/render` exports it.
+
+Run `node --test scripts/projectStore.test.cjs scripts/projectEditor.test.cjs` for storage and render isolation, and `node scripts/project-pages.test.cjs` against the dev server on port 3000 for dashboard navigation and deletion checks. The browser test creates and deletes its own test project.

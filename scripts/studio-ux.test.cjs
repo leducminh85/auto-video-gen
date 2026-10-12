@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
-const production = require('../src/data/scenes.json');
+const production = structuredClone(require('../src/data/scenes.json'));
+production.metadata.project_id = 'fixture';
 function audioFixture() {
   const wav = Buffer.alloc(44 + 320000);
   wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8);
@@ -30,14 +31,15 @@ async function main() {
     await page.route('**/final-video.mp4?*', route => route.fulfill({ contentType: 'video/mp4', body: Buffer.from('download fixture') }));
     await page.route('**/api/**', route => {
       const url = new URL(route.request().url()).pathname;
-      if (url === '/api/project') {
+      if (url === '/api/projects') return route.fulfill({ json: [] });
+      if (url === '/api/projects/fixture') {
         if (route.request().method() === 'POST') {
           if (failSave) return route.fulfill({ status: 500, json: { error: 'Không lưu được. Thử lại.' } });
           project = route.request().postDataJSON(); project.metadata.render_dirty = true;
         }
         return route.fulfill({ json: project });
       }
-      if (url === '/api/project/render') { renders++; project = route.request().postDataJSON(); project.metadata.render_dirty = false; return route.fulfill({ json: project }); }
+      if (url === '/api/projects/fixture/render') { renders++; project = route.request().postDataJSON(); project.metadata.render_dirty = false; return route.fulfill({ json: project }); }
       if (url === '/api/audio/import') return route.fulfill({ json: { file: 'import_ux.wav', duration: 20 } });
       if (url === '/api/image-provider/status') return route.fulfill({ json: { preferredProvider: 'google_ai_studio' } });
       if (url === '/api/regenerate-beat') {
@@ -46,8 +48,8 @@ async function main() {
       }
       throw new Error(`Unexpected API ${url}`);
     });
-    const open = () => page.getByRole('button', { name: 'Tạo video mới', exact: true }).click();
-    await page.goto(process.env.STUDIO_URL || 'http://localhost:3000');
+    const open = () => page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/new`);
+    await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/fixture`);
     await open();
     const script = await page.locator('#script-content').boundingBox();
     assert.ok(script.y < 350 && script.x < 300, 'Script is visible on opening, in the main column');
@@ -64,6 +66,7 @@ async function main() {
     assert.equal(await page.getByLabel('Kịch bản tham khảo (không bắt buộc)').inputValue(), 'A bird carries a twig.\n\nIt builds a nest.');
     await page.screenshot({ path: '/tmp/ux-audio-desktop.png' });
     await page.keyboard.press('Escape');
+    await page.goto(`${process.env.STUDIO_URL || 'http://localhost:3000'}/project/fixture`);
     await page.getByRole('button', { name: 'Thêm ảnh vào cảnh', exact: true }).click();
     assert.equal(await page.getByLabel('Mô tả hình ảnh', { exact: true }).inputValue(), source.text);
     await page.getByLabel('Chèn sau ảnh', { exact: true }).selectOption('fixture-1');
