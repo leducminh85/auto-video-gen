@@ -149,7 +149,7 @@ export function SceneTimeline({ scene, fps, busy, playhead, selectedId, onSelect
       <div className={`timeline-scroll ${dragging ? 'is-dragging' : ''}`} ref={viewport} tabIndex={0} aria-label="Timeline cảnh, cuộn ngang để xem các ảnh"
         onPointerMove={event => applyPointer(event.clientX, event.clientY)} onPointerUp={() => finish()} onPointerCancel={() => finish(true)} onLostPointerCapture={() => { if (gesture.current) finish(true); }} onKeyDown={event => { if (event.key === 'Escape' && gesture.current) { event.preventDefault(); finish(true); } }}>
         <div className="timeline-canvas" style={{ width: trackWidth }}>
-          <div className="timeline-ruler" onClick={seek}>{ticks.map(frame => <span key={frame} style={{ left: frame * scale }}>{(frame / fps).toFixed(tickSeconds < 1 ? 1 : 0)}s</span>)}<span className="timeline-end" style={{ left: trackWidth }}>{time(scene.duration_in_frames, fps)}</span></div>
+          <div className="timeline-ruler" onClick={seek}>{ticks.map(frame => <span key={frame} style={{ left: frame * scale }}>{(frame / fps).toFixed(tickSeconds < 1 ? 1 : 0)}s</span>)}</div>
           <div className="audio-track" onClick={seek}><AudioWaveform file={scene.audio_file} version={scene.audio_version} /><span className="audio-track-caption">Audio · {time(scene.duration_in_frames, fps)} · Giữ nguyên</span></div>
           <div className="image-track">
             {beats.map((beat, index) => {

@@ -1,3 +1,4 @@
+import { StudioBrand } from './StudioBrand';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic,
@@ -700,17 +701,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       {/* Studio Top Navigation Bar */}
       <header className="creator-header" inert={isCreating}>
         <div className="creator-header-left">
-          <button
-            type="button"
-            className="creator-back-btn"
-            onClick={onCancel}
-            disabled={isCreating || audioUploading}
-            aria-label="Quay lại danh sách dự án"
-          >
-            <ArrowLeft size={16} aria-hidden="true" />
-            <span>Dự án</span>
-          </button>
-          <div className="creator-header-divider" aria-hidden="true" />
+          <StudioBrand />
           <div className="creator-header-titles">
             <h1 id="creator-title" className="creator-title">
               Tạo video mới

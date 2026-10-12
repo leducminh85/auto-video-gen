@@ -1,3 +1,4 @@
+import { StudioBrand } from './components/StudioBrand';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -5,7 +6,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
-import { Play, Pause, Download, CheckCircle2, Code2, Eye, Copy, Check, PlusCircle, Undo2, Loader2 } from 'lucide-react';
+import { Download, CheckCircle2, Code2, Eye, Copy, Check, PlusCircle, Undo2, Loader2 } from 'lucide-react';
 import { MainVideo } from './remotion/MainVideo';
 import scenesDataJson from './data/scenes.json';
 import { ProductionData, SceneData, VisualBeat, VideoMetadata } from './types/scenes';
@@ -236,15 +237,15 @@ export default function App({ projectId }: { projectId: string }) {
   return (
     <div className="studio-shell">
       <header className="studio-topbar" inert={regenerateModalOpen}>
-        <div className="studio-identity"><img src="/favicon.svg" alt="" width={34} height={34} /><div><h1>Wevic Video Studio</h1><p title={metadata.title}>{metadata.title}</p></div></div>
+        <div className="header-identity"><StudioBrand /><h1 className="header-page-title" title={metadata.title}>{metadata.title}</h1></div>
         <div className="toolbar-actions">
           <span className="studio-project-summary">{scenes.length} cảnh · {totalImagesCount} ảnh · {durationDisplay}</span>
           <a className="dashboard-back" href="/">Dự án</a>
           <IconButton label={exporting ? 'Đang xuất MP4' : metadata.render_dirty ? 'Xuất và tải MP4' : 'Tải MP4'} className="icon-accent" disabled={projectBusy || projectLoading || exporting} onClick={() => void downloadVideo()}>{exporting ? <Loader2 className="animate-spin" size={20} /> : <Download size={20} />}</IconButton>
         </div>
       </header>
-      {(projectError || projectLoading || metadata.render_dirty) && <div className="project-notice" inert={regenerateModalOpen} role={projectError ? 'alert' : 'status'}>
-        {projectError || (projectLoading ? 'Đang mở dự án…' : 'Đã lưu chỉnh sửa. Xuất MP4 để tải video với timeline mới.')}
+      {(projectError || projectLoading) && <div className="project-notice" inert={regenerateModalOpen} role={projectError ? 'alert' : 'status'}>
+        {projectError || 'Đang mở dự án…'}
       </div>}
       <main className="studio-workspace" inert={regenerateModalOpen}>
         <section ref={playerSectionRef} className="studio-section preview-section" aria-labelledby="preview-title">
@@ -270,7 +271,6 @@ export default function App({ projectId }: { projectId: string }) {
           <div className="studio-section-heading timeline-heading">
             <div><h2 id="timeline-title">Chi tiết cảnh</h2><p>Cảnh {selectedScene.id} · {selectedSceneBeats.length} ảnh · {selectedScene.duration_in_seconds.toFixed(2)} giây</p></div>
             <div className="toolbar-actions">
-              <IconButton label={isPlaying ? 'Tạm dừng' : 'Phát'} onClick={togglePlay}>{isPlaying ? <Pause size={18} /> : <Play size={18} />}</IconButton>
               <IconButton label="Thêm ảnh vào cảnh" disabled={projectBusy || projectLoading || !selectedSceneBeats.some(beat => beat.duration_in_frames >= 2)} onClick={handleAddBeat}><PlusCircle size={18} /></IconButton>
               <IconButton label="Hoàn tác" disabled={!undoProject || projectBusy} onClick={async () => { if (undoProject && await persistProject(undoProject, false, false)) setUndoProject(null); }}><Undo2 size={18} /></IconButton>
             </div>

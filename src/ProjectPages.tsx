@@ -1,3 +1,4 @@
+import { StudioBrand } from './components/StudioBrand';
 import { useEffect, useRef, useState } from 'react';
 import {
   MoreVertical,
@@ -269,15 +270,7 @@ function Dashboard() {
         {/* Studio Modern Navigation Bar */}
         <header className="library-topbar">
           <div className="topbar-container">
-            <a href="/" className="workspace-brand" aria-label="Wevic Video Studio">
-              <div className="brand-logo-mark">
-                <img src="/favicon.svg" alt="" width="24" height="24" />
-              </div>
-              <div className="brand-titles">
-                <span className="brand-name">Wevic</span>
-                <span className="brand-tag">Studio</span>
-              </div>
-            </a>
+            <StudioBrand />
 
 
           </div>

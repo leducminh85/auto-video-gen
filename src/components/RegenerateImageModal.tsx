@@ -21,14 +21,14 @@ export const RegenerateImageModal: React.FC<RegenerateImageModalProps> = props =
   props.isOpen ? <ImageDialog key={`${props.scene.id}:${props.selectedBeat?.id}`} {...props} /> : null;
 
 function ImageDialog({ scene, selectedBeat, adding, imageStylePrompt, insertAfterId, onInsertAfterChange, onClose, onSaveImage }: RegenerateImageModalProps) {
-  const initialPrompt = adding ? selectedBeat?.caption || scene.text : selectedBeat?.plan?.imageGenerationPrompt || selectedBeat?.prompt || scene.prompt;
+  const initialPrompt = adding ? '' : selectedBeat?.plan?.imageGenerationPrompt || selectedBeat?.prompt || scene.prompt;
   const [style, setStyle] = useState(imageStylePrompt || defaultPrompt);
   const [prompt, setPrompt] = useState(initialPrompt);
   const [generated, setGenerated] = useState<{ file: string; version: number; prompt: string } | null>(null);
   const [busy, setBusy] = useState<'generate' | 'save' | null>(null);
   const [error, setError] = useState('');
   const dialogRef = useDialog(onClose, !busy);
-  const fullPrompt = adding ? `${style.trim()}\n\nScene content: ${prompt.trim()}` : prompt.trim();
+  const fullPrompt = adding ? `${style.trim()}\n\nNarration for context (do not render as text): ${scene.text}\n\nScene content: ${prompt.trim()}` : prompt.trim();
   const changed = generated && (fullPrompt !== generated.prompt);
   const source = generated ? `/images/${generated.file}?v=${generated.version}` : !adding ? `/images/${selectedBeat?.image_file || scene.image_file}?v=${selectedBeat?.image_version || scene.image_version || ''}` : null;
   const [imageFailed, setImageFailed] = useState(false);
@@ -66,10 +66,10 @@ function ImageDialog({ scene, selectedBeat, adding, imageStylePrompt, insertAfte
       <div className="image-dialog-body">
         <div className="image-dialog-preview">
           <div className="image-preview-frame">
-            {source && !imageFailed ? <img src={source} alt={generated ? 'Ảnh vừa tạo' : 'Ảnh hiện tại'} onError={() => setImageFailed(true)} /> : <div className="image-empty"><ImageIcon size={32} /><p>{imageFailed ? 'Không tải được ảnh xem trước.' : 'Ảnh mới sẽ xuất hiện ở đây'}</p><span>Viết mô tả rồi bấm Tạo ảnh mới.</span></div>}
+            {source && !imageFailed ? <img src={source} alt={generated ? 'Ảnh vừa tạo' : 'Ảnh hiện tại'} onError={() => setImageFailed(true)} /> : <div className="image-empty"><ImageIcon size={32} /><p>{imageFailed ? 'Không tải được ảnh xem trước.' : 'Ảnh mới sẽ xuất hiện ở đây'}</p><span>{busy === 'generate' ? 'Đang xử lý mô tả của bạn.' : 'Xem trước ảnh trước khi lưu vào cảnh.'}</span></div>}
             {busy === 'generate' && <div className="image-progress" role="status"><Loader2 className="animate-spin" /> Đang tạo ảnh…</div>}
           </div>
-          {(generated || adding) && <p className="editor-help">{generated ? 'Kiểm tra ảnh trước khi lưu vào cảnh.' : 'Ảnh chỉ được chèn sau khi bạn bấm Thêm vào cảnh.'}</p>}
+
           <details className="image-narration"><summary>Lời thoại của cảnh</summary><p>{scene.text}</p></details>
         </div>
         <div className="image-dialog-controls">
@@ -80,7 +80,7 @@ function ImageDialog({ scene, selectedBeat, adding, imageStylePrompt, insertAfte
             </select>
             <p className="editor-help">{anchor ? `Chia ${anchor.duration_in_seconds.toFixed(1)} giây của ảnh ${anchor.display_number ?? anchor.sub_index} cho hai ảnh. Các ảnh khác và audio giữ nguyên.` : 'Chọn ảnh để chia thời gian hiển thị.'}</p>
           </div>}
-          <div><label htmlFor="image-prompt">Mô tả hình ảnh</label><textarea id="image-prompt" className="input" rows={9} maxLength={20000} value={prompt} disabled={!!busy} onChange={event => setPrompt(event.target.value)} /></div>
+          <div><label htmlFor="image-prompt">Mô tả hình ảnh</label><textarea id="image-prompt" className="input" rows={6} placeholder="Ví dụ: Góc nhìn từ cửa vào quán net, các dãy máy tính và một người đang chơi game." maxLength={20000} value={prompt} disabled={!!busy} onChange={event => setPrompt(event.target.value)} /></div>
           {adding && <details><summary>Phong cách cho ảnh mới</summary><label htmlFor="new-image-style" className="sr-only">Phong cách cho ảnh mới</label><textarea id="new-image-style" className="input" rows={5} value={style} maxLength={10000} disabled={!!busy} onChange={event => setStyle(event.target.value)} /></details>}
           {error && <p className="editor-error" role="alert">{error}</p>}
           {changed && <p className="editor-help" role="status">Mô tả đã thay đổi. Hãy tạo lại ảnh trước khi lưu.</p>}
@@ -88,7 +88,7 @@ function ImageDialog({ scene, selectedBeat, adding, imageStylePrompt, insertAfte
         </div>
       </div>
       <footer className="image-dialog-footer">
-        <IconButton label="Hủy" disabled={!!busy} onClick={onClose}><X size={17} /></IconButton>
+        <button type="button" className="btn btn-secondary" disabled={!!busy} onClick={onClose}>Hủy</button>
         {!generated || changed ? <button className="btn btn-primary" disabled={!!busy || !prompt.trim()} onClick={() => void generate()}>{busy === 'generate' ? 'Đang tạo ảnh…' : changed ? 'Tạo lại theo mô tả' : 'Tạo ảnh mới'}</button> : <button className="btn btn-primary" disabled={!!busy} onClick={() => void save()}>{busy === 'save' ? 'Đang lưu…' : adding ? 'Thêm vào cảnh' : 'Lưu ảnh vào cảnh'}</button>}
       </footer>
     </div>
