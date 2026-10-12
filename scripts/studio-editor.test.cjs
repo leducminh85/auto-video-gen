@@ -46,7 +46,7 @@ async function main() {
       }
       throw new Error(`Unexpected API request ${url}`);
     });
-    await page.goto(process.env.STUDIO_URL || 'http://localhost:3001');
+    await page.goto(process.env.STUDIO_URL || 'http://localhost:3000');
     const deleteButtons = () => page.getByRole('button', { name: /^Xóa ảnh \d+$/ });
     const startCount = project.scenes[0].beats.length;
     const frames = project.scenes[0].duration_in_frames;
@@ -94,13 +94,8 @@ async function main() {
     assert.equal(await page.getByRole('button', { name: 'Tạo video', exact: true }).isDisabled(), true);
     await page.locator('#audio-upload').setInputFiles({ name: 'voice.wav', mimeType: 'audio/wav', buffer: Buffer.from('fixture-upload') });
     await page.getByText('voice.wav', { exact: true }).waitFor();
-    await page.getByLabel('Nội dung lời thoại').fill('A bird builds a nest.\n\nIt carries a twig home.');
-    await page.getByLabel('Tự đặt thời điểm chuyển cảnh').check();
-    await page.locator('#cut-0').fill('25');
-    await page.getByRole('button', { name: 'Tạo video', exact: true }).click();
-    await page.getByRole('alert').waitFor();
-    assert.equal(submitted, undefined);
-    await page.locator('#cut-0').fill('8.5');
+    await page.getByLabel('Kịch bản tham khảo (không bắt buộc)').fill('A bird builds a nest.\n\nIt carries a twig home.');
+    assert.equal(await page.getByLabel('Tự đặt thời điểm chuyển cảnh').count(), 0);
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -110,7 +105,7 @@ async function main() {
     await page.getByRole('button', { name: 'Tạo video', exact: true }).click();
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     assert.equal(submitted.importedAudio, 'import_test.wav');
-    assert.deepEqual(submitted.audioBoundaries, [8.5]);
+    assert.equal(submitted.audioBoundaries, undefined);
     assert.equal(submitted.scenes.length, 2);
     assert.equal(submitted.imageStylePrompt, 'Watercolor on paper');
     await page.getByRole('button', { name: 'Tạo video mới', exact: true }).click();
@@ -123,7 +118,7 @@ async function main() {
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({ path: '/tmp/wevic-editor-mobile.png', fullPage: true });
     assert.deepEqual(errors, []);
-    console.log('PASS: add/delete/undo, exact timing, reload, render failure/retry, audio upload and boundaries, editable style, mobile layouts. API mutations mocked.');
+    console.log('PASS: add/delete/undo, exact timing, reload, render failure/retry, audio upload and reference context, editable style, mobile layouts. API mutations mocked.');
   } finally { await browser.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

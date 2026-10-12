@@ -1,5 +1,7 @@
 # BẢN ĐẶC TẢ TOÀN DIỆN & MÃ NGUỒN HỆ THỐNG: 2D STICKMAN VIDEO STUDIO
 
+> Cập nhật 12/10/2026: phần chia cảnh, chia nhịp ảnh và lập prompt trong tài liệu này mô tả luồng cũ. Luồng đang dùng nằm trong `scripts/aiProductionPlanner.cjs`: AI chia cảnh theo lời đọc, chọn ranh giới ảnh; code căn thời gian hiển thị ảnh theo audio trước khi AI viết ý tưởng, prompt và review. Nhịp ảnh là gợi ý, không phải giới hạn chặn kế hoạch. Xem [README](README.md#ai-scene-and-image-planning) để biết cấu hình và cách kiểm tra hiện tại.
+
 > **Mục đích tài liệu**: Tài liệu này chứa toàn bộ kiến trúc, thuật toán, schema dữ liệu, prompt AI, công thức toán học và mã nguồn cốt lõi (Source Code) của hệ thống **Remix Stickman Video Studio**.  
 > Bất kỳ AI hoặc kỹ sư phần mềm nào khi đọc tài liệu này đều có thể hiểu tường tận 100% cách từng thành phần của video được sinh ra, luồng thực thi dữ liệu, và có thể tái tạo hoặc mở rộng toàn bộ hệ thống mà không cần tham chiếu thêm file ngoài.
 

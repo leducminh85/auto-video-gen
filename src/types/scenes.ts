@@ -3,6 +3,7 @@ export type VisualType =
   | 'environment'
   | 'object'
   | 'diagram'
+  | 'infographic'
   | 'numbers'
   | 'comparison'
   | 'chart'
@@ -79,6 +80,10 @@ export interface VisualBeatPlan {
   shotType: ShotType;
   intent?: string;
   planningSource?: 'ai' | 'local';
+  startWord?: number;
+  endWord?: number;
+  continuity?: string;
+  imagePrompt?: string;
   what_to_show?: string;
   how_to_show?: string;
 
@@ -117,10 +122,40 @@ export interface VideoStyleGuide {
   levelOfDetail: 'minimalist' | 'focused';
 }
 
+export interface AIReviewItem {
+  index: number;
+  faithful: boolean;
+  coherent: boolean;
+  distinct: boolean;
+  drawable: boolean;
+  evidence: string;
+  reason: string;
+}
+
+export interface AIPlanningQuality {
+  passed: boolean;
+  attempts: number;
+  repairs: string[];
+  provider: string;
+  model: string;
+  providerFailures: string[];
+  boundaries?: {
+    attempts: number;
+    repairs: string[];
+    provider: string;
+    model: string;
+    providerFailures: string[];
+  };
+  reviewer: { provider: string; model: string; providerFailures: string[] };
+  review: { passed: boolean; issues: string[]; items: AIReviewItem[] };
+}
+
 export interface ValidationResult {
-  score: number; // 0 - 100
+  score?: number;
   issues: string[];
-  regenerate: boolean;
+  regenerate?: boolean;
+  passed?: boolean;
+  review?: AIReviewItem;
 }
 
 export interface VisualBeat {
@@ -130,6 +165,7 @@ export interface VisualBeat {
   title: string;
   prompt: string;
   image_file: string;
+  image_method?: string;
   image_version?: number;
   svg_data?: string | null;
   duration_in_seconds: number;
@@ -151,6 +187,10 @@ export interface SceneData {
   title: string;
   text: string;
   narration?: string;
+  planning_source?: 'ai';
+  source_word_range?: { start: number; end: number };
+  intent?: string;
+  planning_quality?: AIPlanningQuality;
   prompt: string;
   audio_file: string;
   audio_version?: number;
@@ -196,10 +236,14 @@ export interface VideoMetadata {
   image_style_prompt?: string;
   image_density?: 'sparse' | 'balanced' | 'dense';
   timing_source?: 'speech_alignment';
+  narration_source?: 'audio_transcript';
+  reference_script?: string;
+  audio_transcript?: { text: string; model: string; words: { word: string; start: number; end: number }[] };
   audio_source?: 'tts' | 'import';
   imported_audio?: string;
   render_dirty?: boolean;
   style_guide?: VideoStyleGuide;
+  ai_planning?: { storyboard: AIPlanningQuality; continuity: string };
   quality_report?: {
     total_beats: number;
     avg_beat_duration_sec: number;

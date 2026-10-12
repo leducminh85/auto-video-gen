@@ -23,7 +23,7 @@ async function main() {
         : route.fulfill({ contentType: 'application/x-ndjson', body: JSON.stringify({ type: 'complete', result: production }) + '\n' });
     });
     await page.route('**/api/regenerate-beat', route => route.fulfill({ json: { success: true, imageFile: production.scenes[0].beats[0].image_file, timestamp: Date.now() } }));
-    await page.goto(process.env.STUDIO_URL || 'http://localhost:3001');
+    await page.goto(process.env.STUDIO_URL || 'http://localhost:3000');
     assert.equal(await page.title(), 'Wevic Video Studio');
     assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'), '/favicon.svg');
     const openCreator = () => page.getByRole('button', { name: 'Tạo video mới', exact: true }).click();

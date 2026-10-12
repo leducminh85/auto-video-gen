@@ -57,7 +57,7 @@ export const PIPELINE_STEPS: PipelineStepDef[] = [
     key: 'beat_plan',
     number: 3,
     title: 'Lập Kế hoạch Nhịp Thị Giác (Visual Beats)',
-    desc: 'Chia nhỏ 2–4 nhịp/cảnh, xác định hành động nhân vật & ẩn dụ trực quan',
+    desc: 'AI chia nhịp ảnh theo lời đọc, lên ý tưởng và kiểm tra từng prompt',
     icon: Layers,
   },
   {
@@ -534,7 +534,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
   const handleCreateVideo = async () => {
     setErrorMessage(null);
-    if (!textContent.trim()) {
+    if (audioMode === 'tts' && !textContent.trim()) {
       setErrorMessage('Vui lòng nhập nội dung kịch bản trước khi bấm Tạo Video');
       return;
     }
@@ -554,17 +554,13 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     ]);
 
     const rawParsedScenes = parseContentToScenes(textContent);
-    if (rawParsedScenes.length === 0) {
+    if (audioMode === 'tts' && rawParsedScenes.length === 0) {
       setErrorMessage('Không nhận diện được phân cảnh nào từ kịch bản.');
       setIsCreating(false);
       return;
     }
 
     try {
-      const cuts = audioMode === 'import' && audioBoundaries.trim() ? audioBoundaries.split(',').map(value => Number(value.trim())) : undefined;
-      if (cuts && (cuts.length !== rawParsedScenes.length - 1 || cuts.some((value, i) => !Number.isFinite(value) || value <= (i ? cuts[i - 1] : 0) || value >= importedAudio!.duration))) {
-        throw new Error('Kiểm tra mốc kết thúc: cảnh sau phải kết thúc muộn hơn cảnh trước và nằm trong thời lượng audio.');
-      }
       let effectiveTitle = (scriptTitle || '').trim();
       if (!effectiveTitle) {
         const firstScene = rawParsedScenes[0];
@@ -587,7 +583,6 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           imageStylePrompt,
           imageDensity,
           importedAudio: audioMode === 'import' ? importedAudio?.file : undefined,
-          audioBoundaries: cuts,
         }),
       });
 
@@ -653,7 +648,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               throw new Error(event.error || 'Lỗi trong quá trình tạo video');
             }
           } catch (lineErr: any) {
-            if (lineErr.message && !lineErr.message.includes('JSON')) {
+            if (!(lineErr instanceof SyntaxError)) {
               throw lineErr;
             }
           }
@@ -805,8 +800,8 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             {/* ONLY ONE CLEAN TEXTAREA - NO PRESETS */}
             <label className="label" htmlFor="script-title">Tên video</label>
             <input id="script-title" className="input" value={scriptTitle} onChange={event => setScriptTitle(event.target.value)} placeholder="Đặt tên cho video" />
-            <label className="label" htmlFor="script-content">Nội dung lời thoại</label>
-            <p id="script-help" className="editor-help creator-script-help">{audioMode === 'import' ? 'Nhập lời thoại khớp với audio; mỗi đoạn cách một dòng trống là một cảnh. Audio chưa tự điền lời thoại vào ô này.' : 'Nhập lời thoại cho video. Tách các ý bằng một dòng trống để gợi ý phân cảnh.'}</p>
+            <label className="label" htmlFor="script-content">{audioMode === 'import' ? 'Kịch bản tham khảo (không bắt buộc)' : 'Nội dung lời thoại'}</label>
+            <p id="script-help" className="editor-help creator-script-help">{audioMode === 'import' ? 'Audio quyết định lời thoại, cảnh và nhịp ảnh. Kịch bản ở đây chỉ giúp AI hiểu chủ đề; không cần khớp từng câu với bản thu.' : 'Nhập toàn bộ lời thoại. AI sẽ chia cảnh, chia nhịp ảnh và viết prompt theo phong cách bạn chọn.'}</p>
             <textarea id="script-content" aria-describedby="script-help"
               value={textContent}
               onChange={(e) => {
@@ -853,7 +848,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 </span>
                 <span>•</span>
                 <span>
-                  Dự kiến: <strong style={{ color: 'var(--text-primary)' }}>{parseContentToScenes(textContent).length}</strong> phân cảnh
+                  {audioMode === 'import' && audioBoundaries.trim() ? `${parseContentToScenes(textContent).length} cảnh theo mốc thủ công` : 'Số cảnh do AI quyết định'}
                 </span>
               </div>
 
@@ -872,8 +867,8 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               <input ref={audioFileInput} id="audio-upload" aria-label="Tệp audio" type="file" accept="audio/*,.m4a,.flac" hidden disabled={audioUploading} onChange={event => void handleImportAudio(event.target.files?.[0])} />
               <p className="editor-help">MP3, WAV, M4A, OGG, FLAC · Tối đa 100 MB</p>
               {audioUploading && <p role="status">Đang nhập và kiểm tra audio…</p>}
-              {importedAudio && <AudioTimingEditor audio={importedAudio} scenes={parseContentToScenes(textContent)} boundaries={audioBoundaries} onChange={value => { setAudioBoundaries(value); setErrorMessage(null); }} />}
-              <p className="editor-help">Dùng kịch bản khớp với audio. Mỗi đoạn cách nhau một dòng trống là một cảnh. Audio giữ nguyên tốc độ.</p>
+              {importedAudio && <AudioTimingEditor audio={importedAudio} scenes={[]} boundaries={audioBoundaries} onChange={value => { setAudioBoundaries(value); setErrorMessage(null); }} />}
+              <p className="editor-help">AI lấy lời thoại từ audio để chia cảnh và lên ý tưởng ảnh. Bản thu giữ nguyên giọng và tốc độ.</p>
             </>}
           </section>
           {audioMode === 'tts' && <>
@@ -1093,7 +1088,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
-            <span role="status">{!textContent.trim() ? 'Nhập lời thoại để tạo video.' : audioUploading ? 'Đang nhập audio…' : audioMode === 'import' && !importedAudio ? 'Chọn tệp audio để tiếp tục.' : !imageStylePrompt.trim() ? 'Mở Phong cách hình ảnh để nhập prompt.' : draftSaved ? 'Đã lưu bản nháp' : 'Không thể lưu bản nháp'}</span>
+            <span role="status">{audioMode === 'tts' && !textContent.trim() ? 'Nhập lời thoại để tạo video.' : audioUploading ? 'Đang nhập audio…' : audioMode === 'import' && !importedAudio ? 'Chọn tệp audio để tiếp tục.' : !imageStylePrompt.trim() ? 'Mở Phong cách hình ảnh để nhập prompt.' : draftSaved ? 'Đã lưu bản nháp' : 'Không thể lưu bản nháp'}</span>
           </div>
         </div>
 
@@ -1101,7 +1096,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           <button
             className="btn btn-primary"
             onClick={handleCreateVideo}
-            disabled={isCreating || audioUploading || !textContent.trim() || !imageStylePrompt.trim() || (audioMode === 'import' && !importedAudio)}
+            disabled={isCreating || audioUploading || (audioMode === 'tts' && !textContent.trim()) || !imageStylePrompt.trim() || (audioMode === 'import' && !importedAudio)}
             style={{
               padding: '10px 24px',
               fontSize: 14,

@@ -8,6 +8,26 @@ const fs = require('fs');
 const path = require('path');
 const { IMAGE_MODELS, isQuotaError, withModelFallback } = require('../modelFallback.cjs');
 
+async function readNewResponseImage(page, previousTurns) {
+  const turns = page.locator('ms-chat-turn .model');
+  if (await turns.count() <= previousTurns) return null;
+  return turns.last().locator('img').evaluateAll(async images => {
+    const img = images.find(image => image.naturalWidth >= 256 && image.naturalHeight >= 128 && /^(blob:|data:image\/|https:\/\/)/.test(image.src));
+    if (!img) return null;
+    try {
+      const response = await fetch(img.src);
+      if (!response.ok) return null;
+      const blob = await response.blob();
+      return await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1]);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch { return null; }
+  });
+}
+
 /**
  * Google AI Studio Image Provider
  * Interacts with Google AI Studio web interface via Playwright persistent worker.
@@ -76,13 +96,8 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       const page = tab.page;
       console.log(`[AI Studio Tab ${tab.id}] Acquired for request: ${requestId} [Index ${imageIndex ?? 'N/A'} - ${parityLabel}]`);
 
-      // 2. Chat reuse check: If tab is not initialized or chat is too long (> 15 turns), reset it
-      if (!tab.isInitialized || tab.turnCount >= 15 || tab.hasError || tab.modelId !== model.id) {
-        await this.browserWorker.resetTab(tab, model);
-      } else {
-        await this.browserWorker.selectImageModel(tab, model);
-        console.log(`[AI Studio Tab ${tab.id}] ⚡ Reusing existing chat session (turn ${tab.turnCount + 1}) without reloading!`);
-      }
+      // Previous generated images can otherwise become unintended editing references.
+      await this.browserWorker.resetTab(tab, model);
 
       // 3. Register Network Interceptor for GenerateContent RPC strictly on THIS tab
       let capturedBase64 = null;
@@ -135,7 +150,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       await page.waitForTimeout(300);
 
       // 6. Record existing images count on this tab to ensure strict prompt-to-image matching
-      const preImagesCount = await page.locator('img[alt*="Generated Image" i], img[src*="blob:https://aistudio.google.com"]').count();
+      const previousTurns = await page.locator('ms-chat-turn .model').count();
 
       // 7. Submit generation on this tab
       let submitted = false;
@@ -158,6 +173,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       const startTime = Date.now();
       const maxTimeoutMs = 90000;
       let rawImageBuffer = null;
+      let completedWithoutImageAt = null;
 
       while (Date.now() - startTime < maxTimeoutMs) {
         if (isQuotaExceeded) {
@@ -176,9 +192,16 @@ class GoogleAIStudioProvider extends BaseImageProvider {
           break;
         }
 
+        const responseImage = await readNewResponseImage(page, previousTurns);
+        if (responseImage) {
+          rawImageBuffer = Buffer.from(responseImage, 'base64');
+          break;
+        }
+
         // Check for UI error text
-        const bodyContent = await page.textContent('body').catch(() => '');
         const quotaMessages = await page.locator(AI_STUDIO_SELECTORS.errorMessages.join(', ')).allTextContents();
+        const modelTurns = page.locator('ms-chat-turn .model');
+        const bodyContent = quotaMessages.join('\n') + (await modelTurns.count() > previousTurns ? await modelTurns.last().innerText() : '');
         if (quotaMessages.some(isQuotaError)) {
           tab.hasError = true;
           return createErrorResult({
@@ -189,13 +212,20 @@ class GoogleAIStudioProvider extends BaseImageProvider {
           });
         }
 
+        const completed = await modelTurns.count() > previousTurns && await modelTurns.last().getByRole('button', { name: 'Good response', exact: true }).isVisible();
+        completedWithoutImageAt = completed ? completedWithoutImageAt ?? Date.now() : null;
+        if (completedWithoutImageAt && Date.now() - completedWithoutImageAt > 5000) {
+          tab.hasError = true;
+          return createErrorResult({ provider: this.name, requestId, code: ERROR_CODES.SERVICE_ERROR, message: 'Google AI Studio hoàn tất phản hồi nhưng không trả ảnh.' });
+        }
+
         if (AI_STUDIO_SELECTORS.safetyViolationText.test(bodyContent)) {
           if (/permission denied|internal error/i.test(bodyContent)) {
             tab.hasError = true;
             return createErrorResult({
               provider: this.name,
               requestId,
-              code: ERROR_CODES.GENERATION_FAILED,
+              code: /internal error/i.test(bodyContent) ? ERROR_CODES.SERVICE_ERROR : ERROR_CODES.AUTH_REQUIRED,
               message: 'Google AI Studio reported an internal or permission error',
             });
           }
@@ -208,34 +238,6 @@ class GoogleAIStudioProvider extends BaseImageProvider {
         }
 
         await page.waitForTimeout(500);
-      }
-
-      // 9. Fallback if network intercept didn't capture: only inspect newly appeared images
-      if (!rawImageBuffer) {
-        const currentImages = page.locator('img[alt*="Generated Image" i], img[src*="blob:https://aistudio.google.com"]');
-        const currentCount = await currentImages.count();
-        if (currentCount > preImagesCount) {
-          const generatedImg = currentImages.last();
-          try {
-            const b64 = await generatedImg.evaluate(async (img) => {
-              if (!img || !img.src) return null;
-              if (img.src.startsWith('data:image')) return img.src.split(',')[1];
-              try {
-                const res = await fetch(img.src);
-                const blob = await res.blob();
-                return new Promise((resolve) => {
-                  const reader = new FileReader();
-                  reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                  reader.readAsDataURL(blob);
-                });
-              } catch (_) { return null; }
-            });
-            if (b64 && b64.length > 5000) {
-              rawImageBuffer = Buffer.from(b64, 'base64');
-              console.log(`[AI Studio Tab ${tab.id}] Extracted image from DOM fallback (${rawImageBuffer.length} bytes)`);
-            }
-          } catch (_) {}
-        }
       }
 
       if (!rawImageBuffer || rawImageBuffer.length < 5000) {
@@ -282,7 +284,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
       return createErrorResult({
         provider: this.name,
         requestId,
-        code: err.code === ERROR_CODES.MODEL_UNAVAILABLE ? ERROR_CODES.MODEL_UNAVAILABLE : ERROR_CODES.BROWSER_ERROR,
+        code: err.code === ERROR_CODES.MODEL_UNAVAILABLE ? ERROR_CODES.MODEL_UNAVAILABLE : err.name === 'TimeoutError' ? ERROR_CODES.TIMEOUT : ERROR_CODES.BROWSER_ERROR,
         message: err.message,
       });
     } finally {
@@ -292,6 +294,7 @@ class GoogleAIStudioProvider extends BaseImageProvider {
         } catch (_) {}
       }
       if (tab) {
+        if (tab.hasError && !/accounts\.google\.com|signin/.test(tab.page.url())) await tab.page.goto('about:blank', { timeout: 10000 }).catch(() => {});
         this.browserWorker.releaseTab(tab);
       }
     }

@@ -25,13 +25,26 @@ def align(chunks, words, start=0, end=float('inf')):
         expected.extend(tokens(text))
         ranges.append((begin, len(expected)))
     matcher = difflib.SequenceMatcher(None, expected, [t for t, _ in observed], autojunk=False)
+    source = ' '.join(chunks)
+    spans = [(m.start(), m.end()) for m in re.finditer(r'\S+', source) for _ in tokens(m.group())]
+    for tag, a, b, c, d in matcher.get_opcodes():
+        if tag not in ('delete', 'replace') or b - a < 6:
+            continue
+        missing = source[spans[a][0]:spans[b - 1][1]]
+        anchor = observed[c][1]['start'] if c < len(observed) else observed[-1][1]['end'] if observed else start
+        minute, second = divmod(int(anchor), 60)
+        raise ValueError(
+            f'Audio và kịch bản chưa khớp tại khoảng {minute:02d}:{second:02d}. '
+            f'Không tìm thấy trong kết quả nhận dạng: “{missing}”. '
+            'Hãy dùng audio có đủ lời, sửa lời thoại cho khớp bản thu, hoặc chuyển sang Tạo giọng đọc.'
+        )
     mapping = {a + k: b + k for a, b, size in matcher.get_matching_blocks() for k in range(size)}
     result = []
     for index, (begin, finish) in enumerate(ranges):
         matched = [i for i in range(begin, finish) if i in mapping]
         confidence = len(matched) / max(1, finish - begin)
         if confidence < 0.6 or not matched or matched[0] - begin > 3:
-            raise ValueError(f'Không xác định được lời đọc cho đoạn {index + 1}: {chunks[index][:100]}. Kiểm tra kịch bản có khớp audio không.')
+            raise ValueError(f'Không tìm được mốc audio đáng tin cậy cho đoạn {index + 1}: “{chunks[index]}”. Hãy đối chiếu lời thoại với bản thu hoặc chuyển sang Tạo giọng đọc.')
         first = max(0, mapping[matched[0]] - (matched[0] - begin))
         last = mapping[matched[-1]]
         result.append({'start': max(start, observed[first][1]['start']), 'end': observed[last][1]['end'], 'confidence': confidence})
@@ -58,7 +71,12 @@ def main():
         temporary = target.with_suffix(f'.{os.getpid()}.tmp')
         temporary.write_text(json.dumps(words, ensure_ascii=False))
         temporary.replace(target)
-    print(json.dumps(align(request['chunks'], words, request.get('start', 0), request.get('end', float('inf')))))
+    if request.get('mode') == 'transcribe':
+        if not words or not any(tokens(w['word']) for w in words):
+            raise ValueError('Không nhận dạng được lời nói trong audio. Hãy kiểm tra bản thu.')
+        print(json.dumps({'text': ' '.join(w['word'].strip() for w in words).strip(), 'words': words, 'model': model_name}, ensure_ascii=False))
+    else:
+        print(json.dumps(align(request['chunks'], words, request.get('start', 0), request.get('end', float('inf')))))
 
 
 if __name__ == '__main__':

@@ -267,7 +267,7 @@ export default function App() {
         </div>
       </header>
       {(projectError || projectLoading || metadata.render_dirty) && <div className="project-notice" inert={showCreatorDrawer || regenerateModalOpen} role={projectError ? 'alert' : 'status'}>
-        {/* {projectError || (projectLoading ? 'Đang mở dự án…' : 'Đã lưu chỉnh sửa. Xuất MP4 để tải video với timeline mới.')} */}
+        {projectError || (projectLoading ? 'Đang mở dự án…' : 'Đã lưu chỉnh sửa. Xuất MP4 để tải video với timeline mới.')}
       </div>}
       <main className="studio-workspace" inert={showCreatorDrawer || regenerateModalOpen}>
         <section ref={playerSectionRef} className="studio-section preview-section" aria-labelledby="preview-title">

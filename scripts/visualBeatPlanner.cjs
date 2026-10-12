@@ -570,14 +570,19 @@ function runProjectQualityGate(scenes) {
 
     if (beats.length === 0) {
       issues.push(`Cảnh ${scene.id} chưa có nhịp thị giác (beat).`);
-    } else if (beats.length > 4) {
-      issues.push(`Cảnh ${scene.id} có ${beats.length} beats (quá nhiều, dễ gây rối mắt cho người xem).`);
+    }
+
+    if (beats.reduce((sum, beat) => sum + beat.duration_in_frames, 0) !== scene.duration_in_frames) {
+      issues.push(`Cảnh ${scene.id}: tổng thời lượng ảnh không khớp audio.`);
     }
 
     for (const beat of beats) {
       totalDurationSec += beat.duration_in_seconds;
       if (beat.duration_in_seconds > 14.0) {
         issues.push(`Beat ${beat.id} dài ${beat.duration_in_seconds}s (vượt quá 14s, cần chia nhỏ để giữ nhịp).`);
+      }
+      if (!Number.isFinite(beat.duration_in_seconds) || beat.duration_in_seconds <= 0 || (beats.length > 1 && beat.duration_in_seconds < 1)) {
+        issues.push(`Beat ${beat.id}: thời lượng quá ngắn hoặc không hợp lệ.`);
       }
     }
   }

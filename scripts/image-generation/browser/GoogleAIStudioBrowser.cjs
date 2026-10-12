@@ -51,17 +51,6 @@ class GoogleAIStudioBrowser extends EventEmitter {
         fs.mkdirSync(this.profileDir, { recursive: true });
       }
 
-      // Clean up stale Chromium lock files before launching
-      try {
-        const lockFiles = ['SingletonLock', 'SingletonSocket', 'SingletonCookie'];
-        for (const lf of lockFiles) {
-          const fullP = path.join(this.profileDir, lf);
-          if (fs.existsSync(fullP)) {
-            try { fs.unlinkSync(fullP); } catch (_) {}
-          }
-        }
-      } catch (_) {}
-
       console.log(`[AI Studio] Initializing persistent browser profile: ${this.profileDir}`);
 
       const launchArgs = [
@@ -250,7 +239,7 @@ class GoogleAIStudioBrowser extends EventEmitter {
   async resetTab(tab, model = IMAGE_MODELS[0]) {
     console.log(`[AI Studio Tab ${tab.id}] Resetting to fresh chat session...`);
     const page = tab.page;
-    await page.goto(AI_STUDIO_URLS.NEW_CHAT, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await page.goto(`${AI_STUDIO_URLS.NEW_CHAT}?model=${encodeURIComponent(model.id)}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
     await page.waitForTimeout(1500);
 
     await this.selectImageModel(tab, model);
@@ -295,11 +284,13 @@ class GoogleAIStudioBrowser extends EventEmitter {
     await button.waitFor({ state: 'visible', timeout: 10000 });
     if (selectedModel(await button.innerText())?.id !== model.id) {
       await button.click();
-      const imagesTab = page.locator(AI_STUDIO_SELECTORS.modelImagesTab.join(', ')).first();
-      if (await imagesTab.isVisible()) await imagesTab.click();
+      const dialog = page.locator('mat-dialog-container, [role="dialog"]').filter({ visible: true }).last();
+      const picker = await dialog.count() ? dialog : page;
+      const imagesTab = picker.getByRole('button', { name: 'Images', exact: true }).or(picker.getByRole('tab', { name: 'Images', exact: true })).first();
+      if (await imagesTab.isVisible()) await imagesTab.click({ timeout: 5000 });
       const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const names = [model.name, ...model.aliases, model.id].map(escape).join('|');
-      const option = page.getByText(new RegExp(`^(?:${names})$`, 'i')).filter({ visible: true }).first();
+      const option = picker.getByText(new RegExp(`^(?:${names})$`, 'i')).filter({ visible: true }).first();
       try {
         await option.waitFor({ state: 'visible', timeout: 5000 });
       } catch {

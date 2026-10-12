@@ -13,4 +13,18 @@ class AlignmentTest(unittest.TestCase):
         words = [dict(word=w,start=t,end=t+.1) for w,t in [('hello',0),('world',1),('hello',5),('world',6)]]
         self.assertEqual(align(['hello world'],words,4,8)[0]['start'],5)
 
+    def test_missing_passage_is_reported_even_when_overall_match_is_high(self):
+        before = ' '.join(f'word{i}' for i in range(80))
+        missing = 'Nhiều người muốn chơi game cùng bạn bè.'
+        after = 'Nếu quán tạo được môi trường tốt.'
+        words = [dict(word=w, start=i, end=i+.2) for i, w in enumerate((before+' '+after).split())]
+        with self.assertRaisesRegex(ValueError, f'01:20.*{missing}'):
+            align([before+' '+missing+' '+after], words)
+        with self.assertRaisesRegex(ValueError, 'Nhiều người muốn chơi game cùng bạn bè.'):
+            align([before, 'Nhiều người muốn', 'chơi game cùng bạn bè.', after], words)
+
+    def test_short_asr_substitution_does_not_block_matching_narration(self):
+        words = [dict(word=w, start=i*.2, end=(i+1)*.2) for i,w in enumerate('Một bộ máy tính cấu hình mạnh có thể khá đặt'.split())]
+        self.assertGreater(align(['Một bộ máy tính cấu hình mạnh có thể khá đắt'], words)[0]['confidence'], .8)
+
 if __name__ == '__main__': unittest.main()

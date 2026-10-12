@@ -7,20 +7,9 @@ const sharp = require('sharp');
 // Load environment variables from .env if present
 const envPath = path.resolve(__dirname, '../.env');
 if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  envContent.split('\n').forEach((line) => {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#')) {
-      const idx = trimmed.indexOf('=');
-      if (idx !== -1) {
-        const key = trimmed.substring(0, idx).trim();
-        const val = trimmed.substring(idx + 1).trim();
-        if (!process.env[key]) {
-          process.env[key] = val;
-        }
-      }
-    }
-  });
+  for (const [key, value] of Object.entries(require('dotenv').parse(fs.readFileSync(envPath)))) {
+    if (!process.env[key]) process.env[key] = value;
+  }
 }
 
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -1444,21 +1433,18 @@ async function generateVideo({
     } catch (_) {}
   }
 
-  const { generateStoryboardFromContent } = require('./storyboardGenerator.cjs');
+  const { planStoryboard, planSceneImages, narrationSource } = require('./aiProductionPlanner.cjs');
+  const { createPlanningClient } = require('./aiPlanningClient.cjs');
   const {
     createVideoStyleGuide,
-    segmentSceneIntoBeats,
-    createLocalBeatPlan,
-    planVisualBeatsWithAI,
-    validateVisualBeat,
-    generateSemanticSvgForBeat,
     runProjectQualityGate,
     buildWhiteboardPrompt,
-    extractDomainAnchor,
   } = require('./visualBeatPlanner.cjs');
   const { generateFluxImage } = require('./fluxImageGenerator.cjs');
 
+  let lastProgress = { stepKey: 'storyboard', percent: 10 };
   const notify = (stepKey, percent, message, details = {}) => {
+    lastProgress = { stepKey, percent };
     if (typeof onProgress === 'function') {
       try {
         onProgress({
@@ -1479,7 +1465,7 @@ async function generateVideo({
   const data = { openaiApiKey };
 
   if (!['sparse', 'balanced', 'dense'].includes(imageDensity)) throw new Error('Mật độ ảnh không hợp lệ.');
-  const { alignAudio, applyBeatTiming } = require('./audioAlignment.cjs');
+  const { alignAudio, applyBeatTiming, transcribeAudio, transcriptScenes } = require('./audioAlignment.cjs');
   const selectedVoice = voice || 'vi-VN-Standard-A';
   const playbackSpeed = Number(speed) || 1.0;
   const styleGuide = createVideoStyleGuide(title);
@@ -1500,16 +1486,29 @@ async function generateVideo({
   console.log(`Giọng đọc: ${selectedVoice} (${playbackSpeed}x)`);
   console.log(`======================================================\n`);
 
-  // 1. Run AI Storyboard Generator to split content & plan diverse scenes
+  let transcript = null;
+  let planningContent = content || script;
+  let planningScenes = scenes;
+  const referenceScript = importedPath ? narrationSource(content || script, scenes) : '';
+  if (importedPath) {
+    notify('storyboard', 7, 'Đang nghe audio để lấy lời thoại và mốc thời gian. Kịch bản chỉ dùng làm ngữ cảnh...');
+    transcript = await transcribeAudio(importedPath);
+    planningContent = transcript.text;
+    planningScenes = transcriptScenes(transcript, audioBoundaries || [], importedDuration);
+  }
   notify('storyboard', 10, 'Đang phân tích kịch bản, xác định nhịp điệu và cấu trúc phân cảnh...');
   console.log(`[Bước 1/5] Chạy Storyboard Generator để phân tích và tạo kịch bản phân cảnh...`);
-  if (importedPath && (!Array.isArray(scenes) || !scenes.length || scenes.some(scene => !String(scene.narration || scene.text || '').trim()))) throw new Error('Hãy nhập kịch bản tương ứng với audio.');
-  const plannedScenes = importedPath ? scenes : await generateStoryboardFromContent({
-    content: content || script,
-    scenesInput: scenes,
-    geminiApiKey,
-    openaiApiKey,
+  const planningRequest = createPlanningClient({ onStatus: message => notify(lastProgress.stepKey, lastProgress.percent, message) });
+  const storyboard = await planStoryboard({
+    content: planningContent,
+    scenesInput: planningScenes,
+    referenceScript,
+    narrationSourceType: importedPath ? 'audio_transcript' : 'script',
+    title, imageStylePrompt: resolvedStyle, imageDensity,
+    lockedScenes: Boolean(importedPath && audioBoundaries?.length),
+    request: planningRequest,
   });
+  const plannedScenes = storyboard.scenes;
 
   const totalScenes = plannedScenes.length;
   let importedTiming = null;
@@ -1520,27 +1519,6 @@ async function generateVideo({
   const alignedCuts = importedTiming?.slice(1).map(t => t.start);
   const audioFrames = importedPath ? editor.allocateAudioFrames(plannedScenes, Math.round(importedDuration * 30), audioBoundaries ?? alignedCuts) : null;
   let importedOffset = 0;
-  // Clean up all existing scene images and audio so no stale assets from previous runs remain
-  try {
-    const existingImages = fs.readdirSync(IMAGES_DIR);
-    for (const f of existingImages) {
-      if (f.startsWith('scene_') && f.endsWith('.png')) {
-        try { fs.unlinkSync(path.join(IMAGES_DIR, f)); } catch (_) {}
-      }
-    }
-  } catch (_) {}
-
-  try {
-    const existingAudio = fs.readdirSync(AUDIO_DIR);
-    for (const f of existingAudio) {
-      if (f.startsWith('scene_') && f.endsWith('.mp3')) {
-        try { fs.unlinkSync(path.join(AUDIO_DIR, f)); } catch (_) {}
-      }
-    }
-  } catch (_) {}
-
-  const fullScriptContext = content || script || plannedScenes.map(s => s.narration || s.text || '').join('\n');
-  const videoDomain = extractDomainAnchor(title, '', fullScriptContext);
   const recentPlans = [];
   console.log(`✓ Kế hoạch Storyboard gồm ${totalScenes} phân cảnh:`);
   plannedScenes.forEach((sc, i) => {
@@ -1554,7 +1532,6 @@ async function generateVideo({
 
   let totalFrames = 0;
   const finalizedScenes = [];
-  let previousMethod = null;
 
   // ==========================================
   // PHASE 1: Audio Generation & Visual Beat Planning
@@ -1574,10 +1551,10 @@ async function generateVideo({
     console.log(`\n--- Phân cảnh ${sceneId}/${totalScenes}: "${sceneTitle}" ---`);
 
     // 1. Generate Voice Audio via TTS (Stage 2: 18% -> 35%)
-    const audioFileName = importedPath ? `imported_${generationRunId}_${sceneId}.wav` : `scene_${sceneId}.mp3`;
+    const audioFileName = importedPath ? `imported_${generationRunId}_${sceneId}.wav` : `scene_${generationRunId}_${sceneId}.mp3`;
     const audioPath = path.join(AUDIO_DIR, audioFileName);
 
-    const ttsStartPct = 18 + ((i + 0.2) / totalScenes) * 17;
+    const ttsStartPct = 18 + (i / totalScenes) * 32;
     notify('tts', ttsStartPct, importedPath ? `Đang chuẩn bị audio đã nhập cho cảnh ${sceneId}` : `[Cảnh ${sceneId}/${totalScenes}] Đang tổng hợp giọng nói AI (${selectedVoice})...`, {
       sceneIndex: sceneId,
       totalScenes,
@@ -1597,7 +1574,7 @@ async function generateVideo({
     const durationInFrames = Math.round(durationInSeconds * 30);
     console.log(`✓ Audio cảnh ${sceneId} hoàn tất: ${durationInSeconds.toFixed(2)}s (${durationInFrames} frames)`);
 
-    const ttsDonePct = 18 + ((i + 1) / totalScenes) * 17;
+    const ttsDonePct = 18 + ((i + 0.2) / totalScenes) * 32;
     notify('tts', ttsDonePct, `Cảnh ${sceneId}/${totalScenes}: Audio đã sẵn sàng (${durationInSeconds.toFixed(1)}s)`, {
       sceneIndex: sceneId,
       totalScenes,
@@ -1606,74 +1583,31 @@ async function generateVideo({
     });
 
     // 2. Segment into visual beats
-    const planStartPct = 35 + ((i + 0.3) / totalScenes) * 15;
+    const planStartPct = 18 + ((i + 0.3) / totalScenes) * 32;
     notify('beat_plan', planStartPct, `[Cảnh ${sceneId}/${totalScenes}] Đang phân tích nhịp thị giác & chuyển động câu chuyện...`, {
       sceneIndex: sceneId,
       totalScenes,
       sceneTitle,
     });
 
-    console.log(`[Bước 3/5] Phân chia thành các Visual Beats theo diễn tiến câu chuyện...`);
-    let segmentedBeats = segmentSceneIntoBeats(
-      { id: sceneId, title: sceneTitle, text: sceneText },
-      durationInSeconds,
-      durationInFrames,
-      imageDensity
-    );
     const audioOffset = importedPath ? (importedOffset - audioFrames[i]) / 30 : 0;
-    const timing = await alignAudio(importedPath || audioPath, segmentedBeats.map(b => b.text), importedPath ? { start: audioOffset, end: importedOffset / 30 } : {});
-    segmentedBeats = applyBeatTiming(segmentedBeats, timing, durationInFrames, audioOffset);
-    console.log(`✓ Cảnh ${sceneId} được chia thành ${segmentedBeats.length} visual beats (trung bình ${(durationInSeconds / segmentedBeats.length).toFixed(1)}s/beat)`);
+    const transcriptWordStarts = transcript?.words.flatMap(word => word.word.trim().split(/\s+/).filter(Boolean).map(() => word.start));
+    const wordTiming = transcriptWordStarts?.slice(rawScene.startWord, rawScene.endWord).map(t => Math.max(0, t - audioOffset));
+    notify('beat_plan', planStartPct, `AI đang chia ảnh theo mốc audio và kiểm tra ý tưởng cảnh ${sceneId}/${totalScenes}...`);
+    const imagePlan = await planSceneImages({
+        scene: rawScene, storyboard, durationInSeconds, totalFrames: durationInFrames,
+        imageDensity, imageStylePrompt: resolvedStyle, recentPlans, wordTiming,
+        timeBeats: async beats => {
+          const timing = await alignAudio(importedPath || audioPath, beats.map(b => b.text), importedPath ? { start: audioOffset, end: importedOffset / 30 } : {});
+          return applyBeatTiming(beats, timing, durationInFrames, audioOffset);
+        },
+        request: planningRequest,
+      });
+    const segmentedBeats = imagePlan.beats;
+    const beatPlans = segmentedBeats.map(b => b.plan);
+    recentPlans.push(...beatPlans);
 
-    const dynamicDomain = videoDomain;
-    const resolvedTopic = videoDomain.topic;
-
-    // 3. Visual Planner: Plan structured visual beats with AI + Smart local fallback
-    console.log(`[Bước 4/5] Lập kế hoạch hình ảnh (Visual Planner) & Kiểm định ngữ nghĩa (Validator)...`);
-    let beatPlans = await planVisualBeatsWithAI({
-      scene: { id: sceneId, title: sceneTitle, text: sceneText },
-      beats: segmentedBeats,
-      styleGuide,
-      geminiApiKey,
-      openaiApiKey,
-      previousMethod,
-      videoTitle: title || dynamicDomain.topicVn,
-      overallTopic: resolvedTopic,
-      fullScriptContext,
-      imageStylePrompt: resolvedStyle,
-      recentPlans,
-    });
-
-    if (!beatPlans || beatPlans.length !== segmentedBeats.length) {
-      console.warn(`Cảnh ${sceneId}: AI planner không trả về kế hoạch hợp lệ; dùng bộ lập kế hoạch cục bộ theo nội dung.`);
-      beatPlans = [];
-      for (const [bIdx, b] of segmentedBeats.entries()) {
-        beatPlans.push(createLocalBeatPlan({
-          beatText: b.text,
-          beatIndex: bIdx + 1,
-          totalBeats: segmentedBeats.length,
-          sceneTitle,
-          sceneText,
-          videoTitle: title || dynamicDomain.topicVn,
-          overallTopic: resolvedTopic,
-          recentPlans: [...recentPlans, ...beatPlans],
-          prevMethod: bIdx > 0 ? beatPlans?.[bIdx - 1]?.visualMethod : previousMethod,
-        }));
-      }
-    }
-
-    for (let bIdx = 0; bIdx < beatPlans.length; bIdx++) {
-      if (validateVisualBeat({ beatText: segmentedBeats[bIdx].text, plan: beatPlans[bIdx] }).regenerate) {
-        beatPlans[bIdx] = createLocalBeatPlan({
-          beatText: segmentedBeats[bIdx].text, sceneText, sceneTitle,
-          overallTopic: resolvedTopic, recentPlans,
-        });
-      }
-      recentPlans.push(beatPlans[bIdx]);
-      previousMethod = beatPlans[bIdx].visualMethod;
-    }
-
-    const planDonePct = 35 + ((i + 1) / totalScenes) * 15;
+    const planDonePct = 18 + ((i + 1) / totalScenes) * 32;
     notify('beat_plan', planDonePct, `✓ Cảnh ${sceneId}/${totalScenes}: Đã lên kế hoạch ${segmentedBeats.length} nhịp thị giác`, {
       sceneIndex: sceneId,
       totalScenes,
@@ -1693,6 +1627,7 @@ async function generateVideo({
       durationInFrames,
       segmentedBeats,
       beatPlans,
+      planningQuality: imagePlan.quality,
     });
   }
 
@@ -1704,33 +1639,13 @@ async function generateVideo({
   for (const sData of scenesData) {
     for (let bIdx = 0; bIdx < sData.segmentedBeats.length; bIdx++) {
       const beat = sData.segmentedBeats[bIdx];
-      let plan = sData.beatPlans[bIdx];
-
-      // Semantic Validation & Quality Check
-      let validation = validateVisualBeat({ beatText: beat.text, plan });
-      if (validation.regenerate) {
-        console.warn(`   ⚠️ Beat ${beat.sub_index} có cảnh báo ngữ nghĩa (${validation.issues.join('; ')}). Tự động tinh chỉnh kế hoạch...`);
-        plan = createLocalBeatPlan({
-          beatText: beat.text,
-          beatIndex: bIdx + 1,
-          totalBeats: sData.segmentedBeats.length,
-          sceneTitle: sData.sceneTitle,
-          sceneText: sData.sceneText,
-          videoTitle: title,
-          overallTopic: videoDomain.topic,
-          recentPlans: allBeatsToGenerate.map(item => item.plan),
-          prevMethod: previousMethod,
-        });
-        validation = validateVisualBeat({ beatText: beat.text, plan });
-      }
-
-      plan = { ...plan, imageGenerationPrompt: editor.styledPrompt(plan, resolvedStyle) };
+      const plan = sData.beatPlans[bIdx];
+      const validation = { passed: true, issues: [], review: sData.planningQuality.review.items[bIdx] };
       beat.plan = plan;
       beat.validation = validation;
-      previousMethod = plan.visualMethod;
 
       const globalIndex = allBeatsToGenerate.length;
-      const beatImageFile = `scene_${sData.sceneId}_beat_${beat.sub_index}.png`;
+      const beatImageFile = `scene_${generationRunId}_${sData.sceneId}_beat_${beat.sub_index}.png`;
       const beatPngPath = path.join(IMAGES_DIR, beatImageFile);
 
       allBeatsToGenerate.push({
@@ -1760,6 +1675,7 @@ async function generateVideo({
 
   let completedImagesCount = 0;
   const totalBeatsCount = allBeatsToGenerate.length;
+  const imageFailures = [];
 
   await Promise.all(
     allBeatsToGenerate.map(async (item) => {
@@ -1803,6 +1719,7 @@ async function generateVideo({
 
       let imageMethod = 'svg_fallback';
       let svgContent = null;
+      let imageError = 'Nhà cung cấp chưa trả ảnh hợp lệ.';
 
       // STEP 1: PRIORITIZE GOOGLE AI STUDIO / FLUX (Routes even to Tab 1, odd to Tab 2)
       try {
@@ -1817,8 +1734,11 @@ async function generateVideo({
         if (fluxRes.success && fs.existsSync(beatPngPath) && fs.statSync(beatPngPath).size > 5000) {
           imageMethod = fluxRes.method || 'flux';
           console.log(`   ✓ [${parityLabel}] Hoàn tất ảnh #${globalIndex + 1} (${imageMethod}): ${beatImageFile}`);
+        } else {
+          imageError = fluxRes.error?.message || imageError;
         }
       } catch (fluxErr) {
+        imageError = fluxErr.message;
         console.warn(`   ⚠️ Lỗi tạo ảnh beat #${globalIndex + 1}:`, fluxErr.message);
       }
 
@@ -1871,15 +1791,11 @@ async function generateVideo({
         }
       }
 
-      // STEP 3: FALLBACK TO SEMANTIC SVG ONLY IF ALL AI METHODS FAILED
       if (imageMethod === 'svg_fallback') {
-        console.log(`   🎨 [SVG Fallback] Dựng hình đồ họa vector cho beat #${globalIndex + 1}...`);
-        svgContent = generateSemanticSvgForBeat({
-          beat,
-          scene: { id: sceneId, title: sceneTitle, text: item.sceneText, videoTitle: title },
-          styleGuide,
-        });
-        await sharp(Buffer.from(svgContent)).png({ quality: 95 }).toFile(beatPngPath);
+        const failure = `Cảnh ${sceneId}, ảnh ${beat.sub_index}: ${imageError}`;
+        imageFailures.push(failure);
+        notify('images', 50 + completedImagesCount / Math.max(1, totalBeatsCount) * 30, `Không tạo được ảnh. ${failure}`);
+        return;
       }
 
       item.imageMethod = imageMethod;
@@ -1899,6 +1815,7 @@ async function generateVideo({
       });
     })
   );
+  if (imageFailures.length) throw new Error(`Không tạo được ${imageFailures.length}/${totalBeatsCount} ảnh AI. Giữ nguyên dự án trước đó. ${imageFailures.join(' | ')}`);
 
   // ==========================================
   // PHASE 4: Assemble Clips and Combine with Audio in Exact Chronological Order
@@ -1925,12 +1842,6 @@ async function generateVideo({
     for (const item of sceneBeats) {
       const { beat, plan, validation, beatImageFile, beatPngPath, imageMethod, svgContent } = item;
 
-      if (beat.sub_index === 1) {
-        try {
-          fs.copyFileSync(beatPngPath, path.join(IMAGES_DIR, `scene_${sceneId}.png`));
-        } catch (_) {}
-      }
-
       beats.push({
         id: beat.id,
         sub_index: beat.sub_index,
@@ -1939,6 +1850,7 @@ async function generateVideo({
         prompt: plan.imageGenerationPrompt,
         caption: beat.caption,
         image_file: beatImageFile,
+        image_method: imageMethod,
         image_version: generationRunId,
         svg_data: svgContent,
         duration_in_seconds: beat.duration_in_seconds,
@@ -1960,10 +1872,14 @@ async function generateVideo({
       title: sceneTitle,
       text: sceneText,
       narration: sceneText,
+      planning_source: 'ai',
+      source_word_range: { start: rawScene.startWord, end: rawScene.endWord },
+      intent: rawScene.intent,
+      planning_quality: sData.planningQuality,
       prompt: beats[0]?.prompt || `2D cartoon explainer, ${sceneTitle}`,
       audio_file: sData.audioFileName,
       audio_version: generationRunId,
-      image_file: `scene_${sceneId}_beat_1.png`,
+      image_file: beats[0].image_file,
       image_version: generationRunId,
       visual_type: beats[0]?.visual_type || 'character',
       visual_description: beats[0]?.plan?.meaning || '',
@@ -1991,7 +1907,7 @@ async function generateVideo({
   const qualityReport = runProjectQualityGate(finalizedScenes);
   console.log(`\n🛡️ [QUALITY GATE CHECK]: Passed=${qualityReport.validation_passed} | Total Beats=${qualityReport.total_beats} | Avg Beat Dur=${qualityReport.avg_beat_duration_sec}s`);
   if (qualityReport.issues.length > 0) {
-    qualityReport.issues.forEach((iss) => console.log(`   • ${iss}`));
+    throw new Error(`Kế hoạch chưa đạt kiểm định: ${qualityReport.issues.join('; ')}`);
   }
 
   const metadata = {
@@ -2013,6 +1929,8 @@ async function generateVideo({
     image_density: imageDensity,
     timing_source: 'speech_alignment',
     quality_report: qualityReport,
+    ai_planning: { storyboard: storyboard.quality, continuity: storyboard.continuity },
+    ...(transcript ? { narration_source: 'audio_transcript', reference_script: referenceScript, audio_transcript: transcript } : {}),
   };
 
   const outputData = {
@@ -2022,6 +1940,7 @@ async function generateVideo({
 
   notify('render', 95, 'Đang ghép ảnh và audio thành MP4...');
   await editor.renderProject(outputData, PUBLIC_DIR);
+  outputData.metadata.quality_report = qualityReport;
   outputData.metadata.render_dirty = false;
   fs.writeFileSync(path.join(PUBLIC_DIR, 'scenes.json'), JSON.stringify(outputData, null, 2));
   fs.writeFileSync(path.join(SRC_DATA_DIR, 'scenes.json'), JSON.stringify(outputData, null, 2));

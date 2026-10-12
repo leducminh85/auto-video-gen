@@ -40,12 +40,11 @@ async function main() {
     });
     const durations = () => project.scenes[0].beats.map(b => b.duration_in_frames);
     const saved = async count => { await page.waitForFunction(count => Number(document.querySelectorAll('.timeline-clip').length) === count, project.scenes[0].beats.length); await page.getByRole('button', { name: 'Tạo video mới', exact: true }).waitFor({ state: 'visible' }); await page.waitForFunction(() => !document.querySelector('[aria-label="Tạo video mới"]').disabled); assert.equal(saves, count); };
-    await page.goto(process.env.STUDIO_URL || 'http://localhost:3001');
+    await page.goto(process.env.STUDIO_URL || 'http://localhost:3000');
     await page.locator('.audio-waveform[data-status="ready"]').waitFor();
     assert.equal(await page.locator('.studio-workspace > section').count(), 3);
     const unnamed = await page.locator('.studio-workspace .icon-button, .studio-topbar .icon-button').evaluateAll(buttons => buttons.filter(b => !b.getAttribute('aria-label') || !b.getAttribute('title') || b.textContent.trim()).length);
     assert.equal(unnamed, 0);
-    await page.getByRole('button', { name: 'Chỉnh ảnh trong cảnh', exact: true }).click();
     await page.locator('.timeline-section').scrollIntoViewIfNeeded();
     const clip = await page.locator('[data-beat-id="b0"]').boundingBox();
     const handle = await page.getByRole('slider', { name: 'Cuối ảnh 1', exact: true }).boundingBox();
@@ -81,7 +80,13 @@ async function main() {
     assert.deepEqual(await page.locator('.timeline-clip').evaluateAll(clips => clips.map(clip => clip.dataset.beatId)), ['b1','b2','b0']);
     assert.deepEqual(await page.locator('.clip-caption strong').allTextContents(), ['Ảnh 2','Ảnh 3','Ảnh 1']);
     await page.locator('[data-beat-id="b2"] .clip-body').click();
-    await page.getByLabel('Thời lượng', { exact: false }).fill('4'); await page.getByLabel('Thời lượng', { exact: false }).press('Enter');
+    const resizeClip = await page.locator('[data-beat-id="b2"]').boundingBox();
+    const resizeHandle = await page.getByRole('slider', { name: 'Cuối ảnh 3', exact: true }).boundingBox();
+    const resizeX = resizeHandle.x + resizeHandle.width / 2;
+    await page.mouse.move(resizeX, resizeHandle.y + 50);
+    await page.mouse.down();
+    await page.mouse.move(resizeX - resizeClip.width * 30 / 150, resizeHandle.y + 50);
+    await page.mouse.up();
     await saved(6); assert.deepEqual(durations(), [30,120,150]);
     const cancelHandle = await page.getByRole('slider', { name: 'Cuối ảnh 2', exact: true }).boundingBox();
     await page.mouse.move(cancelHandle.x + cancelHandle.width / 2, cancelHandle.y + 50); await page.mouse.down(); await page.mouse.move(cancelHandle.x + 45, cancelHandle.y + 50); await page.keyboard.press('Escape'); await page.mouse.up();
@@ -119,7 +124,7 @@ async function main() {
     await page.evaluate(() => scrollTo(0,0)); await page.screenshot({ path: '/tmp/timeline-verified-desktop.png', fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 }); await page.screenshot({ path: '/tmp/timeline-verified-mobile.png', fullPage: true });
     assert.deepEqual(errors, []);
-    console.log('PASS: three sections, icon labels, real decoded waveform, mouse resize/reorder, keyboard resize, duration field, failed-save rollback, undo/reload, Escape cancel, touch resize, responsive images. All mutations mocked.');
+    console.log('PASS: three sections, icon labels, real decoded waveform, mouse resize/reorder, keyboard resize, failed-save rollback, undo/reload, Escape cancel, touch resize, responsive images. All mutations mocked.');
   } finally { await browser.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

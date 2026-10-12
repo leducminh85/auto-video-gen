@@ -24,10 +24,14 @@ async function withModelFallback(attempt) {
   let result;
   const attempts = [];
   for (const model of IMAGE_MODELS) {
-    result = await attempt(model);
-    attempts.push({ model: model.name, code: result.error?.code || 'SUCCESS' });
-    if (result.success) return { ...result, metadata: { ...result.metadata, model: model.id, modelName: model.name, attempts } };
-    if (![ERROR_CODES.QUOTA_EXCEEDED, ERROR_CODES.MODEL_UNAVAILABLE].includes(result.error?.code)) return result;
+    for (let retry = 0; retry < 2; retry++) {
+      result = await attempt(model);
+      attempts.push({ model: model.name, code: result.error?.code || 'SUCCESS' });
+      if (result.success) return { ...result, metadata: { ...result.metadata, model: model.id, modelName: model.name, attempts } };
+      if (![ERROR_CODES.TIMEOUT, ERROR_CODES.SERVICE_ERROR].includes(result.error?.code)) break;
+      if (retry === 0) console.warn(`[AI Studio] ${model.name}: ${result.error.message}. Retrying in a fresh chat.`);
+    }
+    if (![ERROR_CODES.QUOTA_EXCEEDED, ERROR_CODES.MODEL_UNAVAILABLE, ERROR_CODES.TIMEOUT, ERROR_CODES.SERVICE_ERROR].includes(result.error?.code)) return result;
   }
   return { ...result, error: { ...result.error, message: 'Không còn model tạo ảnh khả dụng trong danh sách dự phòng.', details: { attempts } } };
 }
