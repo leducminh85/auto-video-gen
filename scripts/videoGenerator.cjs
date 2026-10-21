@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
+const binary = name => fs.existsSync(`/opt/homebrew/bin/${name}`) ? `/opt/homebrew/bin/${name}` : name;
+const runAudioTool = (name, args, options = {}) => execFileSync(binary(name), args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], ...options });
 const googleTTS = require('google-tts-api');
 const sharp = require('sharp');
 
@@ -1329,8 +1331,8 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
     const edgeVoice = cfg.voice;
     const pitchStr = cfg.pitch || '+0Hz';
 
-    execSync(
-      `edge-tts --voice "${edgeVoice}" --pitch="${pitchStr}" --rate="${rateStr}" -f "${tempTxt}" --write-media "${outputPath}" 2>/dev/null`,
+    runAudioTool(
+      'edge-tts', ['--voice', edgeVoice, `--pitch=${pitchStr}`, `--rate=${rateStr}`, '-f', tempTxt, '--write-media', outputPath],
       { timeout: 30000 }
     );
     if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
@@ -1356,7 +1358,7 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
         const buffer = Buffer.concat(parts.map((p) => Buffer.from(p.base64, 'base64')));
         fs.writeFileSync(tempRaw, buffer);
         if (safeSpeed !== 1.0) {
-          execSync(`/opt/homebrew/bin/ffmpeg -y -i "${tempRaw}" -filter:a "atempo=${safeSpeed}" -vn "${outputPath}" 2>/dev/null`);
+          runAudioTool('ffmpeg', ['-y', '-i', tempRaw, '-filter:a', `atempo=${safeSpeed}`, '-vn', outputPath]);
           try { fs.unlinkSync(tempRaw); } catch (_) {}
         } else {
           fs.copyFileSync(tempRaw, outputPath);
@@ -1370,15 +1372,15 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
   }
 
   // 3. Fallback to macOS native high-quality speech (offline Linh / Samantha)
-  if (!success) {
+  if (!success && process.platform === 'darwin') {
     try {
       const isEnglish = voice.startsWith('en-');
       const macVoice = isEnglish ? 'Samantha' : 'Linh';
       fs.writeFileSync(tempTxt, cleanText, 'utf8');
-      execSync(`say -v "${macVoice}" -f "${tempTxt}" -o "${tempAiff}" 2>/dev/null`);
+      runAudioTool('say', ['-v', macVoice, '-f', tempTxt, '-o', tempAiff]);
       if (fs.existsSync(tempAiff) && fs.statSync(tempAiff).size > 1000) {
-        const filter = safeSpeed !== 1.0 ? `-filter:a "atempo=${safeSpeed}"` : '';
-        execSync(`/opt/homebrew/bin/ffmpeg -y -i "${tempAiff}" ${filter} -q:a 2 -vn "${outputPath}" 2>/dev/null`);
+        const filter = safeSpeed !== 1.0 ? ['-filter:a', `atempo=${safeSpeed}`] : [];
+        runAudioTool('ffmpeg', ['-y', '-i', tempAiff, ...filter, '-q:a', '2', '-vn', outputPath]);
         if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
           success = true;
         }
@@ -1392,12 +1394,12 @@ async function generateTTSAudio(text, outputPath, voice = 'vi-VN-Standard-A', sp
   // 4. Absolute emergency silence fallback so pipeline never crashes
   if (!success || !fs.existsSync(outputPath) || fs.statSync(outputPath).size < 500) {
     const fallbackDur = Math.max(3.0, (cleanText.split(/\s+/).length / 2.8) / safeSpeed);
-    execSync(`/opt/homebrew/bin/ffmpeg -y -f lavfi -i anullsrc=r=24000:cl=mono -t ${fallbackDur.toFixed(2)} -q:a 9 -acodec libmp3lame "${outputPath}" 2>/dev/null`);
+    runAudioTool('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'anullsrc=r=24000:cl=mono', '-t', fallbackDur.toFixed(2), '-q:a', '9', '-acodec', 'libmp3lame', outputPath]);
   }
 
   let durationInSeconds = 4.0;
   try {
-    const probe = execSync(`/opt/homebrew/bin/ffprobe -i "${outputPath}" -show_entries format=duration -v quiet -of csv="p=0"`).toString().trim();
+    const probe = runAudioTool('ffprobe', ['-i', outputPath, '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv=p=0']).toString().trim();
     durationInSeconds = parseFloat(probe) || 4.0;
   } catch (err) {
     durationInSeconds = Math.max(3.0, (cleanText.split(/\s+/).length / 3.0) / safeSpeed);

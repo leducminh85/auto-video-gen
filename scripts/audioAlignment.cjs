@@ -3,7 +3,7 @@ const path = require('node:path');
 
 function alignAudio(audio, chunks, range = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.env.WEVIC_PYTHON || 'python3', [path.join(__dirname, 'alignAudio.py')], { stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(process.env.WEVIC_PYTHON || (process.platform === 'win32' ? 'python' : 'python3'), ['-X', 'utf8', path.join(__dirname, 'alignAudio.py')], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     let output = '', errors = '';
     const timer = setTimeout(() => child.kill(), 30 * 60 * 1000);
     child.stdout.on('data', data => { output += data; });
