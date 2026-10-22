@@ -18,6 +18,36 @@ function videoApiPlugin(): Plugin {
         const editor = require('./scripts/projectEditor.cjs');
         const publicRoot = path.resolve('public');
         const store = require('./scripts/projectStore.cjs').createStore(publicRoot);
+        if ((req.url === '/api/chatgpt/status' && req.method === 'GET') || (['/api/chatgpt/connect', '/api/chatgpt/test'].includes(req.url || '') && req.method === 'POST')) {
+          res.setHeader('Content-Type', 'application/json');
+          try {
+            delete require.cache[require.resolve('./scripts/chatgptBrowser.cjs')];
+            const browser = require('./scripts/chatgptBrowser.cjs').ChatGPTBrowser.getInstance();
+            const result = req.url?.endsWith('/test')
+              ? await editor.exclusive(async () => {
+                const reply = await browser.request('Connection test for my local video studio. Reply with only this JSON: {"studio_connection":"ok"}');
+                const parsed = require('./scripts/chatgptBrowser.cjs').parseJSON(reply);
+                if (parsed.studio_connection !== 'ok') throw new Error('ChatGPT chưa trả lời đúng yêu cầu kiểm tra.');
+                return { connected: true, verified: true };
+              })
+              : req.url?.endsWith('/connect') ? await browser.open() : await browser.status();
+            res.end(JSON.stringify(result));
+          } catch (error: any) { res.statusCode = 400; res.end(JSON.stringify({ error: error.message })); }
+          return;
+        }
+        if (req.url === '/api/remotion/revise' && req.method === 'POST') {
+          res.setHeader('Content-Type', 'application/json');
+          try {
+            const chunks: Buffer[] = []; let size = 0;
+            for await (const chunk of req) { size += chunk.length; if (size > 1024 * 1024) throw new Error('Yêu cầu quá lớn.'); chunks.push(Buffer.from(chunk)); }
+            const data = JSON.parse(Buffer.concat(chunks).toString());
+            const current = require('./scripts/remotionSchema.cjs').validateShot(data.current);
+            if (typeof data.instruction !== 'string' || !data.instruction.trim() || data.instruction.length > 4000) throw new Error('Nhập yêu cầu chỉnh cảnh, tối đa 4.000 ký tự.');
+            const shot = await editor.exclusive(() => require('./scripts/remotionPlanner.cjs').planShot({ ...data, current }));
+            res.end(JSON.stringify({ shot }));
+          } catch (error: any) { res.statusCode = 400; res.end(JSON.stringify({ error: error.message })); }
+          return;
+        }
         const videoRoute = req.url?.split('?')[0].match(/^\/projects\/([a-zA-Z0-9-]+)\/final-video\.mp4$/);
         if (videoRoute && (req.method === 'GET' || req.method === 'HEAD')) {
           const file = path.join(publicRoot, 'projects', videoRoute[1], 'final-video.mp4');
@@ -103,7 +133,9 @@ function videoApiPlugin(): Plugin {
 
             try {
               const data = JSON.parse(body);
-              const scriptPath = require.resolve('./scripts/videoGenerator.cjs');
+              if (data.videoMode && !['images', 'remotion'].includes(data.videoMode)) throw new Error('Kiểu video không hợp lệ.');
+              if (data.videoMode === 'remotion') for (const module of ['remotionGenerator', 'remotionPlanner', 'remotionSchema']) delete require.cache[require.resolve(`./scripts/${module}.cjs`)];
+              const scriptPath = require.resolve(data.videoMode === 'remotion' ? './scripts/remotionGenerator.cjs' : './scripts/videoGenerator.cjs');
               const { generateVideo } = require(scriptPath);
 
               const onProgress = (prog: any) => {

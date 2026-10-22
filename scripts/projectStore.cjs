@@ -41,7 +41,7 @@ function createStore(publicRoot) {
     return fs.readdirSync(root).filter(id => !id.startsWith('.')).map(id => {
       const data = read(id);
       const image = data.scenes[0]?.beats?.[0]?.image_file || data.scenes[0]?.image_file;
-      return { id, title: data.metadata.title || 'Video chưa đặt tên', thumbnail: image ? `/images/${encodeURIComponent(image)}` : null,
+      return { id, title: data.metadata.title || 'Video chưa đặt tên', videoMode: data.metadata.video_mode || 'images', thumbnail: image ? `/images/${encodeURIComponent(image)}` : null,
         duration: Number(data.metadata.total_duration_in_seconds), updatedAt: data.metadata.updated_at || data.metadata.created_at };
     }).sort((a,b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
   }
