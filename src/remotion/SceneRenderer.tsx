@@ -1,5 +1,6 @@
 import React from 'react';
-import { Audio, staticFile, useCurrentFrame, interpolate } from 'remotion';
+import { Audio, staticFile, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
+import { VectorShot } from './stickman/VectorShot';
 import { SceneData, VisualType } from '../types/scenes';
 import { CameraContainer } from './components/CameraContainer';
 import { CharacterScene } from './scenes/CharacterScene';
@@ -19,6 +20,7 @@ interface SceneRendererProps {
 
 export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = false }) => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   const totalDuration = scene.duration_in_frames;
 
   // Scene entrance & exit opacity
@@ -99,6 +101,7 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
 
   // Prioritize AI Generated image (FLUX.1 / DALL-E) over SVG fallback
   const renderBeatVisual = () => {
+    if ('remotion' in activeBeat && activeBeat.remotion) return <VectorShot shot={activeBeat.remotion} frame={beatLocalFrame} duration={beatDuration} fps={fps} />;
     if (activeBeat.image_file) {
       const baseImg = activeBeat.image_file.startsWith('http') || activeBeat.image_file.startsWith('/')
         ? activeBeat.image_file
@@ -213,7 +216,7 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
         backgroundColor: '#FFFFFF',
         overflow: 'hidden',
         fontFamily: "'Be Vietnam Pro', system-ui, -apple-system, sans-serif",
-        opacity: sceneOpacity,
+        opacity: 'remotion' in activeBeat && activeBeat.remotion ? 1 : sceneOpacity,
       }}
     >
       {/* Dynamic Camera Animation & Beat Content */}

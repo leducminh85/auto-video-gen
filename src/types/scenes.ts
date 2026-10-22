@@ -159,6 +159,7 @@ export interface ValidationResult {
 }
 
 export interface VisualBeat {
+  remotion?: import('./remotion').RemotionShot;
   id: string;
   display_number?: number;
   sub_index: number;
@@ -221,6 +222,8 @@ export interface SceneData {
 }
 
 export interface VideoMetadata {
+  video_mode?: 'images' | 'remotion';
+  remotion_style?: string;
   project_id?: string;
   updated_at?: string;
   title: string;

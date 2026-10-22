@@ -22,6 +22,7 @@ function normalizeProject(input) {
   const project = structuredClone(input);
   if (!project?.metadata || !Array.isArray(project.scenes) || !project.scenes.length) throw new Error('Dự án phải có ít nhất một cảnh.');
   const fps = project.metadata.fps;
+  if (project.metadata.video_mode === 'remotion' && (fps !== 60 || project.metadata.width !== 1920 || project.metadata.height !== 1080)) throw new Error('Hoạt hình người que cần 1920 × 1080, 60 fps.');
   if (!Number.isInteger(fps) || fps < 1 || fps > 60) throw new Error('FPS không hợp lệ.');
   let start = 0;
   const ids = new Set();
@@ -33,6 +34,8 @@ function normalizeProject(input) {
     const beatIds = new Set();
     let offset = 0;
     for (const [index, beat] of scene.beats.entries()) {
+      if (project.metadata.video_mode === 'remotion') beat.remotion = require('./remotionSchema.cjs').validateShot(beat.remotion);
+      else if (beat.remotion) throw new Error('Dữ liệu hoạt hình cần chế độ Remotion.');
       if (typeof beat.id !== 'string' || beatIds.has(beat.id)) throw new Error('ID ảnh không hợp lệ hoặc bị trùng.');
       beatIds.add(beat.id);
       if (!Number.isInteger(beat.duration_in_frames) || beat.duration_in_frames < 1) throw new Error('Mỗi ảnh phải có ít nhất một frame.');
@@ -113,6 +116,7 @@ async function sliceAudio(source, target, startFrames, frames) {
 }
 async function renderProject(input, root, assetRoot = root) {
   const project = normalizeProject(input);
+  if (project.metadata.video_mode === 'remotion') return require('./remotionRender.cjs').renderRemotion(project, root, assetRoot);
   const { fps, width, height } = project.metadata;
   if (![width, height].every(n => Number.isInteger(n) && n >= 2 && n <= 3840 && n % 2 === 0)) throw new Error('Kích thước video không hợp lệ.');
   for (const scene of project.scenes) {
