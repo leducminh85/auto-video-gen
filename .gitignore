@@ -21,6 +21,8 @@ public/clips_list.txt
 data/google-ai-studio-profile/
 data/
 playwright-auth/
+chatgpt-cookie.json
+chatgpt.com_*.json
 scratch/
 
 # Python audio alignment
