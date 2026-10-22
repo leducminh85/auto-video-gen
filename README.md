@@ -33,6 +33,14 @@ Browse video thumbnails, search and sort projects, rename them, or delete a proj
 
 Start from narration text or imported audio. Configure the voice, speaking speed, image density, and illustration style.
 
+The **Kiểu video** selector also offers **Hoạt hình người que · Remotion**. This mode uses ChatGPT in a visible Playwright browser to plan shots and author animated vector layers. It reuses the Leo rig, palette, lighting and motion helpers from `genvideo 2`; the reference is preserved in [STYLE_GUIDE_NGUOI_QUE.md](docs/STYLE_GUIDE_NGUOI_QUE.md). Output is 1920 × 1080 at 60 fps with 56 px letterbox bars.
+
+Select the Remotion option, click **Mở ChatGPT đăng nhập**, complete sign-in, then click **Kiểm tra kết nối**. The application uses its own profile in `data/chatgpt-profile/`, excluded from Git. If Google rejects automated-browser sign-in, try a direct ChatGPT sign-in method available to your account; the app does not bypass provider login checks. Keep the browser open while generating. Narration and the style guide are sent to ChatGPT. An expired login, account limit or changed ChatGPT interface can interrupt generation; there is no silent fallback to image generation.
+
+Both narration sources work in this mode. Imported audio is transcribed and aligned before cutting scenes; AI narration is generated for each planned scene. ChatGPT returns a validated scene description containing vector layers and frame-based movements. The app renders that description through Remotion rather than executing arbitrary generated JavaScript. Custom SVG shapes, grouped props, characters, camera transforms, text, steam and signal effects are supported. This does not expose all of Remotion's React API.
+
+Remotion videos appear in the same project list. In the editor, **Chỉnh hoạt hình** opens a moving preview and controls for layer position, scale, rotation, opacity, text and expressions. You can ask ChatGPT to revise the selected shot, duplicate a shot, reorder or resize it on the timeline, undo changes, and export again. Editing preserves the scene's audio duration; shot motion scales with its new timeline duration.
+
 ![Video creation form showing script input, voice selection, speed, and image density](docs/images/create-video.png)
 
 ### Video editor
@@ -98,14 +106,14 @@ These activation commands use a POSIX-style shell. Start the development server 
 npm run dev
 ```
 
-Open **http://localhost:3000**. The dev script binds to `0.0.0.0`, rather than loopback only.
+Open **http://localhost:5173**. The dev script binds to `0.0.0.0`, rather than loopback only.
 
 ### 4. Sign in to Google AI Studio
 
 With the development server running, open the application's login browser through its API:
 
 ```sh
-curl -X POST http://localhost:3000/api/image-provider/test-connection
+curl -X POST http://localhost:5173/api/image-provider/test-connection
 ```
 
 Complete sign-in in the Chromium window opened by Playwright. The session is stored in `data/google-ai-studio-profile/`. The browser runs with a visible window (`headless: false`). The AI Studio web planning flow does not require an API key.
@@ -113,7 +121,7 @@ Complete sign-in in the Chromium window opened by Playwright. The session is sto
 To inspect provider status:
 
 ```sh
-curl http://localhost:3000/api/image-provider/status
+curl http://localhost:5173/api/image-provider/status
 ```
 
 Keep login profiles and `.env` files out of Git. These paths are covered by `.gitignore`.
@@ -278,10 +286,11 @@ Run selected tests directly:
 ```sh
 node --test scripts/aiPlanningClient.test.cjs scripts/aiProductionPlanner.test.cjs scripts/audioAlignment.test.cjs
 node --test scripts/projectStore.test.cjs scripts/projectEditor.test.cjs
+node --test scripts/remotion.test.cjs
 node --test scripts/image-generation/modelFallback.test.cjs scripts/image-generation/fluxFallback.test.cjs
 ```
 
-Some rendering tests require FFmpeg. Browser tests require Playwright Chromium and the development server on port 3000, for example:
+Some rendering tests require FFmpeg. Browser tests require Playwright Chromium. Older browser scripts may assume port 3000; adjust their URL to the dev server on port 5173 before running them, for example:
 
 ```sh
 node scripts/studio-timeline.test.cjs
@@ -290,6 +299,8 @@ node scripts/project-pages.test.cjs
 ```
 
 Browser scripts use different fixtures: some mock API responses, while others create and delete temporary projects or render actual files. Read each script before running it against a working environment. UI selectors may need updating as the interface changes; listing a command here does not assert that the entire suite currently passes.
+
+For the Remotion mode, `node scripts/remotion-render-smoke.cjs` renders a two-second fixture with audio into `data/remotion-smoke/` and checks its frame count and format. Then `node scripts/remotion-ui.test.cjs` checks creation and editing against mocked API responses on port 5173 (override with `STUDIO_URL`). These checks do not establish that a live ChatGPT account is authenticated or that its current UI still matches the browser adapter.
 
 To inspect a real AI plan without generating images:
 
@@ -315,3 +326,5 @@ This command uses the signed-in Studio profile and sends AI requests. Close the 
 **Deployment:** the API is implemented in Vite's `configureServer` hook. `npm run preview` serves the frontend build; it does not replace the development backend or provide the full video pipeline. Deploying `dist/` alone to static hosting is insufficient. A deployment needs the backend, processing tools, storage, and browser environment as well.
 
 The repository does not implement user accounts or access controls for these local APIs. The development server is not a ready-made public multi-user service.
+
+The animation pipeline, keyframe schema, reference study and authored IQ storyboard are documented in [REMOTION_CHOREOGRAPHY.md](docs/REMOTION_CHOREOGRAPHY.md).
