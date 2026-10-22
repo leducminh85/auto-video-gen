@@ -19,7 +19,7 @@ import { CreatorPanel } from './components/CreatorPanel';
 import { useDialog } from './utils/useDialog';
 import type { VideoMetadata } from './types/scenes';
 
-type Project = { id: string; title: string; thumbnail: string | null; duration: number; updatedAt: string };
+type Project = { id: string; title: string; thumbnail: string | null; duration: number; updatedAt: string; videoMode?: 'images' | 'remotion' };
 const emptyMetadata: VideoMetadata = {
   title: '',
   subtitle: '',
@@ -424,7 +424,7 @@ function Dashboard() {
                         )}
                         <div className="duration-badge">
                           <Clock size={11} aria-hidden="true" />
-                          <span>{formatDuration(project.duration)}</span>
+                          <span>{project.videoMode === 'remotion' ? 'Remotion · ' : ''}{formatDuration(project.duration)}</span>
                         </div>
                       </div>
                     </a>

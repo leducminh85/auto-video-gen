@@ -239,6 +239,19 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     imageStylePrompt: currentMetadata.image_style_prompt || defaultPrompt,
   }));
   const [selectedVoice, setSelectedVoice] = useState<string>(draft.voice);
+  const [videoMode, setVideoMode] = useState<'images' | 'remotion'>(draft.videoMode || 'images');
+  const [chatgptStatus, setChatgptStatus] = useState('Mở ChatGPT để đăng nhập trước khi tạo hoạt hình.');
+  const [chatgptBusy, setChatgptBusy] = useState(false);
+  const connectChatGPT = async (open = false) => {
+    setChatgptBusy(true);
+    try {
+      const response = await fetch(`/api/chatgpt/${open ? 'connect' : 'status'}`, { method: open ? 'POST' : 'GET' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      setChatgptStatus(result.message);
+    } catch (error: any) { setChatgptStatus(error.message); }
+    finally { setChatgptBusy(false); }
+  };
   const [speed, setSpeed] = useState<number>(draft.speed);
   const [contentMode, setContentMode] = useState<'text' | 'file'>('text');
   const [textContent, setTextContent] = useState<string>(draft.text);
@@ -279,8 +292,8 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const dialogRef = useDialog(onCancel, !isCreating && !audioUploading);
   useEffect(() => {
-    setDraftSaved(saveCreatorDraft({ voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries }));
-  }, [selectedVoice, speed, textContent, scriptTitle, scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries]);
+    setDraftSaved(saveCreatorDraft({ videoMode, voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries }));
+  }, [videoMode, selectedVoice, speed, textContent, scriptTitle, scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries]);
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [currentStepKey, setCurrentStepKey] = useState<string>('storyboard');
   const [currentMessage, setCurrentMessage] = useState<string>('');
@@ -318,8 +331,9 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   };
 
   useEffect(() => {
-    checkImageProviderStatus();
-  }, []);
+    if (videoMode === 'images') void checkImageProviderStatus();
+    else void connectChatGPT();
+  }, [videoMode]);
 
   const handleSelectProvider = async (provider: 'google_ai_studio' | 'flux_local') => {
     setSelectedImageProvider(provider);
@@ -543,7 +557,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       setErrorMessage('Vui lòng nhập nội dung kịch bản trước khi bấm Tạo Video');
       return;
     }
-    if (!imageStylePrompt.trim()) { setErrorMessage('Hãy nhập phong cách hình ảnh hoặc khôi phục mặc định.'); return; }
+    if (videoMode === 'images' && !imageStylePrompt.trim()) { setErrorMessage('Hãy nhập phong cách hình ảnh hoặc khôi phục mặc định.'); return; }
     if (audioMode === 'import' && !importedAudio) { setErrorMessage('Hãy nhập tệp audio trước khi tạo video.'); return; }
     audioPreviewManager.stop();
     setPlayingVoiceId(null);
@@ -576,6 +590,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          videoMode,
           title: effectiveTitle,
           subtitle: scriptSubtitle || (audioMode === 'import' ? 'Audio đã nhập' : `Giọng đọc ${speed}×`),
           voice: selectedVoice,
@@ -588,6 +603,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
           imageStylePrompt,
           imageDensity,
           importedAudio: audioMode === 'import' ? importedAudio?.file : undefined,
+          audioBoundaries: audioMode === 'import' && audioBoundaries.trim() ? audioBoundaries.split(/[,;\s]+/).filter(Boolean).map(Number) : undefined,
         }),
       });
 
@@ -873,6 +889,27 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
           {/* Right Column: Studio Inspector */}
           <aside className="creator-inspector">
+            <section className="inspector-card video-mode-card" aria-labelledby="video-mode-label">
+              <h2 id="video-mode-label">Kiểu video</h2>
+              <div className="video-mode-options">
+                <label className={videoMode === 'images' ? 'selected' : ''}>
+                  <input type="radio" name="video-mode" value="images" checked={videoMode === 'images'} onChange={() => setVideoMode('images')} />
+                  <span><strong>Ảnh minh họa</strong><small>Tạo ảnh theo lời đọc, ghép thành video.</small></span>
+                </label>
+                <label className={videoMode === 'remotion' ? 'selected' : ''}>
+                  <input type="radio" name="video-mode" value="remotion" checked={videoMode === 'remotion'} onChange={() => setVideoMode('remotion')} />
+                  <span><strong>Hoạt hình người que · Remotion</strong><small>Nhân vật Leo, bối cảnh vector và chuyển động theo lời thoại. 1080p · 60 fps.</small></span>
+                </label>
+              </div>
+              {videoMode === 'remotion' && <div className="chatgpt-connection">
+                <p>ChatGPT lên ý tưởng và thiết kế chuyển động theo phong cách người que của bạn. Lời thoại và hướng dẫn phong cách sẽ được gửi vào ChatGPT.</p>
+                <div className="toolbar-actions">
+                  <button type="button" className="btn btn-secondary" disabled={chatgptBusy} onClick={() => void connectChatGPT(true)}>Mở ChatGPT đăng nhập</button>
+                  <button type="button" className="btn btn-ghost" disabled={chatgptBusy} onClick={() => void connectChatGPT()}>Kiểm tra kết nối</button>
+                </div>
+                <p role="status">{chatgptBusy ? 'Đang kết nối…' : chatgptStatus}</p>
+              </div>}
+            </section>
             {/* Section 1: Audio Configuration */}
             <div className="inspector-card">
               <div className="inspector-card-header">
@@ -1049,7 +1086,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               <div className="inspector-card-header">
                 <div className="card-badge-title">
                   <Gauge size={16} className="title-icon" aria-hidden="true" />
-                  <span>Mật độ hình ảnh</span>
+                  <span>{videoMode === 'remotion' ? 'Nhịp phân cảnh' : 'Mật độ hình ảnh'}</span>
                 </div>
               </div>
 
@@ -1070,7 +1107,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                       onClick={() => setImageDensity(option.value as any)}
                     >
                       <strong className="density-title">{option.label}</strong>
-                      <span className="density-meta">{option.seconds}</span>
+                      <span className="density-meta">{videoMode === 'remotion' ? option.seconds.replace('ảnh', 'cảnh') : option.seconds}</span>
                     </button>
                   );
                 })}
@@ -1078,7 +1115,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             </div>
 
             {/* Section 3: Visual Style Prompt */}
-            <details className="inspector-card style-details">
+            {videoMode === 'images' && <details className="inspector-card style-details">
               <summary className="style-summary">
                 <div className="summary-left">
                   <Palette size={16} className="title-icon" aria-hidden="true" />
@@ -1111,7 +1148,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                   <span>Khôi phục phong cách mặc định</span>
                 </button>
               </div>
-            </details>
+            </details>}
           </aside>
         </div>
       </div>
@@ -1136,7 +1173,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 isCreating ||
                 audioUploading ||
                 (audioMode === 'tts' && !textContent.trim()) ||
-                !imageStylePrompt.trim() ||
+                (videoMode === 'images' && !imageStylePrompt.trim()) ||
                 (audioMode === 'import' && !importedAudio)
               }
             >
@@ -1210,12 +1247,12 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                     </span>
                     <div className="step-info">
                       <h3>
-                        {step.key === 'tts' && audioMode === 'import'
+                        {videoMode === 'remotion' && step.key === 'beat_plan' ? 'Thiết kế chuyển động với ChatGPT' : videoMode === 'remotion' && step.key === 'images' ? 'Dựng các lớp vector' : step.key === 'tts' && audioMode === 'import'
                           ? 'Chuẩn bị audio đã nhập'
                           : step.title}
                       </h3>
                       <p>
-                        {step.key === 'tts' && audioMode === 'import'
+                        {videoMode === 'remotion' && step.key === 'beat_plan' ? 'Bố cục, hành động và nhịp chuyển động cho từng cảnh.' : videoMode === 'remotion' && step.key === 'images' ? 'Tái sử dụng nhân vật và phong cách người que.' : videoMode === 'remotion' && step.key === 'render' ? 'Remotion dựng từng frame và xuất MP4 với audio.' : step.key === 'tts' && audioMode === 'import'
                           ? 'Giữ nguyên giọng đọc và căn thời gian cho từng cảnh.'
                           : step.desc}
                       </p>

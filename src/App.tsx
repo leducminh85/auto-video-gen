@@ -16,6 +16,8 @@ import { insertBeat, removeBeat } from './utils/beatEditing';
 import { SceneTimeline } from './components/SceneTimeline';
 import { IconButton } from './components/IconButton';
 import { defaultPrompt } from './config/imageStyle.json';
+import { VectorShotEditor } from './components/VectorShotEditor';
+import { BeatThumbnail } from './components/BeatThumbnail';
 
 const initialProductionData = scenesDataJson as ProductionData;
 const initialMultiBeatScenes = buildMultiBeatScenes(initialProductionData.scenes);
@@ -195,6 +197,13 @@ export default function App({ projectId }: { projectId: string }) {
 
   const handleAddBeat = () => {
     if (!selectedScene || projectBusy) return;
+    if (metadata.video_mode === 'remotion') {
+      const source = selectedSceneBeats.find(beat => beat.id === selectedBeatId && beat.duration_in_frames >= 2) || selectedSceneBeats.find(beat => beat.duration_in_frames >= 2);
+      if (!source) return;
+      const edited = insertBeat(selectedScene, { ...structuredClone(source), id: crypto.randomUUID(), title: `${source.title} · bản sao` }, source.id, metadata.fps);
+      void persistProject({ metadata, scenes: scenes.map(scene => scene.id === edited.id ? edited : scene) });
+      return;
+    }
     const prompt = `${metadata.image_style_prompt || defaultPrompt}\n\nNội dung cần minh họa: ${selectedScene.text}`;
     setSceneToRegenerate(selectedScene);
     setBeatToRegenerate({ ...selectedSceneBeats[0], id: crypto.randomUUID(), sub_index: selectedSceneBeats.length + 1, title: 'Ảnh mới', prompt, plan: undefined, caption: selectedScene.text });
@@ -239,7 +248,7 @@ export default function App({ projectId }: { projectId: string }) {
       <header className="studio-topbar" inert={regenerateModalOpen}>
         <div className="header-identity"><StudioBrand /><h1 className="header-page-title" title={metadata.title}>{metadata.title}</h1></div>
         <div className="toolbar-actions">
-          <span className="studio-project-summary">{scenes.length} cảnh · {totalImagesCount} ảnh · {durationDisplay}</span>
+          <span className="studio-project-summary">{scenes.length} cảnh · {totalImagesCount} {metadata.video_mode === 'remotion' ? 'đoạn hoạt hình' : 'ảnh'} · {durationDisplay}</span>
           <a className="dashboard-back" href="/">Dự án</a>
           <IconButton label={exporting ? 'Đang xuất MP4' : metadata.render_dirty ? 'Xuất và tải MP4' : 'Tải MP4'} className="icon-accent" disabled={projectBusy || projectLoading || exporting} onClick={() => void downloadVideo()}>{exporting ? <Loader2 className="animate-spin" size={20} /> : <Download size={20} />}</IconButton>
         </div>
@@ -261,17 +270,17 @@ export default function App({ projectId }: { projectId: string }) {
           <div className="studio-section-heading"><h2 id="scenes-title">Phân cảnh</h2><span className="section-meta">{scenes.length} cảnh</span></div>
           <div className="studio-scene-list">
             {scenes.map(scene => <button key={scene.id} className={`studio-scene-item ${selectedScene.id === scene.id ? 'active' : ''}`} aria-label={`Chọn cảnh ${scene.id}: ${scene.title}`} aria-pressed={selectedScene.id === scene.id} disabled={projectBusy} onClick={() => selectScene(scene)}>
-              <img src={`/images/${scene.beats?.[0]?.image_file || scene.image_file}?v=${scene.beats?.[0]?.image_version || scene.image_version || ''}`} alt="" />
-              <span className="scene-item-copy"><strong>Cảnh {scene.id} <span>{scene.duration_in_seconds.toFixed(1)}s</span></strong><span>{scene.text}</span><small>{scene.beats?.length || 1} ảnh</small></span>
+              {scene.beats?.[0] && <BeatThumbnail beat={scene.beats[0]} />}
+              <span className="scene-item-copy"><strong>Cảnh {scene.id} <span>{scene.duration_in_seconds.toFixed(1)}s</span></strong><span>{scene.text}</span><small>{scene.beats?.length || 1} {metadata.video_mode === 'remotion' ? 'đoạn hoạt hình' : 'ảnh'}</small></span>
             </button>)}
           </div>
           <details className="timeline-narration"><summary>Lời thoại của cảnh</summary><p>{selectedScene.text}</p></details>
         </section>
         <section className="studio-section timeline-section" aria-labelledby="timeline-title">
           <div className="studio-section-heading timeline-heading">
-            <div><h2 id="timeline-title">Chi tiết cảnh</h2><p>Cảnh {selectedScene.id} · {selectedSceneBeats.length} ảnh · {selectedScene.duration_in_seconds.toFixed(2)} giây</p></div>
+            <div><h2 id="timeline-title">Chi tiết cảnh</h2><p>Cảnh {selectedScene.id} · {selectedSceneBeats.length} {metadata.video_mode === 'remotion' ? 'đoạn hoạt hình' : 'ảnh'} · {selectedScene.duration_in_seconds.toFixed(2)} giây</p></div>
             <div className="toolbar-actions">
-              <IconButton label="Thêm ảnh vào cảnh" disabled={projectBusy || projectLoading || !selectedSceneBeats.some(beat => beat.duration_in_frames >= 2)} onClick={handleAddBeat}><PlusCircle size={18} /></IconButton>
+              <IconButton label={metadata.video_mode === 'remotion' ? 'Nhân đôi đoạn hoạt hình' : 'Thêm ảnh vào cảnh'} disabled={projectBusy || projectLoading || !selectedSceneBeats.some(beat => beat.duration_in_frames >= 2)} onClick={handleAddBeat}><PlusCircle size={18} /></IconButton>
               <IconButton label="Hoàn tác" disabled={!undoProject || projectBusy} onClick={async () => { if (undoProject && await persistProject(undoProject, false, false)) setUndoProject(null); }}><Undo2 size={18} /></IconButton>
             </div>
           </div>
@@ -281,7 +290,8 @@ export default function App({ projectId }: { projectId: string }) {
             onRegenerate={beat => handleOpenRegenerate(selectedScene, beat)} onDelete={handleDeleteBeat} />
         </section>
       </main>
-      {sceneToRegenerate && <RegenerateImageModal isOpen={regenerateModalOpen} onClose={() => setRegenerateModalOpen(false)} scene={sceneToRegenerate} selectedBeat={beatToRegenerate} onSaveImage={handleSaveRegeneratedImage} adding={addingBeat} imageStylePrompt={metadata.image_style_prompt} insertAfterId={insertAfterId} onInsertAfterChange={setInsertAfterId} />}
+      {sceneToRegenerate && metadata.video_mode !== 'remotion' && <RegenerateImageModal isOpen={regenerateModalOpen} onClose={() => setRegenerateModalOpen(false)} scene={sceneToRegenerate} selectedBeat={beatToRegenerate} onSaveImage={handleSaveRegeneratedImage} adding={addingBeat} imageStylePrompt={metadata.image_style_prompt} insertAfterId={insertAfterId} onInsertAfterChange={setInsertAfterId} />}
+      {regenerateModalOpen && beatToRegenerate?.remotion && <VectorShotEditor beat={beatToRegenerate} fps={metadata.fps} onClose={() => setRegenerateModalOpen(false)} onSave={shot => persistProject({ metadata, scenes: scenes.map(scene => scene.id === sceneToRegenerate?.id ? { ...scene, beats: scene.beats?.map(beat => beat.id === beatToRegenerate.id ? { ...beat, remotion: shot, prompt: shot.direction } : beat) } : scene) })} />}
       {toastMessage && <div className="toast toast-success" role="status"><CheckCircle2 size={16} /><span>{toastMessage}</span></div>}
     </div>
   );
