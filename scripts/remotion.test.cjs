@@ -23,7 +23,7 @@ test('storyboard preserves every narration word and rejects missing or overlappi
 });
 test('repairs invalid ChatGPT output once and keeps a validated scene', async () => {
   let attempts = 0;
-  const result = await planShot({ text: 'test', seconds: 2 }, async prompt => { attempts++; if (attempts === 1) return {}; assert.match(prompt, /failed validation/); return shot; });
+  const result = await planShot({ text: 'test', seconds: 2 }, async prompt => { attempts++; if (attempts === 1) return {}; assert.match(prompt, /FIX THESE ITEMS FIRST/); return shot; });
   assert.equal(attempts, 2); assert.equal(result.styleId, 'STICKMAN_500IQ_V1');
 });
 test('project edits preserve animation and enforce the source style frame rate', () => {

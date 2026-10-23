@@ -1,0 +1,1522 @@
+{
+  "timing_source": "estimated_preview_only",
+  "total_seconds": 95.8,
+  "storyboard": {
+    "fullScript": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng, đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.\n\nLợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà. Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác. Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều.\n\nKhách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.\n\nLợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày.\n\nKhác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày. Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.\n\nVí dụ, một khách chơi ba tiếng vào buổi chiều, sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.\n\nĐiều này giúp tài sản của quán được khai thác nhiều lần.\n\nMột lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống.\n\nKhách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn. Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh.\n\nĐôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.\n\nQuán net cũng có lợi thế về cộng đồng.\n\nNhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè. Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội.\n\nNếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên.\n\nĐây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.\n\nNgoài ra, quán net có thể tổ chức các giải đấu nhỏ.\n\nVí dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến.\n\nNhững sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+    "continuity": "The video uses a consistent hand-drawn 2D whiteboard-doodle style with stick-figure characters, flat colors (light blue, muted red, yellow, green, tan, brown, gray, black, off-white), and clean, simple line art throughout, avoiding all text or realistic detail. No on-screen text, letters, or words appear in any scene.",
+    "scenes": [
+      {
+        "startWord": 0,
+        "title": "Introduction to the Gaming Cafe Model",
+        "intent": "A character stands in front of a simple building outline representing a gaming cafe, pointing towards a group of young people walking by to suggest the potential target audience.",
+        "endWord": 37,
+        "id": 1,
+        "scene_id": "scene_1",
+        "text": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng, đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.",
+        "narration": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng, đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.",
+        "planningSource": "ai"
+      },
+      {
+        "startWord": 37,
+        "title": "Addressing the Need for High-End PC Access",
+        "intent": "A character is depicted looking frustrated at an empty, expensive desk, then transitions to a character happily using a high-end PC inside a cafe, highlighting the accessibility benefit.",
+        "endWord": 129,
+        "id": 2,
+        "scene_id": "scene_2",
+        "text": "Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà. Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác. Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều.\n\nKhách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.",
+        "narration": "Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà. Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác. Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều.\n\nKhách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.",
+        "planningSource": "ai"
+      },
+      {
+        "startWord": 129,
+        "title": "High Frequency Usage and Revenue",
+        "intent": "A calendar icon above a computer shows multiple time slots being filled, illustrating how one machine generates constant revenue by serving different customers throughout the day.",
+        "endWord": 231,
+        "id": 3,
+        "scene_id": "scene_3",
+        "text": "Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày.\n\nKhác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày. Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.\n\nVí dụ, một khách chơi ba tiếng vào buổi chiều, sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.\n\nĐiều này giúp tài sản của quán được khai thác nhiều lần.",
+        "narration": "Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày.\n\nKhác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày. Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.\n\nVí dụ, một khách chơi ba tiếng vào buổi chiều, sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.\n\nĐiều này giúp tài sản của quán được khai thác nhiều lần.",
+        "planningSource": "ai"
+      },
+      {
+        "startWord": 231,
+        "title": "Secondary Revenue Streams",
+        "intent": "A character sitting at a computer is shown enjoying snacks and drinks, with icons for a cup and a bowl appearing above, emphasizing additional income from food services.",
+        "endWord": 313,
+        "id": 4,
+        "scene_id": "scene_4",
+        "text": "Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống.\n\nKhách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn. Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh.\n\nĐôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.",
+        "narration": "Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống.\n\nKhách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn. Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh.\n\nĐôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.",
+        "planningSource": "ai"
+      },
+      {
+        "startWord": 313,
+        "title": "Community and Loyalty",
+        "intent": "A group of stick-figure characters are seen cheering together side-by-side at a row of computers, demonstrating the social aspect and repeat customer behavior.",
+        "endWord": 394,
+        "id": 5,
+        "scene_id": "scene_5",
+        "text": "Quán net cũng có lợi thế về cộng đồng.\n\nNhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè. Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội.\n\nNếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên.\n\nĐây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.",
+        "narration": "Quán net cũng có lợi thế về cộng đồng.\n\nNhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè. Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội.\n\nNếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên.\n\nĐây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.",
+        "planningSource": "ai"
+      },
+      {
+        "startWord": 394,
+        "title": "Events and Tournaments",
+        "intent": "A group of players is shown focused on their screens with excitement shown through hand gestures, illustrating a competitive gaming match atmosphere without using any trophy icons or text.",
+        "endWord": 447,
+        "id": 6,
+        "scene_id": "scene_6",
+        "text": "Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ.\n\nVí dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến.\n\nNhững sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+        "narration": "Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ.\n\nVí dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến.\n\nNhững sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+        "planningSource": "ai"
+      }
+    ],
+    "quality": {
+      "passed": true,
+      "attempts": 2,
+      "repairs": [
+        "AI review chưa đạt: [\"Scene 6 includes a trophy, which is a forbidden symbol according to the instructions.\"]"
+      ],
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite",
+      "providerFailures": [],
+      "reviewer": {
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-lite",
+        "providerFailures": []
+      },
+      "review": {
+        "passed": true,
+        "issues": [],
+        "items": [
+          {
+            "index": 1,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng, đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.",
+            "reason": "The scene visually establishes the business model and its target demographic as described in the narration."
+          },
+          {
+            "index": 2,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng. Không phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà. Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác. Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều. Khách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.",
+            "reason": "The contrast between the frustrated individual without a PC and the content customer at a cafe effectively illustrates the accessibility and cost-saving value proposition."
+          },
+          {
+            "index": 3,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày. Khác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày. Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu. Ví dụ, một khách chơi ba tiếng vào buổi chiều, sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối. Điều này giúp tài sản của quán được khai thác nhiều lần.",
+            "reason": "The visual of a calendar icon tracking time slots on a PC provides a clear representation of recurring revenue and asset utilization."
+          },
+          {
+            "index": 4,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống. Khách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn. Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh. Đôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.",
+            "reason": "The inclusion of food and drink icons alongside the gaming customer correctly maps the additional revenue stream narration to visual props."
+          },
+          {
+            "index": 5,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Quán net cũng có lợi thế về cộng đồng. Nhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè. Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội. Nếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên. Đây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.",
+            "reason": "The scene illustrates the social aspect of gaming with friends, which matches the community benefit mentioned in the script."
+          },
+          {
+            "index": 6,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ. Ví dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến. Những sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+            "reason": "The scene depicts the competitive and communal atmosphere of a gaming tournament through character interaction, fulfilling the event planning aspect."
+          }
+        ]
+      }
+    }
+  },
+  "scenes": [
+    {
+      "startWord": 0,
+      "title": "Introduction to the Gaming Cafe Model",
+      "intent": "A character stands in front of a simple building outline representing a gaming cafe, pointing towards a group of young people walking by to suggest the potential target audience.",
+      "endWord": 37,
+      "id": 1,
+      "scene_id": "scene_1",
+      "text": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng, đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.",
+      "narration": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng, đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.",
+      "planningSource": "ai",
+      "beats": [
+        {
+          "id": "scene_1_beat_1",
+          "sub_index": 1,
+          "title": "Introduction to the Gaming Cafe Model / 1",
+          "text": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng,",
+          "caption": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng,",
+          "start_frame_offset": 0,
+          "duration_in_frames": 122,
+          "duration_in_seconds": 4.066666666666666,
+          "plan": {
+            "startWord": 0,
+            "what_to_show": "A stick-figure business owner contemplating opening a store, with a minimalist sketch of a building outline appearing.",
+            "how_to_show": "A hand-drawn whiteboard-doodle style scene of an owner character standing thoughtfully while a simple line-art outline of a shop front forms on the screen.",
+            "subject": "Business owner character",
+            "action": "Standing in a thoughtful pose looking at a developing building outline",
+            "environment": "Minimalist white background with simple line art",
+            "objects": [
+              "stick-figure owner",
+              "building outline"
+            ],
+            "shotType": "wide",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Hand-drawn 2D whiteboard-doodle, clean lines, flat colors, no text.",
+            "transitionIntent": "Establish the business idea concept.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "realistic people",
+              "gradients"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure character standing in an empty space looking thoughtful. A simple outline of a small cafe building is being sketched into existence. Clean thin black lines on a white background, flat colors including light blue and muted red. No text, no letters, no gradients, no realistic details, playful and clean composition, wide shot.",
+            "endWord": 19,
+            "meaning": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng,",
+            "composition": "A hand-drawn whiteboard-doodle style scene of an owner character standing thoughtfully while a simple line-art outline of a shop front forms on the screen.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure character standing in an empty space looking thoughtful. A simple outline of a small cafe building is being sketched into existence. Clean thin black lines on a white background, flat colors including light blue and muted red. No text, no letters, no gradients, no realistic details, playful and clean composition, wide shot.\nContinuity: Hand-drawn 2D whiteboard-doodle, clean lines, flat colors, no text.\nExclude: text, letters, money symbols, realistic people, gradients\nNarration to illustrate faithfully: Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng,"
+          }
+        },
+        {
+          "id": "scene_1_beat_2",
+          "sub_index": 2,
+          "title": "Introduction to the Gaming Cafe Model / 2",
+          "text": "đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.",
+          "caption": "đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.",
+          "start_frame_offset": 122,
+          "duration_in_frames": 116,
+          "duration_in_seconds": 3.8666666666666667,
+          "plan": {
+            "startWord": 19,
+            "what_to_show": "A group of diverse young stick-figure people representing students and young gamers walking by the shop front.",
+            "how_to_show": "A hand-drawn whiteboard-doodle scene showing the cafe building in the background with a diverse group of young stick-figure characters walking past, appearing energetic and interested.",
+            "subject": "Group of young students and gamers",
+            "action": "Walking past the cafe with enthusiastic body language",
+            "environment": "Sidewalk in front of the previously sketched cafe shop front",
+            "objects": [
+              "group of students",
+              "cafe exterior outline",
+              "backpacks"
+            ],
+            "shotType": "wide",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Hand-drawn 2D whiteboard-doodle, clean lines, flat colors, no text.",
+            "transitionIntent": "Illustrate the target audience for the cafe.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "realistic people",
+              "gradients"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a group of diverse young stick-figure students walking past a simple outline of a cafe shop front. The characters are depicted as happy and youthful. Clean thin black lines on a white background, flat colors including yellow, green, and tan. No text, no letters, no gradients, no realistic details, playful and clean composition, wide shot.",
+            "endWord": 37,
+            "meaning": "đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.",
+            "composition": "A hand-drawn whiteboard-doodle scene showing the cafe building in the background with a diverse group of young stick-figure characters walking past, appearing energetic and interested.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a group of diverse young stick-figure students walking past a simple outline of a cafe shop front. The characters are depicted as happy and youthful. Clean thin black lines on a white background, flat colors including yellow, green, and tan. No text, no letters, no gradients, no realistic details, playful and clean composition, wide shot.\nContinuity: Hand-drawn 2D whiteboard-doodle, clean lines, flat colors, no text.\nExclude: text, letters, money symbols, realistic people, gradients\nNarration to illustrate faithfully: đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game."
+          }
+        }
+      ],
+      "quality": {
+        "passed": true,
+        "attempts": 2,
+        "repairs": [
+          "Ảnh 1 dài 7.9 giây, vượt nhịp đã chọn (tối đa 7 giây). AI cần chia thêm tại ranh giới ý nghĩa."
+        ],
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-lite",
+        "providerFailures": [],
+        "reviewer": {
+          "provider": "gemini",
+          "model": "gemini-3.1-flash-lite",
+          "providerFailures": []
+        },
+        "review": {
+          "passed": true,
+          "issues": [],
+          "items": [
+            {
+              "index": 1,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Nếu bạn muốn mở một quán net, đây có thể là một mô hình kinh doanh khá tiềm năng,",
+              "reason": "The plan visually represents the narrated idea of opening a business (gaming cafe) by sketching an owner and a cafe outline, which aligns with the potential business concept mentioned."
+            },
+            {
+              "index": 2,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "đặc biệt ở những khu vực có nhiều học sinh, sinh viên hoặc người trẻ thích chơi game.",
+              "reason": "The plan depicts young stick-figure students walking past the established shop front to illustrate the target audience mentioned in the narration."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "startWord": 37,
+      "title": "Addressing the Need for High-End PC Access",
+      "intent": "A character is depicted looking frustrated at an empty, expensive desk, then transitions to a character happily using a high-end PC inside a cafe, highlighting the accessibility benefit.",
+      "endWord": 129,
+      "id": 2,
+      "scene_id": "scene_2",
+      "text": "Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà. Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác. Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều.\n\nKhách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.",
+      "narration": "Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà. Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác. Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều.\n\nKhách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.",
+      "planningSource": "ai",
+      "beats": [
+        {
+          "id": "scene_2_beat_1",
+          "sub_index": 1,
+          "title": "Addressing the Need for High-End PC Access / 1",
+          "text": "Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà.",
+          "caption": "Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà.",
+          "start_frame_offset": 0,
+          "duration_in_frames": 187,
+          "duration_in_seconds": 6.233333333333333,
+          "plan": {
+            "startWord": 0,
+            "what_to_show": "A person standing at a desk with an incomplete or messy setup at home, looking puzzled.",
+            "how_to_show": "Hand-drawn stick figure in a home setting looking at a sparse desk with scattered electronic components representing the difficulty of assembling a high-end setup.",
+            "subject": "stick-figure character",
+            "action": "scratching head while looking at a desk",
+            "environment": "home office or bedroom",
+            "objects": [
+              "stick figure",
+              "desk",
+              "scattered electronic components"
+            ],
+            "shotType": "medium",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.",
+            "transitionIntent": "Introduce the initial problem of needing a computer setup.",
+            "mustNotInclude": [
+              "money symbols",
+              "text",
+              "realistic people",
+              "price tags"
+            ],
+            "imagePrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. A stick-figure character with a round head and thin black line body stands in a room, scratching their head in confusion next to a desk that has a few disconnected, complex-looking computer parts scattered on it, representing the difficulty of setting up a high-end PC. Flat colors, simple shapes, light blue and off-white background.",
+            "endWord": 29,
+            "meaning": "Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà.",
+            "composition": "Hand-drawn stick figure in a home setting looking at a sparse desk with scattered electronic components representing the difficulty of assembling a high-end setup.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. A stick-figure character with a round head and thin black line body stands in a room, scratching their head in confusion next to a desk that has a few disconnected, complex-looking computer parts scattered on it, representing the difficulty of setting up a high-end PC. Flat colors, simple shapes, light blue and off-white background.\nContinuity: Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.\nExclude: money symbols, text, realistic people, price tags\nNarration to illustrate faithfully: Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà."
+          }
+        },
+        {
+          "id": "scene_2_beat_2",
+          "sub_index": 2,
+          "title": "Addressing the Need for High-End PC Access / 2",
+          "text": "Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác.",
+          "caption": "Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác.",
+          "start_frame_offset": 187,
+          "duration_in_frames": 135,
+          "duration_in_seconds": 4.5,
+          "plan": {
+            "startWord": 29,
+            "what_to_show": "A large, complex stack of computer components like a monitor, keyboard, and tower appearing heavy and crowded.",
+            "how_to_show": "The components are drawn piled up to visually represent that they are numerous and complicated, without using any text or numbers.",
+            "subject": "computer setup components",
+            "action": "sitting on a desk representing complexity",
+            "environment": "minimalist home environment",
+            "objects": [
+              "monitor",
+              "keyboard",
+              "computer tower",
+              "mouse"
+            ],
+            "shotType": "close-up",
+            "visualMethod": "object_metaphor",
+            "keyText": "",
+            "continuity": "Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.",
+            "transitionIntent": "Emphasize the high cost and complexity of hardware ownership.",
+            "mustNotInclude": [
+              "money symbols",
+              "text",
+              "numbers",
+              "realistic people"
+            ],
+            "imagePrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. A close-up view of a high-end PC setup on a desk, including a monitor, keyboard, tower, and mouse. The drawing uses simplified line art and flat colors. The composition is uncluttered and focuses on the multitude of components to show that a complete setup is elaborate and physically cumbersome.",
+            "endWord": 50,
+            "meaning": "Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác.",
+            "composition": "The components are drawn piled up to visually represent that they are numerous and complicated, without using any text or numbers.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. A close-up view of a high-end PC setup on a desk, including a monitor, keyboard, tower, and mouse. The drawing uses simplified line art and flat colors. The composition is uncluttered and focuses on the multitude of components to show that a complete setup is elaborate and physically cumbersome.\nContinuity: Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.\nExclude: money symbols, text, numbers, realistic people\nNarration to illustrate faithfully: Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác."
+          }
+        },
+        {
+          "id": "scene_2_beat_3",
+          "sub_index": 3,
+          "title": "Addressing the Need for High-End PC Access / 3",
+          "text": "Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều.",
+          "caption": "Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều.",
+          "start_frame_offset": 322,
+          "duration_in_frames": 135,
+          "duration_in_seconds": 4.5,
+          "plan": {
+            "startWord": 50,
+            "what_to_show": "A character sitting comfortably in a well-lit cafe, happily using a high-end PC.",
+            "how_to_show": "The character is now in a different environment, smiling while interacting with a sleek, well-maintained PC, illustrating accessibility.",
+            "subject": "stick-figure character",
+            "action": "sitting and smiling while using a computer",
+            "environment": "modern gaming cafe interior",
+            "objects": [
+              "computer desk",
+              "comfortable chair",
+              "modern computer setup"
+            ],
+            "shotType": "wide",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.",
+            "transitionIntent": "Contrast the previous home frustration with the ease of a cafe setup.",
+            "mustNotInclude": [
+              "money symbols",
+              "text",
+              "realistic people"
+            ],
+            "imagePrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. A stick-figure character is sitting in a clean, organized cafe setting, using a high-end gaming computer with ease. The character looks happy and relaxed. Minimalist line art, flat yellow and light blue colors on a neutral background, capturing an inviting and professional environment.",
+            "endWord": 71,
+            "meaning": "Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều.",
+            "composition": "The character is now in a different environment, smiling while interacting with a sleek, well-maintained PC, illustrating accessibility.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. A stick-figure character is sitting in a clean, organized cafe setting, using a high-end gaming computer with ease. The character looks happy and relaxed. Minimalist line art, flat yellow and light blue colors on a neutral background, capturing an inviting and professional environment.\nContinuity: Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.\nExclude: money symbols, text, realistic people\nNarration to illustrate faithfully: Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều."
+          }
+        },
+        {
+          "id": "scene_2_beat_4",
+          "sub_index": 4,
+          "title": "Addressing the Need for High-End PC Access / 4",
+          "text": "Khách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.",
+          "caption": "Khách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.",
+          "start_frame_offset": 457,
+          "duration_in_frames": 135,
+          "duration_in_seconds": 4.5,
+          "plan": {
+            "startWord": 71,
+            "what_to_show": "A character interacting with a small clock icon or a timer to suggest pay-per-hour usage.",
+            "how_to_show": "The character holds a simple circular clock icon, showing that they can access the gaming experience for just the duration they need.",
+            "subject": "stick-figure character",
+            "action": "holding a circular clock icon while at the computer",
+            "environment": "gaming cafe",
+            "objects": [
+              "computer",
+              "clock icon",
+              "chair"
+            ],
+            "shotType": "medium",
+            "visualMethod": "object_metaphor",
+            "keyText": "",
+            "continuity": "Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.",
+            "transitionIntent": "Explain the pay-per-hour model simply.",
+            "mustNotInclude": [
+              "money symbols",
+              "text",
+              "numbers",
+              "realistic people"
+            ],
+            "imagePrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. A stick-figure character in a gaming cafe is smiling and holding a simple line-drawn clock icon next to their computer setup. The scene is bright and uncluttered, focusing on the ease of usage and the concept of time-based access. Flat color accents, soft shading, consistent with previous doodle scenes.",
+            "endWord": 92,
+            "meaning": "Khách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.",
+            "composition": "The character holds a simple circular clock icon, showing that they can access the gaming experience for just the duration they need.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. A stick-figure character in a gaming cafe is smiling and holding a simple line-drawn clock icon next to their computer setup. The scene is bright and uncluttered, focusing on the ease of usage and the concept of time-based access. Flat color accents, soft shading, consistent with previous doodle scenes.\nContinuity: Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.\nExclude: money symbols, text, numbers, realistic people\nNarration to illustrate faithfully: Khách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet."
+          }
+        }
+      ],
+      "quality": {
+        "passed": true,
+        "attempts": 1,
+        "repairs": [],
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-lite",
+        "providerFailures": [],
+        "reviewer": {
+          "provider": "gemini",
+          "model": "gemini-3.1-flash-lite",
+          "providerFailures": []
+        },
+        "review": {
+          "passed": true,
+          "issues": [],
+          "items": [
+            {
+              "index": 1,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Lợi ích đầu tiên là nhu cầu sử dụng khá rõ ràng.\n\nKhông phải ai cũng có điều kiện mua một bộ máy tính cấu hình mạnh ở nhà.",
+              "reason": "The visual depiction of a character looking confused at complex computer parts effectively conveys the frustration and difficulty of owning a high-end setup."
+            },
+            {
+              "index": 2,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Một bộ PC gaming tốt có thể khá đắt, chưa kể màn hình, bàn phím, chuột và các phụ kiện khác.",
+              "reason": "Showing a pile of computer peripherals visually represents the accumulation of various components that make up a full, costly gaming setup."
+            },
+            {
+              "index": 3,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Vì vậy, quán net cho khách hàng cơ hội sử dụng máy tính mạnh với chi phí thấp hơn rất nhiều.",
+              "reason": "The contrast between the previous home-setup frustration and the happy character in a tidy cafe environment clearly illustrates the accessibility benefit of the business model."
+            },
+            {
+              "index": 4,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Khách hàng chỉ cần trả tiền theo giờ là có thể chơi game, học tập, làm việc hoặc sử dụng Internet.",
+              "reason": "Using a clock icon to signify the pay-per-hour model is a direct, drawable visual metaphor that aligns with the narration and provided design constraints."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "startWord": 129,
+      "title": "High Frequency Usage and Revenue",
+      "intent": "A calendar icon above a computer shows multiple time slots being filled, illustrating how one machine generates constant revenue by serving different customers throughout the day.",
+      "endWord": 231,
+      "id": 3,
+      "scene_id": "scene_3",
+      "text": "Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày.\n\nKhác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày. Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.\n\nVí dụ, một khách chơi ba tiếng vào buổi chiều, sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.\n\nĐiều này giúp tài sản của quán được khai thác nhiều lần.",
+      "narration": "Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày.\n\nKhác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày. Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.\n\nVí dụ, một khách chơi ba tiếng vào buổi chiều, sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.\n\nĐiều này giúp tài sản của quán được khai thác nhiều lần.",
+      "planningSource": "ai",
+      "beats": [
+        {
+          "id": "scene_3_beat_1",
+          "sub_index": 1,
+          "title": "High Frequency Usage and Revenue / 1",
+          "text": "Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày.",
+          "caption": "Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày.",
+          "start_frame_offset": 0,
+          "duration_in_frames": 84,
+          "duration_in_seconds": 2.8,
+          "plan": {
+            "startWord": 0,
+            "what_to_show": "A stick-figure character looking at a repeating loop icon over a computer.",
+            "how_to_show": "Whiteboard doodle style, a stick figure points to a computer, with a circular arrow icon above it to represent cycles.",
+            "subject": "stick-figure character",
+            "action": "pointing to a computer",
+            "environment": "clean, white, minimalist studio",
+            "objects": [
+              "computer",
+              "circular arrow icon"
+            ],
+            "shotType": "medium",
+            "visualMethod": "object_metaphor",
+            "keyText": "",
+            "continuity": "consistent stick-figure style, flat colors",
+            "transitionIntent": "introduce repeating revenue",
+            "mustNotInclude": [
+              "money symbols",
+              "graphs",
+              "text"
+            ],
+            "imagePrompt": "A simple stick-figure character standing next to a computer station, with a soft-edged circle arrow icon floating above to suggest repetition in a clean, minimalist whiteboard-doodle style. Flat light blue and gray colors.",
+            "endWord": 13,
+            "meaning": "Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày.",
+            "composition": "Whiteboard doodle style, a stick figure points to a computer, with a circular arrow icon above it to represent cycles.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA simple stick-figure character standing next to a computer station, with a soft-edged circle arrow icon floating above to suggest repetition in a clean, minimalist whiteboard-doodle style. Flat light blue and gray colors.\nContinuity: consistent stick-figure style, flat colors\nExclude: money symbols, graphs, text\nNarration to illustrate faithfully: Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày."
+          }
+        },
+        {
+          "id": "scene_3_beat_2",
+          "sub_index": 2,
+          "title": "High Frequency Usage and Revenue / 2",
+          "text": "Khác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.",
+          "caption": "Khác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.",
+          "start_frame_offset": 84,
+          "duration_in_frames": 167,
+          "duration_in_seconds": 5.566666666666666,
+          "plan": {
+            "startWord": 13,
+            "what_to_show": "Side-by-side comparison of a single PC sale versus a busy cafe computer station.",
+            "how_to_show": "Split screen. Left side: a boxed PC being handed over once. Right side: a computer in a cafe being used continuously.",
+            "subject": "boxed PC and cafe computer",
+            "action": "sale vs usage",
+            "environment": "split background",
+            "objects": [
+              "cardboard box",
+              "computer station"
+            ],
+            "shotType": "wide",
+            "visualMethod": "comparison",
+            "keyText": "",
+            "continuity": "clean whiteboard-doodle style",
+            "transitionIntent": "contrast one-time sale with cafe usage",
+            "mustNotInclude": [
+              "text",
+              "numbers",
+              "money"
+            ],
+            "imagePrompt": "Split-panel 16:9 composition. Left side: a box icon being passed. Right side: a computer workstation in a cafe environment, clean lines, flat yellow and tan colors, stick-figure style.",
+            "endWord": 39,
+            "meaning": "Khác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.",
+            "composition": "Split screen. Left side: a boxed PC being handed over once. Right side: a computer in a cafe being used continuously.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nSplit-panel 16:9 composition. Left side: a box icon being passed. Right side: a computer workstation in a cafe environment, clean lines, flat yellow and tan colors, stick-figure style.\nContinuity: clean whiteboard-doodle style\nExclude: text, numbers, money\nNarration to illustrate faithfully: Khác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày."
+          }
+        },
+        {
+          "id": "scene_3_beat_3",
+          "sub_index": 3,
+          "title": "High Frequency Usage and Revenue / 3",
+          "text": "Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.",
+          "caption": "Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.",
+          "start_frame_offset": 251,
+          "duration_in_frames": 167,
+          "duration_in_seconds": 5.566666666666666,
+          "plan": {
+            "startWord": 39,
+            "what_to_show": "A computer station being used with high frequency.",
+            "how_to_show": "Close-up of a sleek PC monitor in a well-lit cafe setting, simplified to show it is functional and active.",
+            "subject": "computer workstation",
+            "action": "active usage",
+            "environment": "gaming cafe",
+            "objects": [
+              "computer",
+              "chair"
+            ],
+            "shotType": "close-up",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "consistent whiteboard-doodle style",
+            "transitionIntent": "illustrate machine stability",
+            "mustNotInclude": [
+              "text",
+              "graphs",
+              "queues"
+            ],
+            "imagePrompt": "Close-up of a single modern computer workstation in a clean whiteboard-doodle style, with soft light blue and grey tones, emphasizing the station itself without any text or people present.",
+            "endWord": 65,
+            "meaning": "Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.",
+            "composition": "Close-up of a sleek PC monitor in a well-lit cafe setting, simplified to show it is functional and active.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nClose-up of a single modern computer workstation in a clean whiteboard-doodle style, with soft light blue and grey tones, emphasizing the station itself without any text or people present.\nContinuity: consistent whiteboard-doodle style\nExclude: text, graphs, queues\nNarration to illustrate faithfully: Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu."
+          }
+        },
+        {
+          "id": "scene_3_beat_4",
+          "sub_index": 4,
+          "title": "High Frequency Usage and Revenue / 4",
+          "text": "Ví dụ, một khách chơi ba tiếng vào buổi chiều,",
+          "caption": "Ví dụ, một khách chơi ba tiếng vào buổi chiều,",
+          "start_frame_offset": 418,
+          "duration_in_frames": 64,
+          "duration_in_seconds": 2.1333333333333333,
+          "plan": {
+            "startWord": 65,
+            "what_to_show": "A stick-figure character using the PC in the afternoon.",
+            "how_to_show": "Stick figure sitting at the station, relaxed posture, clear daylight setting.",
+            "subject": "stick-figure character",
+            "action": "sitting at computer",
+            "environment": "gaming cafe during daytime",
+            "objects": [
+              "computer",
+              "chair"
+            ],
+            "shotType": "medium",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "consistent stick-figure style",
+            "transitionIntent": "show first user session",
+            "mustNotInclude": [
+              "text",
+              "money symbols"
+            ],
+            "imagePrompt": "A single stick-figure character sitting comfortably at a PC station, simple line art, flat colors, bright atmosphere suggesting daytime.",
+            "endWord": 75,
+            "meaning": "Ví dụ, một khách chơi ba tiếng vào buổi chiều,",
+            "composition": "Stick figure sitting at the station, relaxed posture, clear daylight setting.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA single stick-figure character sitting comfortably at a PC station, simple line art, flat colors, bright atmosphere suggesting daytime.\nContinuity: consistent stick-figure style\nExclude: text, money symbols\nNarration to illustrate faithfully: Ví dụ, một khách chơi ba tiếng vào buổi chiều,"
+          }
+        },
+        {
+          "id": "scene_3_beat_5",
+          "sub_index": 5,
+          "title": "High Frequency Usage and Revenue / 5",
+          "text": "sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.",
+          "caption": "sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.",
+          "start_frame_offset": 482,
+          "duration_in_frames": 97,
+          "duration_in_seconds": 3.2333333333333334,
+          "plan": {
+            "startWord": 75,
+            "what_to_show": "A different stick-figure character using the SAME computer station.",
+            "how_to_show": "Same station from previous shot, different stick figure sitting there, darker lighting to suggest evening.",
+            "subject": "different stick-figure character",
+            "action": "sitting at computer",
+            "environment": "gaming cafe during evening",
+            "objects": [
+              "same computer station",
+              "chair"
+            ],
+            "shotType": "medium",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "reuse the exact workstation setup",
+            "transitionIntent": "show second user session",
+            "mustNotInclude": [
+              "text",
+              "multiple people"
+            ],
+            "imagePrompt": "A different stick-figure character sitting at the same PC station as the previous image, simple line art, flat colors, muted lighting indicating evening hours.",
+            "endWord": 90,
+            "meaning": "sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.",
+            "composition": "Same station from previous shot, different stick figure sitting there, darker lighting to suggest evening.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA different stick-figure character sitting at the same PC station as the previous image, simple line art, flat colors, muted lighting indicating evening hours.\nContinuity: reuse the exact workstation setup\nExclude: text, multiple people\nNarration to illustrate faithfully: sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối."
+          }
+        },
+        {
+          "id": "scene_3_beat_6",
+          "sub_index": 6,
+          "title": "High Frequency Usage and Revenue / 6",
+          "text": "Điều này giúp tài sản của quán được khai thác nhiều lần.",
+          "caption": "Điều này giúp tài sản của quán được khai thác nhiều lần.",
+          "start_frame_offset": 579,
+          "duration_in_frames": 77,
+          "duration_in_seconds": 2.566666666666667,
+          "plan": {
+            "startWord": 90,
+            "what_to_show": "The computer station being utilized multiple times.",
+            "how_to_show": "A simplified visualization of the station as an asset, using two faint outlines of people in succession over the station.",
+            "subject": "computer station",
+            "action": "multiple usage",
+            "environment": "gaming cafe",
+            "objects": [
+              "computer workstation"
+            ],
+            "shotType": "wide",
+            "visualMethod": "process",
+            "keyText": "",
+            "continuity": "consistent doodle style",
+            "transitionIntent": "summarize asset utilization",
+            "mustNotInclude": [
+              "text",
+              "money",
+              "graphs"
+            ],
+            "imagePrompt": "Wide shot of the gaming cafe computer station, with thin, simple line art, showing it as a productive asset in a consistent hand-drawn whiteboard style, no text or numbers.",
+            "endWord": 102,
+            "meaning": "Điều này giúp tài sản của quán được khai thác nhiều lần.",
+            "composition": "A simplified visualization of the station as an asset, using two faint outlines of people in succession over the station.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nWide shot of the gaming cafe computer station, with thin, simple line art, showing it as a productive asset in a consistent hand-drawn whiteboard style, no text or numbers.\nContinuity: consistent doodle style\nExclude: text, money, graphs\nNarration to illustrate faithfully: Điều này giúp tài sản của quán được khai thác nhiều lần."
+          }
+        }
+      ],
+      "quality": {
+        "passed": true,
+        "attempts": 1,
+        "repairs": [],
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-lite",
+        "providerFailures": [],
+        "reviewer": {
+          "provider": "gemini",
+          "model": "gemini-3.1-flash-lite",
+          "providerFailures": []
+        },
+        "review": {
+          "passed": true,
+          "issues": [],
+          "items": [
+            {
+              "index": 1,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Lợi ích thứ hai là doanh thu có thể lặp lại mỗi ngày.",
+              "reason": "The image uses a circular arrow icon to metaphorically represent the concept of cycle or repetition without violating the no-graph constraint."
+            },
+            {
+              "index": 2,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Khác với việc bán máy tính, một chiếc máy trong quán net có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.",
+              "reason": "A split-screen comparison effectively visualizes the difference between a one-time product sale and recurring cafe service usage."
+            },
+            {
+              "index": 3,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.",
+              "reason": "A close-up of a functional, active workstation highlights the asset's capability to generate revenue without implying a crowd or queue."
+            },
+            {
+              "index": 4,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Ví dụ, một khách chơi ba tiếng vào buổi chiều,",
+              "reason": "The image clearly depicts one individual user in a daytime setting, establishing the first part of the sequential usage example."
+            },
+            {
+              "index": 5,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "sau đó một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.",
+              "reason": "By using the same workstation setup as the previous image but shifting to an evening setting with a different character, it directly illustrates sequential usage."
+            },
+            {
+              "index": 6,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Điều này giúp tài sản của quán được khai thác nhiều lần.",
+              "reason": "The final image presents the workstation as a static asset, effectively summarizing the point about repeated utilization of the property."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "startWord": 231,
+      "title": "Secondary Revenue Streams",
+      "intent": "A character sitting at a computer is shown enjoying snacks and drinks, with icons for a cup and a bowl appearing above, emphasizing additional income from food services.",
+      "endWord": 313,
+      "id": 4,
+      "scene_id": "scene_4",
+      "text": "Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống.\n\nKhách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn. Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh.\n\nĐôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.",
+      "narration": "Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống.\n\nKhách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn. Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh.\n\nĐôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.",
+      "planningSource": "ai",
+      "beats": [
+        {
+          "id": "scene_4_beat_1",
+          "sub_index": 1,
+          "title": "Secondary Revenue Streams / 1",
+          "text": "Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống.",
+          "caption": "Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống.",
+          "start_frame_offset": 0,
+          "duration_in_frames": 109,
+          "duration_in_seconds": 3.6333333333333333,
+          "plan": {
+            "startWord": 0,
+            "what_to_show": "A cafe owner placing food and drink items on a counter.",
+            "how_to_show": "A hand-drawn whiteboard-doodle style scene of an owner character sliding a bowl and a cup onto a counter.",
+            "subject": "Cafe owner",
+            "action": "Placing food and drink items on a counter",
+            "environment": "Inside a gaming cafe",
+            "objects": [
+              "counter",
+              "bowl",
+              "cup"
+            ],
+            "shotType": "medium",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Consistent stick-figure design, clean line art.",
+            "transitionIntent": "Introduce the secondary revenue stream of food and drink.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "realistic people",
+              "gradients"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure cafe owner placing a bowl and a cup on a cafe counter. Clean thin black lines on a white background, flat colors including light blue and tan. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.",
+            "endWord": 17,
+            "meaning": "Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống.",
+            "composition": "A hand-drawn whiteboard-doodle style scene of an owner character sliding a bowl and a cup onto a counter.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure cafe owner placing a bowl and a cup on a cafe counter. Clean thin black lines on a white background, flat colors including light blue and tan. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.\nContinuity: Consistent stick-figure design, clean line art.\nExclude: text, letters, money symbols, realistic people, gradients\nNarration to illustrate faithfully: Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống."
+          }
+        },
+        {
+          "id": "scene_4_beat_2",
+          "sub_index": 2,
+          "title": "Secondary Revenue Streams / 2",
+          "text": "Khách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn.",
+          "caption": "Khách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn.",
+          "start_frame_offset": 109,
+          "duration_in_frames": 129,
+          "duration_in_seconds": 4.3,
+          "plan": {
+            "startWord": 17,
+            "what_to_show": "A stick-figure gamer sitting at a PC for a long period.",
+            "how_to_show": "A character is seen focused on a PC, with a large clock behind them having moving hands to show time passing.",
+            "subject": "Stick-figure gamer",
+            "action": "Gaming at a PC with a clock face behind",
+            "environment": "Gaming cafe interior",
+            "objects": [
+              "PC station",
+              "clock"
+            ],
+            "shotType": "medium",
+            "visualMethod": "process",
+            "keyText": "",
+            "continuity": "Consistent stick-figure design, clean line art.",
+            "transitionIntent": "Illustrate the long-term presence of customers.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "realistic people",
+              "gradients"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure gamer sitting intently at a PC. Behind the character, a large clock icon features hands moving to represent a long duration of time. Clean thin black lines on a white background, flat colors including yellow and gray. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.",
+            "endWord": 37,
+            "meaning": "Khách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn.",
+            "composition": "A character is seen focused on a PC, with a large clock behind them having moving hands to show time passing.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure gamer sitting intently at a PC. Behind the character, a large clock icon features hands moving to represent a long duration of time. Clean thin black lines on a white background, flat colors including yellow and gray. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.\nContinuity: Consistent stick-figure design, clean line art.\nExclude: text, letters, money symbols, realistic people, gradients\nNarration to illustrate faithfully: Khách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn."
+          }
+        },
+        {
+          "id": "scene_4_beat_3",
+          "sub_index": 3,
+          "title": "Secondary Revenue Streams / 3",
+          "text": "Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh.",
+          "caption": "Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh.",
+          "start_frame_offset": 238,
+          "duration_in_frames": 141,
+          "duration_in_seconds": 4.7,
+          "plan": {
+            "startWord": 37,
+            "what_to_show": "A gamer eating and drinking while using the computer.",
+            "how_to_show": "The gamer is sitting comfortably, holding a cup in one hand and eating with the other while gaming.",
+            "subject": "Stick-figure gamer",
+            "action": "Eating noodles and drinking while gaming",
+            "environment": "Gaming cafe interior",
+            "objects": [
+              "PC station",
+              "cup",
+              "bowl of noodles"
+            ],
+            "shotType": "medium",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Consistent stick-figure design, clean line art.",
+            "transitionIntent": "Show the synergy between gaming time and food consumption.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "realistic people",
+              "gradients"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure gamer sitting at a PC, happily drinking from a cup and eating noodles from a bowl while playing. Clean thin black lines on a white background, flat colors including green, tan, and brown. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.",
+            "endWord": 59,
+            "meaning": "Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh.",
+            "composition": "The gamer is sitting comfortably, holding a cup in one hand and eating with the other while gaming.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure gamer sitting at a PC, happily drinking from a cup and eating noodles from a bowl while playing. Clean thin black lines on a white background, flat colors including green, tan, and brown. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.\nContinuity: Consistent stick-figure design, clean line art.\nExclude: text, letters, money symbols, realistic people, gradients\nNarration to illustrate faithfully: Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh."
+          }
+        },
+        {
+          "id": "scene_4_beat_4",
+          "sub_index": 4,
+          "title": "Secondary Revenue Streams / 4",
+          "text": "Đôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.",
+          "caption": "Đôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.",
+          "start_frame_offset": 379,
+          "duration_in_frames": 148,
+          "duration_in_seconds": 4.933333333333334,
+          "plan": {
+            "startWord": 59,
+            "what_to_show": "A cash register receiving different types of earnings.",
+            "how_to_show": "A register drawer opens, and icons representing a PC and food/drink items are placed together inside.",
+            "subject": "Cash register",
+            "action": "Collecting revenue from different streams",
+            "environment": "Cafe counter",
+            "objects": [
+              "cash register",
+              "computer icon",
+              "food/drink icon"
+            ],
+            "shotType": "close-up",
+            "visualMethod": "object_metaphor",
+            "keyText": "",
+            "continuity": "Consistent stick-figure design, clean line art.",
+            "transitionIntent": "Highlight how food/drink sales contribute to overall earnings.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "realistic people",
+              "gradients"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a cash register drawer being opened. A hand is placing a small computer screen icon and a small food bowl icon into the drawer, representing combined income. Clean thin black lines on a white background, flat colors including gray, muted red, and light blue. No text, no letters, no gradients, no realistic details, playful and clean composition, close-up shot.",
+            "endWord": 82,
+            "meaning": "Đôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.",
+            "composition": "A register drawer opens, and icons representing a PC and food/drink items are placed together inside.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a cash register drawer being opened. A hand is placing a small computer screen icon and a small food bowl icon into the drawer, representing combined income. Clean thin black lines on a white background, flat colors including gray, muted red, and light blue. No text, no letters, no gradients, no realistic details, playful and clean composition, close-up shot.\nContinuity: Consistent stick-figure design, clean line art.\nExclude: text, letters, money symbols, realistic people, gradients\nNarration to illustrate faithfully: Đôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán."
+          }
+        }
+      ],
+      "quality": {
+        "passed": true,
+        "attempts": 2,
+        "repairs": [
+          "Ảnh 4: lời thoại không có số liệu để vẽ tỷ trọng hoặc biểu đồ định lượng. Hãy minh họa hoạt động được kể thay vì tự đặt tỷ lệ."
+        ],
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-lite",
+        "providerFailures": [],
+        "reviewer": {
+          "provider": "gemini",
+          "model": "gemini-3.1-flash-lite",
+          "providerFailures": []
+        },
+        "review": {
+          "passed": true,
+          "issues": [],
+          "items": [
+            {
+              "index": 1,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Một lợi ích lớn khác là có thể kiếm thêm tiền từ đồ ăn và thức uống.",
+              "reason": "The plan depicts a cafe owner placing food and drink on a counter, directly visualizing the narrated opportunity for secondary income."
+            },
+            {
+              "index": 2,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Khách chơi game thường ở quán khá lâu, có thể từ hai đến năm tiếng hoặc thậm chí lâu hơn.",
+              "reason": "The plan uses a character at a PC with a clock to represent the duration of time spent, visually supporting the narration."
+            },
+            {
+              "index": 3,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Trong thời gian đó, họ có nhu cầu mua nước ngọt, cà phê, mì, đồ ăn nhẹ hoặc các món ăn nhanh.",
+              "reason": "The plan shows a character eating and drinking while gaming, which connects the consumption of food/drinks to the gaming activity."
+            },
+            {
+              "index": 4,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Đôi khi lợi nhuận từ đồ ăn và thức uống cũng đóng góp một phần đáng kể vào tổng doanh thu của quán.",
+              "reason": "The plan uses icons for PC services and food/drink items entering a cash register, metaphorically illustrating their combined contribution to revenue."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "startWord": 313,
+      "title": "Community and Loyalty",
+      "intent": "A group of stick-figure characters are seen cheering together side-by-side at a row of computers, demonstrating the social aspect and repeat customer behavior.",
+      "endWord": 394,
+      "id": 5,
+      "scene_id": "scene_5",
+      "text": "Quán net cũng có lợi thế về cộng đồng.\n\nNhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè. Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội.\n\nNếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên.\n\nĐây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.",
+      "narration": "Quán net cũng có lợi thế về cộng đồng.\n\nNhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè. Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội.\n\nNếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên.\n\nĐây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.",
+      "planningSource": "ai",
+      "beats": [
+        {
+          "id": "scene_5_beat_1",
+          "sub_index": 1,
+          "title": "Community and Loyalty / 1",
+          "text": "Quán net cũng có lợi thế về cộng đồng.",
+          "caption": "Quán net cũng có lợi thế về cộng đồng.",
+          "start_frame_offset": 0,
+          "duration_in_frames": 58,
+          "duration_in_seconds": 1.9333333333333333,
+          "plan": {
+            "startWord": 0,
+            "what_to_show": "Multiple stick figures gathered together in a group inside a simple cafe environment, smiling and gesturing towards each other.",
+            "how_to_show": "A friendly social scene in a minimalist cafe setting with several stick-figure characters talking, emphasizing the community aspect.",
+            "subject": "Group of stick-figure customers",
+            "action": "Talking and socializing together in a group",
+            "environment": "Minimalist gaming cafe interior",
+            "objects": [
+              "stick-figure characters"
+            ],
+            "shotType": "medium",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Consistent stick-figure design, clean 2D doodle style, flat colors.",
+            "transitionIntent": "Establish the community aspect of the gaming cafe.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "trophy icons"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a group of stick-figure characters gathered together in a cafe. They are gesturing and talking, showing a social atmosphere. Clean thin black lines on a white background, flat colors including light blue and yellow. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.",
+            "endWord": 9,
+            "meaning": "Quán net cũng có lợi thế về cộng đồng.",
+            "composition": "A friendly social scene in a minimalist cafe setting with several stick-figure characters talking, emphasizing the community aspect.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a group of stick-figure characters gathered together in a cafe. They are gesturing and talking, showing a social atmosphere. Clean thin black lines on a white background, flat colors including light blue and yellow. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.\nContinuity: Consistent stick-figure design, clean 2D doodle style, flat colors.\nExclude: text, letters, money symbols, trophy icons\nNarration to illustrate faithfully: Quán net cũng có lợi thế về cộng đồng."
+          }
+        },
+        {
+          "id": "scene_5_beat_2",
+          "sub_index": 2,
+          "title": "Community and Loyalty / 2",
+          "text": "Nhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè.",
+          "caption": "Nhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè.",
+          "start_frame_offset": 58,
+          "duration_in_frames": 122,
+          "duration_in_seconds": 4.066666666666666,
+          "plan": {
+            "startWord": 9,
+            "what_to_show": "A character looking at a PC and then looking back to interact with a friend, showing priority for social interaction over machine performance.",
+            "how_to_show": "The character turns away from the PC screen to talk to a peer, demonstrating the social preference.",
+            "subject": "Stick-figure gamer",
+            "action": "Looking away from a computer to engage with a friend",
+            "environment": "Gaming cafe interior",
+            "objects": [
+              "computer station"
+            ],
+            "shotType": "medium",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Consistent stick-figure design, clean 2D doodle style.",
+            "transitionIntent": "Shift focus from hardware specs to social motivation.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "trophy icons"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure character sitting at a computer but turning their head to chat with a friend standing next to them. Clean thin black lines on a white background, flat colors including green and tan. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.",
+            "endWord": 28,
+            "meaning": "Nhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè.",
+            "composition": "The character turns away from the PC screen to talk to a peer, demonstrating the social preference.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a stick-figure character sitting at a computer but turning their head to chat with a friend standing next to them. Clean thin black lines on a white background, flat colors including green and tan. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.\nContinuity: Consistent stick-figure design, clean 2D doodle style.\nExclude: text, letters, money symbols, trophy icons\nNarration to illustrate faithfully: Nhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè."
+          }
+        },
+        {
+          "id": "scene_5_beat_3",
+          "sub_index": 3,
+          "title": "Community and Loyalty / 3",
+          "text": "Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội.",
+          "caption": "Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội.",
+          "start_frame_offset": 180,
+          "duration_in_frames": 116,
+          "duration_in_seconds": 3.8666666666666667,
+          "plan": {
+            "startWord": 28,
+            "what_to_show": "A row of five stick-figure characters seated side-by-side at a long desk with multiple computer screens, interacting as a team.",
+            "how_to_show": "A group playing together as a synchronized team, shown through uniform posture and collaborative gestures.",
+            "subject": "A team of five stick-figure players",
+            "action": "Playing together as a team in sync",
+            "environment": "Gaming cafe interior",
+            "objects": [
+              "computers",
+              "long desk"
+            ],
+            "shotType": "wide",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Consistent stick-figure design, clean 2D doodle style.",
+            "transitionIntent": "Illustrate teamwork and shared experience.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "trophy icons"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of five stick-figure characters sitting in a row at gaming computers, all facing the same direction as if playing a team game together. Clean thin black lines on a white background, flat colors including blue and muted red. No text, no letters, no gradients, no realistic details, playful and clean composition, wide shot.",
+            "endWord": 46,
+            "meaning": "Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội.",
+            "composition": "A group playing together as a synchronized team, shown through uniform posture and collaborative gestures.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of five stick-figure characters sitting in a row at gaming computers, all facing the same direction as if playing a team game together. Clean thin black lines on a white background, flat colors including blue and muted red. No text, no letters, no gradients, no realistic details, playful and clean composition, wide shot.\nContinuity: Consistent stick-figure design, clean 2D doodle style.\nExclude: text, letters, money symbols, trophy icons\nNarration to illustrate faithfully: Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội."
+          }
+        },
+        {
+          "id": "scene_5_beat_4",
+          "sub_index": 4,
+          "title": "Community and Loyalty / 4",
+          "text": "Nếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên.",
+          "caption": "Nếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên.",
+          "start_frame_offset": 296,
+          "duration_in_frames": 103,
+          "duration_in_seconds": 3.433333333333333,
+          "plan": {
+            "startWord": 46,
+            "what_to_show": "A customer walking back into the cafe, greeted by the cafe staff.",
+            "how_to_show": "A returning customer icon sequence showing someone walking through the entrance, symbolizing repeat business.",
+            "subject": "Stick-figure customer",
+            "action": "Returning to the cafe",
+            "environment": "Cafe entrance",
+            "objects": [
+              "cafe door outline"
+            ],
+            "shotType": "medium",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Consistent stick-figure design, clean 2D doodle style.",
+            "transitionIntent": "Depict customer loyalty through repeat visits.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "trophy icons"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a happy stick-figure character walking through a doorway into a cafe, being welcomed back by another stick figure. Clean thin black lines on a white background, flat colors including yellow and light blue. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.",
+            "endWord": 62,
+            "meaning": "Nếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên.",
+            "composition": "A returning customer icon sequence showing someone walking through the entrance, symbolizing repeat business.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a happy stick-figure character walking through a doorway into a cafe, being welcomed back by another stick figure. Clean thin black lines on a white background, flat colors including yellow and light blue. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.\nContinuity: Consistent stick-figure design, clean 2D doodle style.\nExclude: text, letters, money symbols, trophy icons\nNarration to illustrate faithfully: Nếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên."
+          }
+        },
+        {
+          "id": "scene_5_beat_5",
+          "sub_index": 5,
+          "title": "Community and Loyalty / 5",
+          "text": "Đây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.",
+          "caption": "Đây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.",
+          "start_frame_offset": 399,
+          "duration_in_frames": 122,
+          "duration_in_seconds": 4.066666666666666,
+          "plan": {
+            "startWord": 62,
+            "what_to_show": "A balance scale icon where one side shows loyalty (a group of characters) and the other shows stable results (a steady level).",
+            "how_to_show": "A balanced scale showing that customer loyalty leads to consistent, stable outcomes.",
+            "subject": "Balance scale icon",
+            "action": "Balancing loyalty and stability",
+            "environment": "Minimalist white background",
+            "objects": [
+              "balance scale",
+              "stick-figure icon",
+              "steady bar graph"
+            ],
+            "shotType": "medium",
+            "visualMethod": "object_metaphor",
+            "keyText": "",
+            "continuity": "Consistent stick-figure design, clean 2D doodle style.",
+            "transitionIntent": "Explain the importance of loyalty for revenue stability.",
+            "mustNotInclude": [
+              "text",
+              "letters",
+              "money symbols",
+              "trophy icons"
+            ],
+            "imagePrompt": "A minimalist, hand-drawn 2D whiteboard-doodle illustration of a balance scale. On one side is a cluster of stick figures representing loyalty, on the other side is a stable horizontal line representing steady revenue. Clean thin black lines on a white background, flat colors including green and gray. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.",
+            "endWord": 81,
+            "meaning": "Đây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.",
+            "composition": "A balanced scale showing that customer loyalty leads to consistent, stable outcomes.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA minimalist, hand-drawn 2D whiteboard-doodle illustration of a balance scale. On one side is a cluster of stick figures representing loyalty, on the other side is a stable horizontal line representing steady revenue. Clean thin black lines on a white background, flat colors including green and gray. No text, no letters, no gradients, no realistic details, playful and clean composition, medium shot.\nContinuity: Consistent stick-figure design, clean 2D doodle style.\nExclude: text, letters, money symbols, trophy icons\nNarration to illustrate faithfully: Đây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn."
+          }
+        }
+      ],
+      "quality": {
+        "passed": true,
+        "attempts": 1,
+        "repairs": [],
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-lite",
+        "providerFailures": [],
+        "reviewer": {
+          "provider": "gemini",
+          "model": "gemini-3.1-flash-lite",
+          "providerFailures": []
+        },
+        "review": {
+          "passed": true,
+          "issues": [],
+          "items": [
+            {
+              "index": 1,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Quán net cũng có lợi thế về cộng đồng.",
+              "reason": "The beat shows multiple stick figures interacting in a cafe setting, illustrating the communal aspect of the gaming cafe as narrated."
+            },
+            {
+              "index": 2,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Nhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè.",
+              "reason": "The beat illustrates the preference for social interaction by showing a character turning away from their screen to chat with a friend, capturing the narration's core meaning."
+            },
+            {
+              "index": 3,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Một nhóm năm hoặc mười người có thể ngồi cạnh nhau, nói chuyện và chơi cùng một đội.",
+              "reason": "The scene visually represents a group sitting together at a row of computers, demonstrating team gaming behavior in a clear, drawable way."
+            },
+            {
+              "index": 4,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Nếu quán tạo được môi trường tốt, khách quen có thể quay lại rất thường xuyên.",
+              "reason": "The beat shows a customer returning to the cafe, which visually conveys the concept of loyal customers returning."
+            },
+            {
+              "index": 5,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Đây là một yếu tố rất quan trọng vì khách hàng trung thành giúp doanh thu ổn định hơn.",
+              "reason": "The use of a balance scale metaphor effectively illustrates the connection between customer loyalty and revenue stability."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "startWord": 394,
+      "title": "Events and Tournaments",
+      "intent": "A group of players is shown focused on their screens with excitement shown through hand gestures, illustrating a competitive gaming match atmosphere without using any trophy icons or text.",
+      "endWord": 447,
+      "id": 6,
+      "scene_id": "scene_6",
+      "text": "Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ.\n\nVí dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến.\n\nNhững sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+      "narration": "Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ.\n\nVí dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến.\n\nNhững sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+      "planningSource": "ai",
+      "beats": [
+        {
+          "id": "scene_6_beat_1",
+          "sub_index": 1,
+          "title": "Events and Tournaments / 1",
+          "text": "Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ.",
+          "caption": "Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ.",
+          "start_frame_offset": 0,
+          "duration_in_frames": 77,
+          "duration_in_seconds": 2.566666666666667,
+          "plan": {
+            "startWord": 0,
+            "what_to_show": "A group of stick-figure players sitting at a row of desks in a gaming cafe, intensely focused on their screens.",
+            "how_to_show": "The players are in a 2D doodle style, leaning forward, with expressions of intense focus, showing their engagement in a shared competitive game environment.",
+            "subject": "A group of stick-figure players",
+            "action": "Playing a competitive game together at their respective PC stations",
+            "environment": "Inside a gaming cafe",
+            "objects": [
+              "computer stations",
+              "chairs",
+              "desks"
+            ],
+            "shotType": "wide",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents, consistent with previous scenes.",
+            "transitionIntent": "Introduce the concept of organizing small gaming tournaments in the cafe.",
+            "mustNotInclude": [
+              "text",
+              "trophy icons",
+              "money symbols",
+              "prize icons",
+              "realistic people"
+            ],
+            "imagePrompt": "A wide, hand-drawn 2D whiteboard-doodle style scene of a group of stick-figure players sitting in a row at their computer stations inside a cafe. They are leaning forward with intense focus, gesturing towards their screens as they participate in a local gaming event. The scene uses clean black line art with flat colors like light blue, muted red, and tan. No text, letters, or trophy icons are present.",
+            "endWord": 12,
+            "meaning": "Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ.",
+            "composition": "The players are in a 2D doodle style, leaning forward, with expressions of intense focus, showing their engagement in a shared competitive game environment.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA wide, hand-drawn 2D whiteboard-doodle style scene of a group of stick-figure players sitting in a row at their computer stations inside a cafe. They are leaning forward with intense focus, gesturing towards their screens as they participate in a local gaming event. The scene uses clean black line art with flat colors like light blue, muted red, and tan. No text, letters, or trophy icons are present.\nContinuity: Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents, consistent with previous scenes.\nExclude: text, trophy icons, money symbols, prize icons, realistic people\nNarration to illustrate faithfully: Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ."
+          }
+        },
+        {
+          "id": "scene_6_beat_2",
+          "sub_index": 2,
+          "title": "Events and Tournaments / 2",
+          "text": "Ví dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến.",
+          "caption": "Ví dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến.",
+          "start_frame_offset": 77,
+          "duration_in_frames": 116,
+          "duration_in_seconds": 3.8666666666666667,
+          "plan": {
+            "startWord": 12,
+            "what_to_show": "The players are now coordinating with each other, signaling hand gestures and looking at neighboring screens as if in a team match.",
+            "how_to_show": "The stick-figure players are turned slightly to talk to each other, highlighting the collaborative team atmosphere of common games like League of Legends or Valorant.",
+            "subject": "A group of stick-figure players",
+            "action": "Communicating and coordinating as a team",
+            "environment": "Inside the gaming cafe",
+            "objects": [
+              "computer stations",
+              "desks"
+            ],
+            "shotType": "medium",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.",
+            "transitionIntent": "Illustrate the variety and popularity of competitive gaming in the cafe.",
+            "mustNotInclude": [
+              "text",
+              "trophy icons",
+              "money symbols",
+              "names of games",
+              "realistic people"
+            ],
+            "imagePrompt": "A medium-shot hand-drawn 2D whiteboard-doodle illustration of stick-figure players interacting with their teammates. They are looking over at each other and talking while sitting at their PCs. Minimalist lines, clean 2D style, flat colors like green and grey. No text, game logos, or trophy icons.",
+            "endWord": 30,
+            "meaning": "Ví dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến.",
+            "composition": "The stick-figure players are turned slightly to talk to each other, highlighting the collaborative team atmosphere of common games like League of Legends or Valorant.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA medium-shot hand-drawn 2D whiteboard-doodle illustration of stick-figure players interacting with their teammates. They are looking over at each other and talking while sitting at their PCs. Minimalist lines, clean 2D style, flat colors like green and grey. No text, game logos, or trophy icons.\nContinuity: Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.\nExclude: text, trophy icons, money symbols, names of games, realistic people\nNarration to illustrate faithfully: Ví dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến."
+          }
+        },
+        {
+          "id": "scene_6_beat_3",
+          "sub_index": 3,
+          "title": "Events and Tournaments / 3",
+          "text": "Những sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+          "caption": "Những sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+          "start_frame_offset": 193,
+          "duration_in_frames": 148,
+          "duration_in_seconds": 4.933333333333334,
+          "plan": {
+            "startWord": 30,
+            "what_to_show": "New stick-figure customers are walking into the cafe and seeing the enthusiastic group, looking interested and joining the environment.",
+            "how_to_show": "Stick figures are seen entering the cafe and observing the ongoing match, showing how events attract new faces and build the community.",
+            "subject": "New stick-figure customers",
+            "action": "Entering the cafe and observing the gaming match with interest",
+            "environment": "Inside the gaming cafe",
+            "objects": [
+              "entrance doorway",
+              "pc stations"
+            ],
+            "shotType": "wide",
+            "visualMethod": "character_action",
+            "keyText": "",
+            "continuity": "Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.",
+            "transitionIntent": "Explain how events lead to growth and community building.",
+            "mustNotInclude": [
+              "text",
+              "trophy icons",
+              "money symbols",
+              "realistic people"
+            ],
+            "imagePrompt": "A wide-angle hand-drawn 2D whiteboard-doodle style illustration showing new stick-figure customers walking through the cafe entrance. They are looking towards the group of players gathered at the PCs, conveying interest and community engagement. Clean line art, flat colors like light blue, muted red, and yellow. No text or symbols.",
+            "endWord": 53,
+            "meaning": "Những sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+            "composition": "Stick figures are seen entering the cafe and observing the ongoing match, showing how events attract new faces and build the community.",
+            "planningSource": "ai",
+            "imageGenerationPrompt": "A clean, simple 2D explainer doodle illustration in a hand-drawn whiteboard-cartoon style. Horizontal 16:9 composition. Use stick-figure characters with round heads, thin black line bodies, and simple facial features like eyes, eyebrows, and mouths for expression. Smooth slightly bold black outlines, casual hand-drawn look.\nUse flat colors only with a soft limited palette: light blue, muted red, yellow, green, tan, brown, gray, black, and off-white. No gradients, no realistic detail, no 3D, no glossy effects, no heavy shading. Bright, clean, playful, and easy to read.\nBackground and props should be minimal, simplified, and lightly detailed, similar to explainer cartoon scenes in cafés, sidewalks, counters, or indoor spaces. Keep the composition uncluttered, readable, and focused on the main action. All important elements should stay clearly inside frame.\nOverall style: minimalist story-based doodle cartoon, similar to animated explainer scenes. No on-screen text, letters, or words.\n\nA wide-angle hand-drawn 2D whiteboard-doodle style illustration showing new stick-figure customers walking through the cafe entrance. They are looking towards the group of players gathered at the PCs, conveying interest and community engagement. Clean line art, flat colors like light blue, muted red, and yellow. No text or symbols.\nContinuity: Hand-drawn 2D whiteboard-doodle style with black lines and flat color accents.\nExclude: text, trophy icons, money symbols, realistic people\nNarration to illustrate faithfully: Những sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng."
+          }
+        }
+      ],
+      "quality": {
+        "passed": true,
+        "attempts": 1,
+        "repairs": [],
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-lite",
+        "providerFailures": [],
+        "reviewer": {
+          "provider": "gemini",
+          "model": "gemini-3.1-flash-lite",
+          "providerFailures": []
+        },
+        "review": {
+          "passed": true,
+          "issues": [],
+          "items": [
+            {
+              "index": 1,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Ngoài ra, quán net có thể tổ chức các giải đấu nhỏ.",
+              "reason": "The beat shows a row of players focused on screens, which directly depicts the action of hosting a small tournament or gaming event."
+            },
+            {
+              "index": 2,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Ví dụ, có thể tổ chức giải League of Legends, Valorant, Counter-Strike hoặc những game đang phổ biến.",
+              "reason": "The beat shows players communicating and coordinating as a team, visualizing the competitive spirit of gaming matches without using prohibited symbols or text."
+            },
+            {
+              "index": 3,
+              "faithful": true,
+              "coherent": true,
+              "distinct": true,
+              "drawable": true,
+              "evidence": "Những sự kiện như vậy có thể thu hút khách mới, tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+              "reason": "The beat shows new customers entering and observing the group, which illustrates the attraction of new people and the formation of a community environment."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "complete": true,
+  "manual_review": {
+    "feedback": {
+      "2": "Replace the generic question-mark image with a concrete customer using or considering a computer at a cafe. No queues, no invented prices. Keep all narration and choose complete clauses.",
+      "3": "Show the SAME workstation reused at distinct times using explicit side-by-side still-image panels. Each panel has just one user. No waiting customer, no line, no queue, no graph, no rising trend, no calendar. Do not imply revenue has grown: the narration is conditional. A computer used by different individuals can illustrate repeated utilization. Each image must be a single drawable frame, never an animation sequence.",
+      "6": "Show actual players competing at computers in a small local gaming event. An owner pointing at a blank wall conveys nothing. No trophies, no prizes, no packed audience. Use a single drawable still composition."
+    },
+    "date": "2026-10-11"
+  },
+  "audio_validation": {
+    "passed": false,
+    "source": "import_f41bc24f-ede9-4cf9-8c32-43a2944c090f.wav",
+    "error": "Không thể căn lời đọc với audio. Không xác định được lời đọc cho đoạn 18: Nhiều người không đến quán chỉ vì máy tính mạnh mà còn vì muốn chơi game cùng bạn bè.. Kiểm tra kịch bản có khớp audio không."
+  },
+  "ready_to_render": false
+}

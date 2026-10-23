@@ -58,10 +58,14 @@ class ChatGPTBrowser {
       }
     } catch {}
     const composerVisible = await editor.isVisible().catch(() => false);
-    return connectionStatus({ authenticated, sessionChecked, challenge, composerVisible });
+    return { ...connectionStatus({ authenticated, sessionChecked, challenge, composerVisible }), busy: !!this.busy };
   }
   async request(prompt) {
-    if (this.busy) throw new Error('ChatGPT đang xử lý một yêu cầu khác.');
+    const queuedAt = Date.now();
+    while (this.busy) {
+      if (Date.now() - queuedAt > 11 * 60 * 1000) throw new Error('Phiên ChatGPT không giải phóng sau 11 phút.');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
     this.busy = true;
     try {
       const state = await this.open();

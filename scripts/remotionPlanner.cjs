@@ -1,22 +1,26 @@
-const fs = require('node:fs');
-const path = require('node:path');
 const { ChatGPTBrowser, parseJSON } = require('./chatgptBrowser.cjs');
-const { validateShot, TYPES, ATTRS, EMOTIONS, DEFS } = require('./remotionSchema.cjs');
-const guide = () => fs.readFileSync(path.join(__dirname, '../docs/STYLE_GUIDE_NGUOI_QUE.md'), 'utf8');
+const { TYPES, ATTRS, EMOTIONS, DEFS, ENUM_ATTRS, MOTION_FIELDS, ANIMATE_ATTRS, BOOLEAN_FIELDS } = require('./remotionSchema.cjs');
+const { inspectShot, applyRepairs } = require('./remotionInspection.cjs');
+const { prepareShot } = require('./remotionNormalize.cjs');
+const { STYLE, compactContext } = require('./remotionPrompts.cjs');
 const request = async prompt => parseJSON(await ChatGPTBrowser.getInstance().request(prompt));
-const reference = () => fs.readFileSync(path.join(__dirname, '../docs/REMOTION_REFERENCE_DIRECTION.md'), 'utf8');
 const words = text => String(text).trim().split(/\s+/u);
 
-async function planStory(text, title, density, ask = request) {
+async function planStory(text, title, density, ask = request, options = {}) {
   const tokens = words(text);
-  const result = await ask(`Direct the ENTIRE narrated film before designing any SVG. Return ONLY JSON {"bible":{"premise":"visual cause and effect","cast":[{"id":"leo","hero":true,"scarf":false,"role":"goal and relationships"}],"locations":[{"id":"workshop","description":"stable geography, palette, lighting, recurring props"}],"arc":"setup, problem, attempt, consequence, payoff"},"scenes":[{"title":"short","startWord":0,"endWord":20,"direction":"location ID, cast IDs, incoming state, concrete action, outgoing state; planned wide/insert/reaction shots"}]}. Preserve every narration word in contiguous zero-based end-exclusive ranges covering all ${tokens.length} words. Segment by narrative event or sentence, NEVER by fixed word counts. A scene can contain multiple camera cuts. Pacing ${density}. Use a recurring lead and supporting cast where narration calls for interaction; each person needs a role and visible response, not decoration. Carry objects, screen direction, positions, and consequences between scenes. Plan anticipation -> contact -> result -> reaction. Do not invent factual claims. Abstract concepts need a concrete visual analogy or a readable diagram, not endless people standing beside text. Alternate establishing shots, inserts of mechanisms, POV, reaction closeups; no arbitrary camera motion. Title: ${title}
-REFERENCE ANALYSIS:
-${reference()}
-STYLE GUIDE:
-${guide()}
-NARRATION WORDS:
-${tokens.map((word, index) => `${index}:${word}`).join(' ')}`);
+  const result = await ask(`Plan a 2D narrated story. Return JSON only, no explanation.
+${STYLE}
+Split by narrative idea. Keep cast, locations and prop ownership consistent. Each scene needs one clear visual action; vary wide shots, mechanism inserts and reactions. Preserve source wording using indexed ranges, start inclusive/end exclusive. First startWord=0, final endWord=${tokens.length}.
+JSON: {"bible":{"premise":"...","cast":[{"id":"leo","hero":true,"role":"..."}],"locations":[{"id":"room","description":"..."}],"arc":"..."},"scenes":[{"title":"...","startWord":0,"endWord":${tokens.length},"direction":"location, cast, action, resulting state"}]}
+Title:${title}; pacing:${density}
+WORDS:${tokens.map((word,index)=>`${index}:${word}`).join(' ')}`);
   if (!Array.isArray(result.scenes) || !result.scenes.length || result.scenes.length > 150) throw new Error('ChatGPT chưa trả về phân cảnh hợp lệ.');
+  if (options.relaxed) {
+    const { spreadTiming } = require('./remotionReliability.cjs');
+    result.scenes = result.scenes.slice(0, tokens.length);
+    const starts = spreadTiming(result.scenes.map(scene => Math.max(1, Number(scene.endWord) - Number(scene.startWord) || 1)), tokens.length, result.scenes.map(scene => Number.isFinite(Number(scene.startWord)) ? Number(scene.startWord) : undefined));
+    result.scenes = result.scenes.map((scene,i) => ({ ...scene, startWord: starts[i], endWord: starts[i+1] ?? tokens.length }));
+  }
   let cursor = 0;
   const scenes = result.scenes.map((scene, index) => {
     if (scene.startWord !== cursor || !Number.isInteger(scene.endWord) || scene.endWord <= cursor || scene.endWord > tokens.length) throw new Error('Phân cảnh ChatGPT bị thiếu hoặc trùng lời thoại. Hãy thử lại.');
@@ -30,20 +34,41 @@ ${tokens.map((word, index) => `${index}:${word}`).join(' ')}`);
   return scenes;
 }
 
-function shotPrompt({ text, direction, seconds, previous, instruction, current, bible, outline }) {
-  return `Act as a Remotion animation director. Design a complete original SVG scene using the attached style guide and existing Leo rig. Return ONLY JSON matching the schema below. This is declarative Remotion scene data, NOT React source code. Build meaningful environments, props, narrative action and readable composition, not a generic character standing next to a heading. Design depth layers in drawing order, ground contact, anticipation/action/reaction, restrained frame-driven movement. Do not claim data absent from narration. Keep continuity. Reuse the supplied character rig for all people. All coordinates are 1920x1080. Black bars y=0..56 and 1024..1080 are added automatically. x/y translate a layer; attrs x/y are coordinates inside it. Character origin is head center; feet at y+454*scale. Leo hero=true; supporting companion scarf=true. Never recolor Leo. Camera transforms around screen center. Motion start/end, enter/exit are fractions 0..1 of the shot, NOT frames. Set motion end>start; visibility defaults 0..1. Use one important text label at a time, Vietnamese if narration is Vietnamese. No paragraph-sized text. No external assets, code, HTML, href, event handlers, styles or arbitrary SVG tags. Draw complex objects with path or grouped shapes. Props held by a character must track the hand. layer "g" can contain children. Primitive shape dimensions must be numeric (not strings). Colors are hex or none or url(#definition). Avoid glow except on a relevant source.\nSCHEMA:\n{"version":1,"styleId":"STICKMAN_500IQ_V1","direction":"explain choreography and continuity","background":"#F3E8DC","camera":{"scale":{"from":1,"to":1.05}},"layers":[{"id":"unique-id","label":"editable layer name","type":"rect","attrs":{"x":0,"y":800,"width":1920,"height":280,"fill":"#8C6650"}},{"id":"leo","type":"character","hero":true,"x":500,"y":400,"scale":1,"emotion":"confident","phone":false,"walking":false,"talking":false,"raised":{"from":0,"to":0.4,"start":0.2,"end":0.5}}]}\nAllowed types: ${TYPES.join(', ')}. Allowed attrs: ${ATTRS.join(', ')}. Existing definitions: ${DEFS.join(', ')}. Emotions: ${EMOTIONS.join(', ')}. Motion fields x,y,scale,rotation,opacity,raised,look accept a number or {from,to,start?,end?}. Boolean fields hero,scarf,phone,walking,talking. Text layer uses text string outside attrs. Up to 250 layers, 8 nesting levels. Reusable authored scenery from the reference project: kitchen draws a detailed full 1920x1080 kitchen (leak:true opens sink cabinet and animates drips at x726 y716..800; sink x727 y621; flow motion 1 dripping, 0 repaired while cupboard/pipe/bucket remain visible). Use only when relevant. mug draws a steaming teacup at local origin and can attach to a hand. Reuse the exact same environment geometry across cuts, transformed or blurred for depth.
-Additional supported animation fields:
-Every motion field also accepts {keys:[{at:0,value:0,ease:"hold"},{at:0.2,value:0,ease:"smooth"},{at:0.5,value:100,ease:"hold"},{at:1,value:100}]}. 2..32 strictly ordered at fractions. ease belongs to the outgoing segment: linear, smooth, hold. Use anticipation, contact, settle and holds instead of constant drifting. Camera accepts the same keyframes. Prefer camera {focusX:726,focusY:700,scale:2.5} for an insert: focus is the world point placed at screen centre. Keep x/y offsets zero unless needed. Screen position = (world-focus)*scale + (960,540) + (x,y). Check this math for every focal object; do not crop the hand contact out of frame.
-Character fields leftHandX,leftHandY,rightHandX,rightHandY are LOCAL hand endpoints relative to head, shoulder at +/-31,108, arm length max250. Independent hands, headTilt degrees, seated 0..1, stride phase radians (keyframed to stop gait when position stops), speech 0/1 keyframes for speaking turns; look -1..1. Feet y440 when standing,330 seated. Use x movement and stride together. Every supporting character has a face. character children can contain vector props with attachment:"leftHand" or "rightHand"; their local origin follows that hand. Do not duplicate held objects on the table after pickup. Use enter/exit for ownership changes. blur accepts motion for background focus pulls. animate accepts numeric motion for x,y,x1,y1,x2,y2,cx,cy,r,rx,ry,width,height,strokeDashoffset,opacity attributes, for drawing paths, filling bars and local impact effects. Never animate every layer together.
-Use contact-timed sparks with 0.08..0.18 second lifespan, legible cause/effect, gaze toward partner or prop. Surround contact events with holds. Complex action needs multiple close/medium/wide cuts, not more labels.\nREFERENCE FILM ANALYSIS:\n${reference()}\nSTORY BIBLE: ${JSON.stringify(bible || {})}\nCOMPLETE STORY OUTLINE: ${JSON.stringify(outline || [])}\nSTYLE GUIDE:\n${guide()}\nNARRATION: ${text}\nDURATION: ${seconds}s\nDIRECTOR PLAN: ${direction || ''}\nPREVIOUS SHOT CONTINUITY: ${previous || 'Opening shot'}\n${current ? `CURRENT DESIGN: ${JSON.stringify(current)}\nREQUESTED EDIT: ${instruction}` : ''}`;
+function shotPrompt(input) {
+  const { text, direction, seconds, instruction, current } = input;
+  return `Create ONE animated vector shot. Return JSON only; no React/code or explanation.
+${STYLE}
+1920x1080; keep focal action within y56..1024 (black bars added). Layers draw back to front.
+JSON: {"version":1,"styleId":"STICKMAN_500IQ_V1","direction":"action and continuity","background":"#C9BAA2","camera":{"focusX":960,"focusY":540,"scale":1},"layers":[{"id":"leo","type":"character","hero":true,"x":500,"y":350,"scale":1,"emotion":"calm","rightHandX":{"keys":[{"at":0,"value":55},{"at":0.6,"value":140},{"at":1,"value":140,"ease":"hold"}]}}]}
+Types:${TYPES.join(',')}. Shape attrs:${ATTRS.join(',')}. Colors:hex,none,url(#id); definition IDs:${DEFS.join(',')}. Numeric dimensions; text uses layer.text, not attrs.text. Emotions:${EMOTIONS.join(',')}.
+Attribute enums:${JSON.stringify(ENUM_ATTRS)}. Use only listed keys; SVG attributes go in attrs using camelCase. No CSS style/transform strings.
+Motion fields:${MOTION_FIELDS.join(',')}. Value:number OR {from,to,start:0,end:1} OR {keys:[{at:0,value:0,ease:"smooth"},{at:1,value:1}]}. Times are 0..1 fractions, keys strictly ordered; ease:smooth|linear|hold. Visibility:enter/exit 0..1. Booleans:${BOOLEAN_FIELDS.join(',')}. animate only:${ANIMATE_ATTRS.join(',')}.
+Character origin=head; shoulder=(±31,108), feet y440 standing/y330 seated, arms reach max250. Hand endpoints are local coordinates. Use character children with attachment:"leftHand"|"rightHand" for held props. Stop stride when walking stops. Groups use children. animate maps numeric SVG attrs to motion values. Camera focusX/focusY is world point centered on screen; scale zooms. Keep contact visible and hold after result. Only relevant effects; max250 layers,8 nesting levels. No external assets,href,events,HTML/styles.
+Reusable props:phone,mug,steam,signal. kitchen is a full-room preset; leak:true and flow:1→0 animate its sink at (727,621).
+NARRATION:${text}
+DURATION:${seconds}s
+STORY BIBLE / OUTLINE / CONTINUITY:${JSON.stringify(compactContext({...input,direction:undefined}))}
+DIRECTOR PLAN:${typeof direction === 'string' ? direction : JSON.stringify(direction || {})}
+${current ? `CURRENT DESIGN:${JSON.stringify(current)}\nREQUESTED EDIT:${instruction || ''}` : ''}`;
 }
-async function planShot(input, ask = request) {
-  let prompt = shotPrompt(input);
-  let lastError;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try { return validateShot(await ask(prompt)); }
-    catch (error) { lastError = error; prompt += `\nYour previous response failed validation: ${error.message}. Return a complete corrected JSON design.`; }
+async function planShot(input, ask = request, options = {}) {
+  const basePrompt = shotPrompt(input);
+  let prompt = basePrompt, lastError, candidate, inspection;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const response = attempt === 0 && options.initial !== undefined ? options.initial : await ask(prompt);
+      candidate = inspection && !inspection.issues.some(issue=>!issue.path) ? applyRepairs(candidate,inspection.issues,response) : response;
+      inspection = inspectShot(candidate,options.onWarning);
+      candidate = inspection.data;
+      if (candidate && typeof candidate === 'object') await options.onDraft?.(candidate);
+      if(!inspection.issues.length) return prepareShot(candidate,options.onWarning);
+      lastError = new Error('Shot requires corrections.');
+      lastError.issues = inspection.issues;
+    } catch(error) { lastError=error; }
+    const issues = inspection?.issues || [{path:'',message:lastError.message}];
+    prompt = `FIX THESE ITEMS FIRST: ${JSON.stringify(issues)}\n${inspection && !issues.some(issue=>!issue.path) ? 'Return JSON only: {"repairs":[{"path":"/layers/0/x","value":100}]}. Use exact reported paths. Use remove:true only for optional fields. Do not return a new shot or alter any accepted field. Fix ALL listed issues in this response.' : 'The response is unusable. Return one complete valid shot JSON.'}\n${lastError?.issues ? '' : `Last repair problem: ${lastError.message}\n`}CURRENT SHOT:${JSON.stringify(candidate)}\nCONTRACT:\n${basePrompt}`;
   }
+  lastError.retryExhausted = true;
   throw lastError;
 }
 async function planSequence(input, ask = request) {
@@ -54,12 +79,16 @@ Instead of a single shot, return {"shots":[{"weight":1,"shot":<schema above>}]}.
     try {
       const result = await ask(prompt);
       if (!Array.isArray(result.shots) || !result.shots.length || result.shots.length > 6) throw new Error('Expected 1..6 shots');
-      return result.shots.map(item => {
-        if (!Number.isFinite(item.weight) || item.weight <= 0 || item.weight > 100) throw new Error('Invalid shot weight');
-        return { weight: item.weight, shot: validateShot(item.shot) };
-      });
+      const accepted = [];
+      for (const item of result.shots) {
+        const weight = Number.isFinite(Number(item.weight)) && Number(item.weight)>0 ? Math.min(100,Number(item.weight)) : 1;
+        const shot = await planShot(input, ask, { initial:item.shot });
+        accepted.push({weight,shot});
+      }
+      return accepted;
     } catch (error) {
-      if (attempt) throw error;
+      if (attempt || error.issues || error.retryExhausted) throw error;
+      prompt = `Fix the response structure first: ${error.message}. Return the required shots array.\n` + prompt;
       prompt += `
 Validation failed: ${error.message}. Return the entire corrected sequence.`;
     }

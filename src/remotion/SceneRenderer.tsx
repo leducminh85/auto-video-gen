@@ -16,9 +16,10 @@ import { ProcessScene } from './scenes/ProcessScene';
 interface SceneRendererProps {
   scene: SceneData;
   isDebug?: boolean;
+  animatic?: boolean;
 }
 
-export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = false }) => {
+export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = false, animatic = false }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const totalDuration = scene.duration_in_frames;
@@ -101,7 +102,7 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({ scene, isDebug = f
 
   // Prioritize AI Generated image (FLUX.1 / DALL-E) over SVG fallback
   const renderBeatVisual = () => {
-    if ('remotion' in activeBeat && activeBeat.remotion) return <VectorShot shot={activeBeat.remotion} frame={beatLocalFrame} duration={beatDuration} fps={fps} />;
+    if ('remotion' in activeBeat && activeBeat.remotion) return <VectorShot shot={activeBeat.remotion} frame={animatic ? Math.floor(beatDuration * .45) : beatLocalFrame} duration={beatDuration} fps={fps} />;
     if (activeBeat.image_file) {
       const baseImg = activeBeat.image_file.startsWith('http') || activeBeat.image_file.startsWith('/')
         ? activeBeat.image_file

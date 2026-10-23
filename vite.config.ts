@@ -130,11 +130,12 @@ function videoApiPlugin(): Plugin {
             res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
             res.setHeader('Cache-Control', 'no-cache, no-transform');
             res.setHeader('Connection', 'keep-alive');
-
+            let remotionRequest = false;
             try {
               const data = JSON.parse(body);
+              remotionRequest = data.videoMode === 'remotion';
               if (data.videoMode && !['images', 'remotion'].includes(data.videoMode)) throw new Error('Kiểu video không hợp lệ.');
-              if (data.videoMode === 'remotion') for (const module of ['remotionGenerator', 'remotionPlanner', 'remotionSchema']) delete require.cache[require.resolve(`./scripts/${module}.cjs`)];
+              if (data.videoMode === 'remotion') for (const module of ['remotionGenerator', 'remotionPlanner', 'remotionSchema', 'remotionDirection', 'chatgptBrowser']) delete require.cache[require.resolve(`./scripts/${module}.cjs`)];
               const scriptPath = require.resolve(data.videoMode === 'remotion' ? './scripts/remotionGenerator.cjs' : './scripts/videoGenerator.cjs');
               const { generateVideo } = require(scriptPath);
 
@@ -149,7 +150,7 @@ function videoApiPlugin(): Plugin {
               const result = await editor.exclusive(async () => {
                 store.migrate();
                 const generated = await generateVideo({ ...data, onProgress });
-                const saved = store.create({ metadata: generated.metadata, scenes: generated.scenes }, path.join(publicRoot, 'final-video.mp4'));
+                const saved = store.create({ metadata: generated.metadata, scenes: generated.scenes }, generated.finalVideoPath || path.join(publicRoot, 'final-video.mp4'));
                 return { ...generated, ...saved, finalVideoUrl: `/projects/${saved.metadata.project_id}/final-video.mp4` };
               });
 
@@ -158,7 +159,7 @@ function videoApiPlugin(): Plugin {
             } catch (err: any) {
               console.error('API Error in /api/generate-video:', err);
               try {
-                res.write(JSON.stringify({ type: 'error', error: err.message || String(err) }) + '\n');
+                res.write(JSON.stringify({ type: 'error', error: remotionRequest ? require('./scripts/remotionReliability.cjs').publicGenerationError(err) : err.message || String(err) }) + '\n');
                 res.end();
               } catch (e) {
                 // socket already closed

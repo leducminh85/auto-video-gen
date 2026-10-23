@@ -1,0 +1,434 @@
+{
+  "checkedAt": "2026-10-11T18:10:06.169Z",
+  "status": "complete",
+  "result": {
+    "beats": [
+      {
+        "id": "scene_4_beat_1",
+        "sub_index": 1,
+        "title": "Doanh thu xoay vòng mỗi ngày / 1",
+        "text": "Lợi ích thứ hai là doanh thu có thể lập lại mỗi ngày.",
+        "caption": "Lợi ích thứ hai là doanh thu có thể lập lại mỗi ngày.",
+        "start_frame_offset": 0,
+        "duration_in_frames": 80,
+        "duration_in_seconds": 2.6666666666666665,
+        "plan": {
+          "startWord": 0,
+          "what_to_show": "A circular calendar or recurring clock cycle symbolizing recurring daily revenue in a business context.",
+          "how_to_show": "Whiteboard doodle style. A central round clock face with rotating curved circular arrows around it, indicating continuous daily rotation. A small cybercafé cash counter icon sits beside it with a happy stick figure clerk. Clean black outlines on pure white background.",
+          "subject": "daily recurring business cycle",
+          "action": "repeating cyclic flow",
+          "environment": "minimalist whiteboard background",
+          "objects": [
+            "circular arrows",
+            "clock dial",
+            "cash counter desk"
+          ],
+          "shotType": "medium",
+          "visualMethod": "object_metaphor",
+          "keyText": "",
+          "continuity": "Minimalist 2D black marker stick figure style with neat linework on clean white background.",
+          "transitionIntent": "Introduce the concept of recurring daily turnover clearly.",
+          "mustNotInclude": [
+            "text",
+            "words",
+            "alphabets",
+            "currency signs",
+            "color gradients"
+          ],
+          "imagePrompt": "Whiteboard cartoon, no text. Clean minimalist black marker linework on a plain white background. In the center, a simple round clock icon surrounded by smooth looping circular arrows indicating repetition each day. Beside it, a cheerful minimalist stick figure stands behind a cybercafé front counter desk, smiling. Crisp hand-drawn doodle style, completely text-free.",
+          "endWord": 13,
+          "meaning": "Lợi ích thứ hai là doanh thu có thể lập lại mỗi ngày.",
+          "composition": "Whiteboard doodle style. A central round clock face with rotating curved circular arrows around it, indicating continuous daily rotation. A small cybercafé cash counter icon sits beside it with a happy stick figure clerk. Clean black outlines on pure white background.",
+          "planningSource": "ai",
+          "imageGenerationPrompt": "Whiteboard cartoon, no text.\n\nWhiteboard cartoon, no text. Clean minimalist black marker linework on a plain white background. In the center, a simple round clock icon surrounded by smooth looping circular arrows indicating repetition each day. Beside it, a cheerful minimalist stick figure stands behind a cybercafé front counter desk, smiling. Crisp hand-drawn doodle style, completely text-free.\nContinuity: Minimalist 2D black marker stick figure style with neat linework on clean white background.\nExclude: text, words, alphabets, currency signs, color gradients\nNarration to illustrate faithfully: Lợi ích thứ hai là doanh thu có thể lập lại mỗi ngày."
+        }
+      },
+      {
+        "id": "scene_4_beat_2",
+        "sub_index": 2,
+        "title": "Doanh thu xoay vòng mỗi ngày / 2",
+        "text": "Khắc với việc bán máy tính một chiếc máy trong quán nét có",
+        "caption": "Khắc với việc bán máy tính một chiếc máy trong quán nét có",
+        "start_frame_offset": 80,
+        "duration_in_frames": 85,
+        "duration_in_seconds": 2.8333333333333335,
+        "plan": {
+          "startWord": 13,
+          "what_to_show": "A retailer selling a boxed computer to a single customer, showing a one-time transaction.",
+          "how_to_show": "A stick figure shopkeeper stands behind a simple store counter handing a large boxed desktop computer with ribbon or handle to one customer stick figure walking away. Minimalist whiteboard line art.",
+          "subject": "one-time computer retail sale",
+          "action": "selling a computer once",
+          "environment": "computer retail counter",
+          "objects": [
+            "store counter",
+            "boxed computer PC",
+            "shopping bag"
+          ],
+          "shotType": "medium",
+          "visualMethod": "character_action",
+          "keyText": "",
+          "continuity": "Consistent 2D stick figure doodle on clean white background.",
+          "transitionIntent": "Contrast retail selling with shared cybercafé usage.",
+          "mustNotInclude": [
+            "text",
+            "words",
+            "price tags",
+            "currency symbols"
+          ],
+          "imagePrompt": "Whiteboard cartoon, no text. Minimalist black marker drawing on clean white background. A stick figure shop owner behind a simple retail counter hands a sealed cardboard box containing a desktop computer to a single customer, who carries it away. Clean doodle line art showing a one-off retail sale.",
+          "endWord": 26,
+          "meaning": "Khắc với việc bán máy tính một chiếc máy trong quán nét có",
+          "composition": "A stick figure shopkeeper stands behind a simple store counter handing a large boxed desktop computer with ribbon or handle to one customer stick figure walking away. Minimalist whiteboard line art.",
+          "planningSource": "ai",
+          "imageGenerationPrompt": "Whiteboard cartoon, no text.\n\nWhiteboard cartoon, no text. Minimalist black marker drawing on clean white background. A stick figure shop owner behind a simple retail counter hands a sealed cardboard box containing a desktop computer to a single customer, who carries it away. Clean doodle line art showing a one-off retail sale.\nContinuity: Consistent 2D stick figure doodle on clean white background.\nExclude: text, words, price tags, currency symbols\nNarration to illustrate faithfully: Khắc với việc bán máy tính một chiếc máy trong quán nét có"
+        }
+      },
+      {
+        "id": "scene_4_beat_3",
+        "sub_index": 3,
+        "title": "Doanh thu xoay vòng mỗi ngày / 3",
+        "text": "thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.",
+        "caption": "thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.",
+        "start_frame_offset": 165,
+        "duration_in_frames": 99,
+        "duration_in_seconds": 3.3,
+        "plan": {
+          "startWord": 26,
+          "what_to_show": "A single cybercafé computer station serving multiple different stick figure customers.",
+          "how_to_show": "A single central desktop computer station with monitor and chair, surrounded by three different stick figures walking in a rotating circular turn sequence to take seats at different moments.",
+          "subject": "single PC serving multiple customers",
+          "action": "rotating user turns around one station",
+          "environment": "cybercafé gaming desk",
+          "objects": [
+            "computer monitor",
+            "keyboard",
+            "mouse",
+            "gaming chair",
+            "motion arrows"
+          ],
+          "shotType": "medium",
+          "visualMethod": "process",
+          "keyText": "",
+          "continuity": "Same clean minimalist cybercafé gaming station design.",
+          "transitionIntent": "Highlight that one internet cafe machine serves multiple distinct players in a day.",
+          "mustNotInclude": [
+            "text",
+            "numbers",
+            "letters",
+            "charts"
+          ],
+          "imagePrompt": "Whiteboard cartoon, no text. Clean black ink doodle on white background. In the center is a modern cybercafé desk with a glowing monitor and gaming chair. Curved rotation arrows and three different stick figures in varied casual outfits take turns moving toward and from the computer desk, showing one computer serving multiple users throughout the day.",
+          "endWord": 39,
+          "meaning": "thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.",
+          "composition": "A single central desktop computer station with monitor and chair, surrounded by three different stick figures walking in a rotating circular turn sequence to take seats at different moments.",
+          "planningSource": "ai",
+          "imageGenerationPrompt": "Whiteboard cartoon, no text.\n\nWhiteboard cartoon, no text. Clean black ink doodle on white background. In the center is a modern cybercafé desk with a glowing monitor and gaming chair. Curved rotation arrows and three different stick figures in varied casual outfits take turns moving toward and from the computer desk, showing one computer serving multiple users throughout the day.\nContinuity: Same clean minimalist cybercafé gaming station design.\nExclude: text, numbers, letters, charts\nNarration to illustrate faithfully: thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày."
+        }
+      },
+      {
+        "id": "scene_4_beat_4",
+        "sub_index": 4,
+        "title": "Doanh thu xoay vòng mỗi ngày / 4",
+        "text": "Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì",
+        "caption": "Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì",
+        "start_frame_offset": 264,
+        "duration_in_frames": 95,
+        "duration_in_seconds": 3.1666666666666665,
+        "plan": {
+          "startWord": 39,
+          "what_to_show": "A cybercafé with a steady, stable stream of customers arriving and using machines.",
+          "how_to_show": "Wide shot of the cybercafé floor with several tidy computer rows. Multiple stick figures sit happily playing, while two incoming patrons step inside with backpacks. Balanced, calm, and orderly environment.",
+          "subject": "stable cybercafé customer flow",
+          "action": "steady patrons playing and arriving",
+          "environment": "cybercafé interior",
+          "objects": [
+            "rows of computer desks",
+            "monitors",
+            "gaming chairs",
+            "headsets"
+          ],
+          "shotType": "wide",
+          "visualMethod": "environment",
+          "keyText": "",
+          "continuity": "Consistent cybercafé layout with stick figure gamers wearing headsets.",
+          "transitionIntent": "Illustrate the condition of steady customer volume and high occupancy.",
+          "mustNotInclude": [
+            "text",
+            "words",
+            "crowded chaos",
+            "money icons"
+          ],
+          "imagePrompt": "Whiteboard cartoon, no text. Wide shot in black marker on white background depicting a cybercafé room with a neat row of gaming stations. Stick figure customers sit at several computers playing calmly with headsets on, while another stick figure with a backpack enters happily. Clean, balanced, orderly doodle style.",
+          "endWord": 54,
+          "meaning": "Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì",
+          "composition": "Wide shot of the cybercafé floor with several tidy computer rows. Multiple stick figures sit happily playing, while two incoming patrons step inside with backpacks. Balanced, calm, and orderly environment.",
+          "planningSource": "ai",
+          "imageGenerationPrompt": "Whiteboard cartoon, no text.\n\nWhiteboard cartoon, no text. Wide shot in black marker on white background depicting a cybercafé room with a neat row of gaming stations. Stick figure customers sit at several computers playing calmly with headsets on, while another stick figure with a backpack enters happily. Clean, balanced, orderly doodle style.\nContinuity: Consistent cybercafé layout with stick figure gamers wearing headsets.\nExclude: text, words, crowded chaos, money icons\nNarration to illustrate faithfully: Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì"
+        }
+      },
+      {
+        "id": "scene_4_beat_5",
+        "sub_index": 5,
+        "title": "Doanh thu xoay vòng mỗi ngày / 5",
+        "text": "mỗi bộ máy có thể liên tục tạo ra doanh thu.",
+        "caption": "mỗi bộ máy có thể liên tục tạo ra doanh thu.",
+        "start_frame_offset": 359,
+        "duration_in_frames": 74,
+        "duration_in_seconds": 2.466666666666667,
+        "plan": {
+          "startWord": 54,
+          "what_to_show": "An individual computer station continuously operating and generating revenue.",
+          "how_to_show": "Close-up on a single gaming setup operating smoothly with subtle motion ripples or sparkle lines around the monitor and keyboard, representing active and uninterrupted productivity.",
+          "subject": "active computer station generating value",
+          "action": "continuous operation",
+          "environment": "gaming station desk",
+          "objects": [
+            "computer monitor",
+            "keyboard",
+            "glowing tower PC",
+            "gaming chair"
+          ],
+          "shotType": "close-up",
+          "visualMethod": "object_metaphor",
+          "keyText": "",
+          "continuity": "Same desktop PC model and ergonomic chair style.",
+          "transitionIntent": "Bridge from overall café occupancy to the continuous productivity of each individual machine.",
+          "mustNotInclude": [
+            "text",
+            "dollar symbols",
+            "coins",
+            "cash register"
+          ],
+          "imagePrompt": "Whiteboard cartoon, no text. Close-up black marker doodle of an active cybercafé computer station on a plain white desk. The monitor displays an animated gaming scene doodle, paired with a sleek gaming mouse and keyboard. Radiant energetic doodle lines around the setup convey steady, continuous active performance and utility.",
+          "endWord": 65,
+          "meaning": "mỗi bộ máy có thể liên tục tạo ra doanh thu.",
+          "composition": "Close-up on a single gaming setup operating smoothly with subtle motion ripples or sparkle lines around the monitor and keyboard, representing active and uninterrupted productivity.",
+          "planningSource": "ai",
+          "imageGenerationPrompt": "Whiteboard cartoon, no text.\n\nWhiteboard cartoon, no text. Close-up black marker doodle of an active cybercafé computer station on a plain white desk. The monitor displays an animated gaming scene doodle, paired with a sleek gaming mouse and keyboard. Radiant energetic doodle lines around the setup convey steady, continuous active performance and utility.\nContinuity: Same desktop PC model and ergonomic chair style.\nExclude: text, dollar symbols, coins, cash register\nNarration to illustrate faithfully: mỗi bộ máy có thể liên tục tạo ra doanh thu."
+        }
+      },
+      {
+        "id": "scene_4_beat_6",
+        "sub_index": 6,
+        "title": "Doanh thu xoay vòng mỗi ngày / 6",
+        "text": "Ví dụ một khách chơi 3 tiếng vào buổi chiều sau đó",
+        "caption": "Ví dụ một khách chơi 3 tiếng vào buổi chiều sau đó",
+        "start_frame_offset": 433,
+        "duration_in_frames": 83,
+        "duration_in_seconds": 2.7666666666666666,
+        "plan": {
+          "startWord": 65,
+          "what_to_show": "An afternoon gamer playing at the PC station.",
+          "how_to_show": "Medium shot of a single PC station. A stick figure gamer sits focused, happily holding a mouse. Outside or in the corner, a hand-drawn sun icon shines, indicating bright daytime gaming.",
+          "subject": "afternoon customer at PC",
+          "action": "gaming during afternoon hours",
+          "environment": "cybercafé station by a window",
+          "objects": [
+            "desktop computer",
+            "keyboard",
+            "mouse",
+            "sun icon",
+            "gaming chair"
+          ],
+          "shotType": "medium",
+          "visualMethod": "character_action",
+          "keyText": "",
+          "continuity": "Same cybercafé computer station layout to prepare for evening transition.",
+          "transitionIntent": "Establish the first specific customer in the afternoon session.",
+          "mustNotInclude": [
+            "text",
+            "clock numbers",
+            "words",
+            "complex shading"
+          ],
+          "imagePrompt": "Whiteboard cartoon, no text. Clean black ink doodle on white background. A minimalist stick figure sits happily at a computer desk wearing gaming headphones, with hand on the mouse and looking at the screen. In the upper corner, a hand-drawn sun icon indicates bright afternoon daytime. Simple line art, expressive posture, no text.",
+          "endWord": 77,
+          "meaning": "Ví dụ một khách chơi 3 tiếng vào buổi chiều sau đó",
+          "composition": "Medium shot of a single PC station. A stick figure gamer sits focused, happily holding a mouse. Outside or in the corner, a hand-drawn sun icon shines, indicating bright daytime gaming.",
+          "planningSource": "ai",
+          "imageGenerationPrompt": "Whiteboard cartoon, no text.\n\nWhiteboard cartoon, no text. Clean black ink doodle on white background. A minimalist stick figure sits happily at a computer desk wearing gaming headphones, with hand on the mouse and looking at the screen. In the upper corner, a hand-drawn sun icon indicates bright afternoon daytime. Simple line art, expressive posture, no text.\nContinuity: Same cybercafé computer station layout to prepare for evening transition.\nExclude: text, clock numbers, words, complex shading\nNarration to illustrate faithfully: Ví dụ một khách chơi 3 tiếng vào buổi chiều sau đó"
+        }
+      },
+      {
+        "id": "scene_4_beat_7",
+        "sub_index": 7,
+        "title": "Doanh thu xoay vòng mỗi ngày / 7",
+        "text": "một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.",
+        "caption": "một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.",
+        "start_frame_offset": 516,
+        "duration_in_frames": 91,
+        "duration_in_seconds": 3.033333333333333,
+        "plan": {
+          "startWord": 77,
+          "what_to_show": "The evening transition where a new customer takes over the exact same computer station.",
+          "how_to_show": "Medium shot of the very same computer desk. The afternoon customer waves goodbye and walks away, while a new stick figure customer with a backpack sits down enthusiastically to begin playing. In the corner, a crescent moon and tiny stars replace the sun.",
+          "subject": "evening customer replacing afternoon customer",
+          "action": "switching users at the same PC station",
+          "environment": "cybercafé station at night",
+          "objects": [
+            "desktop computer",
+            "gaming chair",
+            "moon icon",
+            "backpack"
+          ],
+          "shotType": "medium",
+          "visualMethod": "character_action",
+          "keyText": "",
+          "continuity": "Same PC station setup and chair, showing continuity of the asset across different times.",
+          "transitionIntent": "Show the concrete evening handover mentioned in the script.",
+          "mustNotInclude": [
+            "text",
+            "letters",
+            "words",
+            "digital timestamps"
+          ],
+          "imagePrompt": "Whiteboard cartoon, no text. Black marker drawing on plain white background. At the exact same cybercafé desk, one stick figure customer is getting up and waving goodbye, while another stick figure with a small backpack eagerly sits down at the gaming chair to use the keyboard. In the upper corner, a gentle crescent moon and small stars depict evening time. Whiteboard doodle.",
+          "endWord": 90,
+          "meaning": "một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.",
+          "composition": "Medium shot of the very same computer desk. The afternoon customer waves goodbye and walks away, while a new stick figure customer with a backpack sits down enthusiastically to begin playing. In the corner, a crescent moon and tiny stars replace the sun.",
+          "planningSource": "ai",
+          "imageGenerationPrompt": "Whiteboard cartoon, no text.\n\nWhiteboard cartoon, no text. Black marker drawing on plain white background. At the exact same cybercafé desk, one stick figure customer is getting up and waving goodbye, while another stick figure with a small backpack eagerly sits down at the gaming chair to use the keyboard. In the upper corner, a gentle crescent moon and small stars depict evening time. Whiteboard doodle.\nContinuity: Same PC station setup and chair, showing continuity of the asset across different times.\nExclude: text, letters, words, digital timestamps\nNarration to illustrate faithfully: một khách khác lại sử dụng chính chiếc máy đó vào buổi tối."
+        }
+      },
+      {
+        "id": "scene_4_beat_8",
+        "sub_index": 8,
+        "title": "Doanh thu xoay vòng mỗi ngày / 8",
+        "text": "Điều này giúp tài sản của quán được khai thác nhiều lần.",
+        "caption": "Điều này giúp tài sản của quán được khai thác nhiều lần.",
+        "start_frame_offset": 607,
+        "duration_in_frames": 71,
+        "duration_in_seconds": 2.3666666666666667,
+        "plan": {
+          "startWord": 90,
+          "what_to_show": "The business asset being leveraged repeatedly over time.",
+          "how_to_show": "The cybercafé computer station sits centered on a pedestal or raised platform. Clean circular loop arrows surround the computer station with multiple customer silhouette stick figures circling it, visualizing repeated utilization of the equipment.",
+          "subject": "cybercafé computer as a multi-use revenue generator",
+          "action": "repeated asset utilization",
+          "environment": "abstract conceptual whiteboard space",
+          "objects": [
+            "computer monitor",
+            "tower PC",
+            "circular cycle arrows",
+            "pedestal"
+          ],
+          "shotType": "close-up",
+          "visualMethod": "object_metaphor",
+          "keyText": "",
+          "continuity": "Matches recurring PC equipment doodle aesthetic on white background.",
+          "transitionIntent": "Conclude the scene summarizing the core lesson: physical assets tapped multiple times daily.",
+          "mustNotInclude": [
+            "text",
+            "currency symbols",
+            "words",
+            "numbers"
+          ],
+          "imagePrompt": "Whiteboard cartoon, no text. Conceptual black marker illustration on white background. In the center, a well-defined gaming computer setup on a clean desk sits on a small raised plinth. Elegant looping circular flow arrows surround the station, flanked by stick figure outlines indicating repeated, continuous use of the equipment throughout the day. Minimalist, uncluttered whiteboard sketch.",
+          "endWord": 102,
+          "meaning": "Điều này giúp tài sản của quán được khai thác nhiều lần.",
+          "composition": "The cybercafé computer station sits centered on a pedestal or raised platform. Clean circular loop arrows surround the computer station with multiple customer silhouette stick figures circling it, visualizing repeated utilization of the equipment.",
+          "planningSource": "ai",
+          "imageGenerationPrompt": "Whiteboard cartoon, no text.\n\nWhiteboard cartoon, no text. Conceptual black marker illustration on white background. In the center, a well-defined gaming computer setup on a clean desk sits on a small raised plinth. Elegant looping circular flow arrows surround the station, flanked by stick figure outlines indicating repeated, continuous use of the equipment throughout the day. Minimalist, uncluttered whiteboard sketch.\nContinuity: Matches recurring PC equipment doodle aesthetic on white background.\nExclude: text, currency symbols, words, numbers\nNarration to illustrate faithfully: Điều này giúp tài sản của quán được khai thác nhiều lần."
+        }
+      }
+    ],
+    "quality": {
+      "passed": true,
+      "attempts": 2,
+      "repairs": [
+        "Nhịp ảnh phải trong khoảng 1 đến 4.375 giây (cảnh ngắn hơn 1 giây dùng một ảnh). Ảnh 2: startWord=13, endWord=39, audio thực tế 6.133 giây. Lời thoại: \"Khắc với việc bán máy tính một chiếc máy trong quán nét có thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.\". Ảnh 3: startWord=39, endWord=65, audio thực tế 5.633 giây. Lời thoại: \"Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì mỗi bộ máy có thể liên tục tạo ra doanh thu.\". Hãy chia ảnh dài hoặc gộp ảnh ngắn, viết ý tưởng riêng cho mỗi ảnh mới và giữ toàn bộ lời thoại."
+      ],
+      "provider": "google_ai_studio",
+      "model": "gemini-3.8-flash",
+      "providerFailures": [
+        "Google AI Studio (gemini-3.8-flash): lỗi nội bộ."
+      ],
+      "reviewer": {
+        "provider": "google_ai_studio",
+        "model": "gemini-3.8-flash",
+        "providerFailures": []
+      },
+      "review": {
+        "passed": true,
+        "issues": [],
+        "items": [
+          {
+            "index": 1,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Lợi ích thứ hai là doanh thu có thể lập lại mỗi ngày.",
+            "reason": "The prompt depicts a repeating cycle clock with circular arrows beside a cybercafé counter, visually representing recurring daily turnover."
+          },
+          {
+            "index": 2,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Khắc với việc bán máy tính một chiếc máy trong quán nét có",
+            "reason": "The prompt illustrates a shopkeeper selling a boxed computer once to a single customer, visualizing the contrast with retail computer sales."
+          },
+          {
+            "index": 3,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "thể phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.",
+            "reason": "The prompt shows a single computer station with multiple stick figures taking turns throughout the day, directly representing one machine serving many different customers."
+          },
+          {
+            "index": 4,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Nếu quán có lượng khách ổn định và tỷ lệ sử dụng máy cao thì",
+            "reason": "The prompt depicts a cybercafé with rows of stations occupied calmly and incoming customers arriving, visualizing stable demand and high machine utilization."
+          },
+          {
+            "index": 5,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "mỗi bộ máy có thể liên tục tạo ra doanh thu.",
+            "reason": "The prompt focuses on an active, smoothly running computer setup with energetic operational doodle marks, visualizing the continuous productivity of each machine."
+          },
+          {
+            "index": 6,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Ví dụ một khách chơi 3 tiếng vào buổi chiều sau đó",
+            "reason": "The prompt shows a gamer playing at a PC station accompanied by a sun symbol, depicting the afternoon gaming session."
+          },
+          {
+            "index": 7,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "một khách khác lại sử dụng chính chiếc máy đó vào buổi tối.",
+            "reason": "The prompt portrays the afternoon player leaving as an evening customer sits down at the exact same machine under a crescent moon, capturing the evening handover."
+          },
+          {
+            "index": 8,
+            "faithful": true,
+            "coherent": true,
+            "distinct": true,
+            "drawable": true,
+            "evidence": "Điều này giúp tài sản của quán được khai thác nhiều lần.",
+            "reason": "The prompt illustrates looping flow arrows and rotating customer silhouettes around the computer station, directly conveying the repeated exploitation of the café's physical asset."
+          }
+        ]
+      }
+    }
+  },
+  "images_generated": false,
+  "video_rendered": false
+}

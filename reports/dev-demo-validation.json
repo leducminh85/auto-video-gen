@@ -1,0 +1,155 @@
+{
+  "date": "2026-10-11T18:52:54.928Z",
+  "passed": true,
+  "sourceAudio": "import_f41bc24f-ede9-4cf9-8c32-43a2944c090f.wav",
+  "sourceWords": 411,
+  "referenceWords": 447,
+  "scenes": 8,
+  "images": 37,
+  "frames": 2874,
+  "fps": 30,
+  "durationSeconds": 95.8,
+  "imageDurationSeconds": {
+    "min": 1.3333333333333333,
+    "max": 4.266666666666667,
+    "limit": 4.375
+  },
+  "svgPlaceholders": 0,
+  "provider": "google_ai_studio",
+  "download": {
+    "passed": true,
+    "filename": "Kịch bản video mới.mp4",
+    "sha256": "c1e7f9a3274c4caa970136800a5c9993c7cf2994ac244e22c548ebcbad6e9f75",
+    "pageErrors": []
+  },
+  "visualCorrections": {
+    "date": "2026-10-11T18:49:09.046Z",
+    "corrections": [
+      {
+        "sceneId": 1,
+        "subIndex": 3,
+        "issue": "The generated cafe sign contains lettering. Specify a plain blank facade and blank sign surfaces."
+      },
+      {
+        "sceneId": 4,
+        "subIndex": 3,
+        "issue": "The prompt invents waiting customers. Show the SAME workstation used at DIFFERENT times, each user actively using it, never people standing nearby waiting."
+      },
+      {
+        "sceneId": 8,
+        "subIndex": 1,
+        "issue": "The tournament setup invents a trophy/prize absent from narration. Show participants preparing or competing at computers for a small local tournament, with no prizes or trophies."
+      },
+      {
+        "sceneId": 8,
+        "subIndex": 5,
+        "issue": "The prompt invents a trophy and victory absent from narration. Depict cafe recognition and social connection through a friendly meeting or group interaction without a trophy, podium or prize."
+      }
+    ],
+    "aiReview": {
+      "passed": true,
+      "issues": [],
+      "items": [
+        {
+          "index": 1,
+          "faithful": true,
+          "coherent": true,
+          "distinct": true,
+          "drawable": true,
+          "evidence": "đặc biệt ở những khu vực có nhiều học sinh sinh viên hoặc người trẻ thích chơi game.",
+          "reason": "The plan correctly shows student stick figures with backpacks outside near a plain internet cafe facade with blank sign surfaces, following all style guidelines and avoiding any unsupported elements."
+        },
+        {
+          "index": 2,
+          "faithful": true,
+          "coherent": true,
+          "distinct": true,
+          "drawable": true,
+          "evidence": "phục vụ rất nhiều khách hàng khác nhau trong cùng một ngày.",
+          "reason": "The plan accurately depicts a single computer workstation being used by distinct individual users at different times of day without any waiting customers or standing mobs."
+        },
+        {
+          "index": 3,
+          "faithful": true,
+          "coherent": true,
+          "distinct": true,
+          "drawable": true,
+          "evidence": "Ngoài ra, quán nét có thể tổ chức các giải đấu nhỏ.",
+          "reason": "The plan shows stick-figure players competing at computers for a small tournament setup without any unsupported trophies, prizes, or podiums."
+        },
+        {
+          "index": 4,
+          "faithful": true,
+          "coherent": true,
+          "distinct": true,
+          "drawable": true,
+          "evidence": "tăng độ nhận diện cho quán và tạo ra cộng đồng riêng.",
+          "reason": "The plan depicts the cafe owner and gamers interacting socially to represent a tight-knit community and visibility, entirely free of trophies, victory celebrations, or lettering."
+        }
+      ]
+    },
+    "repairedImages": 12,
+    "freshChatRerenders": [
+      "4.3",
+      "8.5"
+    ]
+  },
+  "planning": [
+    {
+      "scene": 1,
+      "images": 3,
+      "boundaryAttempts": 2,
+      "ideaAttempts": 1,
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "scene": 2,
+      "images": 4,
+      "boundaryAttempts": 1,
+      "ideaAttempts": 1,
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "scene": 3,
+      "images": 5,
+      "boundaryAttempts": 1,
+      "ideaAttempts": 1,
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "scene": 4,
+      "images": 5,
+      "boundaryAttempts": 1,
+      "ideaAttempts": 1,
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "scene": 5,
+      "images": 3,
+      "boundaryAttempts": 1,
+      "ideaAttempts": 1,
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "scene": 6,
+      "images": 8,
+      "boundaryAttempts": 1,
+      "ideaAttempts": 2,
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "scene": 7,
+      "images": 4,
+      "boundaryAttempts": 1,
+      "ideaAttempts": 1,
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "scene": 8,
+      "images": 5,
+      "boundaryAttempts": 1,
+      "ideaAttempts": 1,
+      "model": "gemini-3.8-flash"
+    }
+  ]
+}

@@ -50,6 +50,7 @@ function createStore(publicRoot) {
     const project = editor.normalizeProject(input);
     project.metadata.project_id = id;
     project.metadata.updated_at = new Date().toISOString();
+    if (project.metadata.video_mode === 'remotion') project.metadata.quality_review = { status: 'pending_visual_review', visual_review: null, reason: 'Project content changed' };
     if (render) return editor.renderProject(project, directory(id), publicRoot);
     project.metadata.render_dirty = true;
     editor.saveProject(project, directory(id));

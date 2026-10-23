@@ -6,9 +6,10 @@ import { SceneRenderer } from './SceneRenderer';
 interface MainVideoProps {
   scenes: SceneData[];
   isDebug?: boolean;
+  animatic?: boolean;
 }
 
-export const MainVideo: React.FC<MainVideoProps> = ({ scenes, isDebug = false }) => {
+export const MainVideo: React.FC<MainVideoProps> = ({ scenes, isDebug = false, animatic = false }) => {
   return (
     <div
       style={{
@@ -27,7 +28,7 @@ export const MainVideo: React.FC<MainVideoProps> = ({ scenes, isDebug = false })
             durationInFrames={scene.duration_in_frames}
             name={`Scene ${scene.id} - ${scene.title}`}
           >
-            <SceneRenderer scene={scene} isDebug={isDebug} />
+            <SceneRenderer scene={scene} isDebug={isDebug} animatic={animatic} />
           </Sequence>
         );
       })}

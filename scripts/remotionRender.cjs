@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const { randomUUID } = require('node:crypto');
 
-async function renderRemotion(project, root, publicRoot, onProgress = () => {}) {
+async function renderRemotion(project, root, publicRoot, onProgress = () => {}, options = {}) {
   const { bundle } = require('@remotion/bundler');
   const { selectComposition, renderMedia, renderStill } = require('@remotion/renderer');
   const { validateShot } = require('./remotionSchema.cjs');
@@ -20,12 +20,16 @@ async function renderRemotion(project, root, publicRoot, onProgress = () => {}) 
     fs.mkdirSync(path.join(assets, 'audio'), { recursive: true });
     for (const scene of project.scenes) fs.copyFileSync(asset(publicRoot, 'audio', scene.audio_file), path.join(assets, 'audio', scene.audio_file));
     const serveUrl = await bundle({ entryPoint: path.resolve('src/remotion/VectorRenderRoot.tsx'), publicDir: assets, outDir: path.join(temporary, 'bundle') });
-    const inputProps = { scenes: project.scenes };
+    const inputProps = { scenes: project.scenes, animatic: !!options.animatic };
     const browserExecutable = require('playwright').chromium.executablePath();
     const composition = await selectComposition({ serveUrl, id: 'VectorStudio', inputProps, browserExecutable });
     let lastProgress = -1;
-    await renderMedia({ serveUrl, composition, inputProps, browserExecutable, codec: 'h264', outputLocation: output,
+    await renderMedia({ serveUrl, composition, inputProps, browserExecutable, codec: 'h264', outputLocation: output, scale: options.animatic ? .4 : 1,
       concurrency: Math.min(4, os.availableParallelism()), onProgress: ({ progress }) => { const percent = Math.round(progress * 100); if (percent !== lastProgress) { lastProgress = percent; onProgress(percent); } } });
+    if (options.animatic) {
+      fs.renameSync(output, path.join(root, 'animatic.mp4'));
+      return project;
+    }
     fs.mkdirSync(path.join(publicRoot, 'images'), { recursive: true });
     for (const scene of project.scenes) {
       for (const beat of scene.beats) {

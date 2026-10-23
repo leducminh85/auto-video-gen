@@ -1,0 +1,9 @@
+{
+  "checkedAt": "2026-10-11T17:51:41.641Z",
+  "automatedTestsPassed": 18,
+  "liveScene4": {
+    "status": "failed",
+    "message": "Google AI Studio (gemini-3.8-flash): lỗi nội bộ."
+  },
+  "originalFailedCandidateAvailable": false
+}
