@@ -66,3 +66,14 @@ test('provider failures are not misreported as editorial defects', async () => {
   await assert.rejects(directScene({ text: 'one two three' }, async () => { calls++; throw new Error('login expired'); }), /login expired/);
   assert.equal(calls, 4);
 });
+test('dense multi-cut response is repaired into one continuous scene', async () => {
+  let designs = 0;
+  const result = await directScene({text:'one two three four five six',seconds:6}, async prompt => {
+    if (prompt.startsWith('Review this')) return {passed:true,issues:[]};
+    designs++;
+    return {shots: designs === 1 ? [shot,{...shot,startWord:3,endWord:6}] : [{...shot,endWord:6}]};
+  });
+  assert.equal(designs,2);
+  assert.equal(result.shots.length,1);
+  assert.equal(timedBoard(result,[],360)[0].duration_in_frames,360);
+});

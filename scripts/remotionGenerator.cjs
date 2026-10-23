@@ -14,7 +14,7 @@ async function generateVideo(options) {
   const notify = (stepKey, percent, message) => onProgress({ type: 'progress', stepKey, percent, message });
   const publicRoot = path.resolve('public');
   const identity = { ...options }; delete identity.onProgress;
-  const run = createHash('sha256').update(JSON.stringify(identity) + 'continuous-audio-v1').digest('hex').slice(0, 24);
+  const run = createHash('sha256').update(JSON.stringify(identity) + 'continuous-scene-v2').digest('hex').slice(0, 24);
   const runRoot = path.resolve('data/remotion-runs', run);
   fs.mkdirSync(runRoot, { recursive: true });
   const diagnostic = entry => fs.appendFileSync(path.join(runRoot, 'diagnostics.ndjson'), JSON.stringify({ time: new Date().toISOString(), ...entry }) + '\n');
@@ -53,7 +53,7 @@ async function generateVideo(options) {
   notify('storyboard', 10, 'ChatGPT đang phân tích lời thoại và lên ý tưởng phân cảnh…');
   const storyboard = source && audioBoundaries?.length
     ? transcriptScenes(transcript, audioBoundaries, sourceDuration)
-    : await keep('story', { text, title, imageDensity }, async () => { const result = await planStory(text, title, imageDensity, undefined, { relaxed: true }); return { scenes: [...result], bible: result.bible, outline: result.outline }; }).then(result => Object.assign(result.scenes, { bible: result.bible, outline: result.outline }));
+    : await keep('story', { text, title, imageDensity }, async () => { const result = await planStory(text, title, imageDensity, undefined, { relaxed: true, seconds: sourceDuration }); return { scenes: [...result], bible: result.bible, outline: result.outline }; }).then(result => Object.assign(result.scenes, { bible: result.bible, outline: result.outline }));
   checkpoint({ stage: 'story', text, storyboard, bible: storyboard.bible, outline: storyboard.outline });
   let cuts;
   if (source) {
@@ -124,7 +124,7 @@ async function generateVideo(options) {
     start += frames;
   }
   const project = { metadata: { title, subtitle, video_mode: 'remotion', remotion_style: 'STICKMAN_500IQ_V1', fps: 60, width: 1920, height: 1080,
-    output_standard: 'docs/REMOTION_OUTPUT_STANDARD.md', quality_review: { status: 'pending_visual_review', plan_review: 'passed', visual_review: null },
+    pacing: 'continuous-scene-v2', output_standard: 'docs/REMOTION_OUTPUT_STANDARD.md', quality_review: { status: 'pending_visual_review', plan_review: 'passed', visual_review: null },
     story_bible: storyboard.bible, story_outline: storyboard.outline, voice, speed, image_density: imageDensity, audio_source: source ? 'import' : 'tts', imported_audio: importedAudio,
     ...(transcript ? { audio_transcript: transcript, narration_source: 'audio_transcript', reference_script: referenceScript } : {}),
     total_scenes: scenes.length, total_duration_in_frames: start, total_duration_in_seconds: (start / 60).toFixed(2), created_at: new Date().toISOString() }, scenes };

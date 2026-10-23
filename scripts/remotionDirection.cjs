@@ -38,11 +38,11 @@ function validateBoard(board, wordCount) {
 
 async function directScene(input, ask = request, options = {}) {
   const words = input.text.trim().split(/\s+/u);
-  let prompt = `Plan shots for ONE narrated scene. Return JSON only.
+  let prompt = `Plan ONE continuous shot for this entire narrated scene. Return JSON only.
 ${STYLE}
-Each shot: one focal subject, visual meaning, concrete action and consistent incoming/outgoing state. Cuts follow meaning. ${input.firstScene ? 'Opening: show a curious visual in the first 3 seconds.' : 'Continue the existing story; no new hook required.'}
+Each shot: one focal subject, visual meaning, concrete action and consistent incoming/outgoing state. Keep one stable location and composition. Use 3–5 sequential action events within this shot: anticipation, contact, result, reaction. No internal cuts, inserts, replacement sets or isolated reaction shots. ${input.firstScene ? 'Opening: show a curious visual in the first 3 seconds.' : 'Continue the existing story; no new hook required.'}
 JSON:{"shots":[{"startWord":0,"role":"context","framing":"wide","focalSubject":"...","visualMeaning":"...","action":"prepare,contact,result,hold","incomingState":"...","outgoingState":"...","events":[{"word":0,"action":"..."}]}]}
-Roles:${roles.join(',')}. Only startWord is needed: first=0, later starts increase; server fills endings and fits audio. event.word uses scene-wide WORDS indices. Timing is approximate. Use a small number of meaningful shots; no decorative motion or extra facts.
+Roles:${roles.join(',')}. Only startWord is needed: first=0, later starts increase; server fills endings and fits audio. event.word uses scene-wide WORDS indices. Timing is approximate. Return exactly one shot spanning all words; no decorative motion or extra facts.
 CONTEXT:${JSON.stringify(compactContext(input))}
 WORDS:${words.map((w,i)=>`${i}:${w}`).join(' ')}`;
   const basePrompt = prompt;
@@ -68,6 +68,7 @@ WORDS:${words.map((w,i)=>`${i}:${w}`).join(' ')}`;
     let board;
     try {
       board = validateBoard(normalizeBoard(previousBoard, words.length), words.length);
+      if (board.shots.length !== (options.resumeRevision?.board?.shots?.length || 1)) { board = undefined; throw new Error("Combine all actions into ONE continuous shot with timed events; keep the location and composition stable."); }
     } catch (error) {
       history.push({ attempt: attempt + 1, board: previousBoard, review: { passed: false, issues: [error.message] } });
     }
@@ -75,7 +76,7 @@ WORDS:${words.map((w,i)=>`${i}:${w}`).join(' ')}`;
       options.onProgress?.({ attempt: attempt + 1, maxAttempts, phase: 'review' });
       const review = await safeAsk(`Review this storyboard. Return JSON only: {"passed":true,"issues":[],"shotIssues":[]}; if blocked, use passed:false and at most 3 short issues with {"shotIndex":0,"issue":"specific fix"}.
 ${STYLE}
-Block only concrete unreadability, unsupported facts, broken continuity or missing meaningful action. Timing drift, imperfect word indices and taste are not blockers. Keep approved shots. ${input.firstScene ? 'Opening: curious visual within 3 seconds.' : 'NOT the opening scene: do not demand another hook.'} Review the plan, not imaginary pixel defects.
+Require one continuous composition with sequential actions, no internal cuts. Block only concrete unreadability, unsupported facts, broken continuity or missing meaningful action. Timing drift, imperfect word indices and taste are not blockers. Keep approved shots. ${input.firstScene ? 'Opening: curious visual within 3 seconds.' : 'NOT the opening scene: do not demand another hook.'} Review the plan, not imaginary pixel defects.
 NARRATION:${input.text}
 CONTEXT:${JSON.stringify(compactContext(input))}
 BOARD:${JSON.stringify(compactBoard(board))}`);
@@ -91,9 +92,10 @@ BOARD:${JSON.stringify(compactBoard(board))}`);
     }
     if (!board || history[history.length - 1].review.issues[0]?.startsWith('Review response')) await options.onAttempt?.(history[history.length - 1]);
     const latest = history[history.length - 1];
-    prompt = `${basePrompt}\nRepair ONLY the affected shots. Keep acceptable shots, their indices, continuity and visual ideas unchanged. Do not rebuild the whole scene. ${repairIndices ? `Only shot indices ${[...repairIndices].join(',')} may change; preserve the shot count.` : ''} Preserve source narration and valid continuity. Do not answer with criticism or explanations: return a complete replacement storyboard JSON.\nPREVIOUS BOARD:${JSON.stringify(compactBoard(latest.board))}\nREQUIRED CORRECTIONS:${JSON.stringify(briefIssues(latest.review.issues))}`;
+    prompt = `FIX THESE ITEMS FIRST:${JSON.stringify(briefIssues(latest.review.issues))}\n${basePrompt}\nRepair ONLY the affected shots. Keep acceptable shots, their indices, continuity and visual ideas unchanged. Do not rebuild the whole scene. ${repairIndices ? `Only shot indices ${[...repairIndices].join(',')} may change; preserve the shot count.` : ''} Preserve source narration and valid continuity. Do not answer with criticism or explanations: return a complete replacement storyboard JSON.\nPREVIOUS BOARD:${JSON.stringify(compactBoard(latest.board))}\nREQUIRED CORRECTIONS:${JSON.stringify(briefIssues(latest.review.issues))}`;
   }
   const error = new Error(`Storyboard chưa đạt sau ${maxAttempts} lượt tự tối ưu. Các bản sửa đã được lưu để tiếp tục; không xuất bản kế hoạch chưa đạt.`);
+  error.retryExhausted = true;
   error.code = 'STORYBOARD_REPAIR_EXHAUSTED';
   error.reviewHistory = history;
   throw error;

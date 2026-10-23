@@ -31,3 +31,11 @@ test('continuity sends final poses instead of complete keyframe trajectories', (
   assert.equal(context.previous.layers[0].x,500);
   assert.equal(context.previous.state,'holding phone');
 });
+test('45 second audio limits story to eight continuous scenes even with dense images', async () => {
+  const text = Array.from({length:90},(_,i)=>`word${i}`).join(' ');
+  await assert.rejects(planStory(text,'test','dense',async prompt => {
+    assert.match(prompt,/at most 8 scenes/);
+    assert.doesNotMatch(prompt,/pacing:dense/);
+    return {scenes:Array.from({length:9},(_,i)=>({startWord:i*10,endWord:(i+1)*10}))};
+  },{seconds:45.33}), /Too many scenes/);
+});

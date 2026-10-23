@@ -1,3 +1,17 @@
+# Cập nhật nhịp dựng: continuous-scene-v2
+
+Theo yêu cầu ngày 23/10/2026: ưu tiên ít cảnh, hành động diễn ra liên tục bên trong cảnh.
+
+- Phân cảnh theo tình huống; trần số cảnh là ceil(thời lượng audio / 6). Audio 45,33 giây có tối đa 8 cảnh. Không dùng image density để tăng số cut.
+- Mỗi cảnh mới có đúng một shot xuyên suốt, một bố cục ổn định và 3–5 mốc hành động nối tiếp. Không chia shot theo từng cụm từ, không thêm insert/phản ứng độc lập.
+- Audio quyết định thời lượng; các mốc hành động được trải trong cùng timeline. Chỉ cắt ở ranh giới tình huống.
+- Storyboard nhiều shot được yêu cầu sửa trước khi tạo hình. Các bản cũ đang sửa có thể giữ cấu trúc đã duyệt qua resumeRevision.
+- Cache v2 tách khỏi v1 để không lấy lại storyboard dày cut. Các phần đã đạt trong cùng lượt v2 vẫn được giữ.
+- Prompt nêu kích thước phone preset, tỉ lệ khi cầm, gắn vật theo tay và trục xoay local. Đây là hướng dẫn sinh hình, không thay thế kiểm tra video đã render.
+- Bản xuất luôn có trạng thái pending_visual_review cho đến khi thực sự được kiểm tra.
+
+---
+
 # Remotion production flow
 
 Acceptance source: `REMOTION_OUTPUT_STANDARD.md`, copied verbatim from the user's `tro/outputs/KHUON-MAU-VIDEO-GIAI-THICH-2D.md`. Visual and motion references are preserved in `remotion-reference/`.

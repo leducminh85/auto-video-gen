@@ -29,11 +29,11 @@ test('technical details and long review lists never appear in public errors', ()
 test('approved shot stays unchanged when AI returns unrelated edits during repair', async () => {
   const shot = { startWord:0, endWord:3, role:'context', framing:'wide', focalSubject:'Leo', visualMeaning:'arrival', action:'walk and stop', incomingState:'outside', outgoingState:'inside', events:[{word:0,action:'walk'}] };
   const second = {...shot,startWord:3,endWord:6,events:[{word:3,action:'stop'}]};
-  let designs = 0;
+  let designs = 1;
   const result = await directScene({text:'one two three four five six'}, async prompt => {
     if (prompt.startsWith('Review this')) return designs === 1 ? {passed:false,issues:['Fix second shot'],shotIssues:[{shotIndex:1,issue:'Fix second shot'}]} : {passed:true,issues:[]};
     designs++;
     return {shots:[designs===1 ? shot : {...shot,focalSubject:'unwanted replacement'},second]};
-  });
+  }, {resumeRevision:{board:{shots:[shot,second]},review:{issues:['Fix second shot'],shotIssues:[{shotIndex:1,issue:'Fix second shot'}]}}});
   assert.equal(result.shots[0].focalSubject,'Leo');
 });

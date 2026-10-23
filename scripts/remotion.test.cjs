@@ -15,7 +15,7 @@ test('rejects executable attributes, external references and malformed motion', 
   assert.throws(() => validateShot({ ...shot, layers: [shot.layers[0], shot.layers[0]] }));
 });
 test('storyboard preserves every narration word and rejects missing or overlapping ranges', async () => {
-  const scenes = await planStory('Một hai ba bốn', 'Test', 'balanced', async () => ({ scenes: [{ startWord: 0, endWord: 2 }, { startWord: 2, endWord: 4 }] }));
+  const scenes = await planStory('Một hai ba bốn', 'Test', 'balanced', async () => ({ scenes: [{ startWord: 0, endWord: 2 }, { startWord: 2, endWord: 4 }] }), {seconds:12});
   assert.equal(scenes.map(scene => scene.text).join(' '), 'Một hai ba bốn');
   for (const ranges of [[{ startWord: 1, endWord: 4 }], [{ startWord: 0, endWord: 3 }], [{ startWord: 0, endWord: 2 }, { startWord: 1, endWord: 4 }]]) {
     await assert.rejects(planStory('Một hai ba bốn', '', 'balanced', async () => ({ scenes: ranges })));

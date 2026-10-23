@@ -1,0 +1,950 @@
+{
+  "metadata": {
+    "fps": 60,
+    "width": 1920,
+    "height": 1080,
+    "total_duration_in_frames": 408,
+    "render_dirty": false
+  },
+  "scenes": [
+    {
+      "id": 1,
+      "title": "Continuous scene preview",
+      "audio_file": "remotion_5eb28fa36f43b468b918629e_0.wav",
+      "start_frame": 0,
+      "duration_in_frames": 408,
+      "duration_in_seconds": 6.8,
+      "beats": [
+        {
+          "id": "shot_5eb28fa36f43b468b918629e_0_0",
+          "sub_index": 1,
+          "title": "Một triệu lượt xem trong ba giây · 1",
+          "caption": "Bạn đang 1 video, không thâm nêu, không tiêu đề rật gân, 3 giây sau, 1 triệu lượt xem.",
+          "prompt": "One continuous 6.8-second wide shot in Leo's warm studio. Stable camera and set. Leo reaches for the trackpad, publishes a plain video, then returns his hand to rest. The laptop status changes to published, followed by a rapid view-count increase ending at 1,000,000 with a 3 GIÂY label. Leo reacts with a slight head tilt, then remains calm. All changes occur within the fixed laptop screen. No cuts, floating props, or decorative motion.",
+          "direction_plan": {
+            "startWord": 0,
+            "role": "hook",
+            "framing": "wide",
+            "focalSubject": "Leo ngồi bình thản trước laptop trên bàn gỗ trong studio, với màn hình laptop hiển thị video vừa đăng và bộ đếm lượt xem tăng lên 1.000.000.",
+            "visualMeaning": "Một video bình thường, không thumbnail phô trương hay tiêu đề giật gân, bất ngờ đạt một triệu lượt xem chỉ sau ba giây. Sự đối lập giữa kết quả phi thường và phản ứng điềm tĩnh của Leo tạo tò mò ngay đầu câu chuyện.",
+            "action": "Giữ một bố cục trung cảnh rộng cố định suốt 6,8 giây. Leo ngồi trước laptop có sẵn video với thumbnail tối giản. Anh đưa tay đến bàn di chuột, nhấn đăng video, rồi thả tay trở lại bàn. Bộ đếm lượt xem ngay trên màn hình laptop bắt đầu tăng nhanh, đạt 1.000.000 khi nhãn '3 GIÂY' xuất hiện cạnh kết quả. Leo nhìn con số, chỉ hơi nhướng mắt rồi giữ nguyên tư thế bình thản. Không thay đổi góc máy, không chuyển cảnh, không thêm đạo cụ hoặc chuyển động trang trí.",
+            "incomingState": "Studio beige ấm áp, ánh sáng dịu và bóng đổ nhẹ. Leo mặc hoodie xanh dương, ngồi trên ghế trước bàn gỗ. Laptop mở sẵn giao diện đăng video với thumbnail đơn giản, không có tiêu đề giật gân. Video chưa đăng, bộ đếm chưa có lượt xem. Tay Leo đặt gần bàn di chuột, mắt hướng về màn hình.",
+            "outgoingState": "Video đã được đăng. Màn hình laptop giữ cố định bộ đếm '1.000.000' và nhãn '3 GIÂY' rõ ràng, dễ đọc trên điện thoại. Leo vẫn ngồi bình thản, hai tay nghỉ trên bàn, mắt hướng về kết quả. Bố cục studio, vị trí laptop và nhân vật không thay đổi, sẵn sàng nối sang cảnh tiếp theo.",
+            "events": [
+              {
+                "word": 0,
+                "action": "Anticipation: Ngay đầu cảnh, màn hình laptop nổi bật với thumbnail video cực kỳ đơn giản và nút đăng rõ ràng, tạo tò mò về kết quả. Leo ngồi yên, nhìn màn hình và từ từ đưa tay về phía bàn di chuột.",
+                "at": 0
+              },
+              {
+                "word": 7,
+                "action": "Contact: Khi lời kể nhấn mạnh video không có tiêu đề giật gân, Leo nhấn nút đăng một lần. Nút đổi sang trạng thái đã đăng ngay tại vị trí cũ. Leo rút tay về bàn, không có cử chỉ thừa.",
+                "at": 0.4004914004914005
+              },
+              {
+                "word": 12,
+                "action": "Result: Bộ đếm lượt xem trên laptop tăng nhanh qua các giá trị trung gian rồi dừng chính xác tại '1.000.000'. Nhãn '3 GIÂY' xuất hiện ngay cạnh con số, đủ lớn và tương phản để đọc rõ. Toàn bộ thay đổi diễn ra bên trong giao diện laptop, không có đồ họa bay ra ngoài.",
+                "at": 0.6240786240786241
+              },
+              {
+                "word": 15,
+                "action": "Reaction: Leo nhìn kết quả một triệu lượt xem, hơi nhướng mắt trong khoảnh khắc ngắn, không cười lớn hoặc ăn mừng. Tay vẫn đặt trên bàn, cơ thể giữ tư thế ngồi tự nhiên.",
+                "at": 0.7076167076167076
+              },
+              {
+                "word": 18,
+                "action": "Hold: Giữ yên bố cục cuối với '1.000.000' và '3 GIÂY' trên laptop, Leo bình thản nhìn màn hình. Không thêm chuyển động, tạo khoảng dừng ngắn để khán giả cảm nhận sự bất thường của kết quả.",
+                "at": 0.8894348894348895
+              }
+            ],
+            "endWord": 19,
+            "start_frame_offset": 0,
+            "duration_in_frames": 408
+          },
+          "image_file": "remotion_a6567b45-69cc-4d6c-b5c3-8bc8837835b4.png",
+          "image_method": "remotion",
+          "remotion": {
+            "version": 1,
+            "styleId": "STICKMAN_500IQ_V1",
+            "direction": "One continuous 6.8-second wide shot in Leo's warm studio. Stable camera and set. Leo reaches for the trackpad, publishes a plain video, then returns his hand to rest. The laptop status changes to published, followed by a rapid view-count increase ending at 1,000,000 with a 3 GIÂY label. Leo reacts with a slight head tilt, then remains calm. All changes occur within the fixed laptop screen. No cuts, floating props, or decorative motion.",
+            "background": "#C9BAA2",
+            "layers": [
+              {
+                "id": "studio-wall",
+                "type": "rect",
+                "attrs": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1920,
+                  "height": 1080,
+                  "fill": "#D8CBB5"
+                }
+              },
+              {
+                "id": "wall-panel",
+                "type": "rect",
+                "attrs": {
+                  "x": 80,
+                  "y": 90,
+                  "width": 1760,
+                  "height": 690,
+                  "rx": 26,
+                  "fill": "#CFC0A8"
+                }
+              },
+              {
+                "id": "wall-accent",
+                "type": "rect",
+                "attrs": {
+                  "x": 125,
+                  "y": 125,
+                  "width": 1670,
+                  "height": 610,
+                  "rx": 16,
+                  "fill": "#DED2BE"
+                }
+              },
+              {
+                "id": "floor",
+                "type": "rect",
+                "attrs": {
+                  "x": 0,
+                  "y": 790,
+                  "width": 1920,
+                  "height": 290,
+                  "fill": "#B6A185"
+                }
+              },
+              {
+                "id": "floor-divider",
+                "type": "line",
+                "attrs": {
+                  "x1": 0,
+                  "y1": 790,
+                  "x2": 1920,
+                  "y2": 790,
+                  "stroke": "#9D896F",
+                  "strokeWidth": 5
+                }
+              },
+              {
+                "id": "desk-shadow",
+                "type": "ellipse",
+                "attrs": {
+                  "cx": 1040,
+                  "cy": 972,
+                  "rx": 690,
+                  "ry": 35,
+                  "fill": "#8E7B64",
+                  "opacity": 0.23
+                }
+              },
+              {
+                "id": "chair-back",
+                "type": "rect",
+                "attrs": {
+                  "x": 350,
+                  "y": 475,
+                  "width": 260,
+                  "height": 360,
+                  "rx": 65,
+                  "fill": "#806B59"
+                }
+              },
+              {
+                "id": "chair-inner",
+                "type": "rect",
+                "attrs": {
+                  "x": 371,
+                  "y": 495,
+                  "width": 218,
+                  "height": 310,
+                  "rx": 54,
+                  "fill": "#A08A73"
+                }
+              },
+              {
+                "id": "chair-seat",
+                "type": "ellipse",
+                "attrs": {
+                  "cx": 485,
+                  "cy": 808,
+                  "rx": 150,
+                  "ry": 34,
+                  "fill": "#77614F"
+                }
+              },
+              {
+                "id": "chair-leg",
+                "type": "rect",
+                "attrs": {
+                  "x": 475,
+                  "y": 818,
+                  "width": 22,
+                  "height": 143,
+                  "fill": "#645344"
+                }
+              },
+              {
+                "id": "desk-legs",
+                "type": "g",
+                "attrs": {},
+                "children": [
+                  {
+                    "id": "desk-leg-left",
+                    "type": "rect",
+                    "attrs": {
+                      "x": 680,
+                      "y": 785,
+                      "width": 42,
+                      "height": 195,
+                      "fill": "#806044"
+                    }
+                  },
+                  {
+                    "id": "desk-leg-right",
+                    "type": "rect",
+                    "attrs": {
+                      "x": 1550,
+                      "y": 785,
+                      "width": 42,
+                      "height": 195,
+                      "fill": "#806044"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "leo",
+                "type": "character",
+                "x": 470,
+                "y": 340,
+                "scale": 0.9,
+                "look": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.6240786240786241,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.7076167076167076,
+                      "value": 0.12,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 0.8894348894348895,
+                      "value": 0.12,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 1,
+                      "value": 0.12,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "leftHandX": 95,
+                "leftHandY": 238,
+                "rightHandX": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 118,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.3,
+                      "value": 218,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 0.4004914004914005,
+                      "value": 225,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 0.47,
+                      "value": 225,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.6,
+                      "value": 118,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 1,
+                      "value": 118,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "rightHandY": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 225,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.3,
+                      "value": 240,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 0.4004914004914005,
+                      "value": 247,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 0.43,
+                      "value": 252,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 0.47,
+                      "value": 247,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 0.6,
+                      "value": 225,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 1,
+                      "value": 225,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "headTilt": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.7076167076167076,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.79,
+                      "value": -0.045,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 0.8894348894348895,
+                      "value": 0,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 1,
+                      "value": 0,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "seated": 1,
+                "stride": 0,
+                "hero": true,
+                "emotion": "calm",
+                "attrs": {}
+              },
+              {
+                "id": "desk-top",
+                "type": "rect",
+                "attrs": {
+                  "x": 610,
+                  "y": 766,
+                  "width": 1040,
+                  "height": 35,
+                  "rx": 10,
+                  "fill": "#98704F"
+                }
+              },
+              {
+                "id": "desk-front",
+                "type": "rect",
+                "attrs": {
+                  "x": 630,
+                  "y": 800,
+                  "width": 1000,
+                  "height": 42,
+                  "rx": 7,
+                  "fill": "#76553D"
+                }
+              },
+              {
+                "id": "laptop-screen-shadow",
+                "type": "rect",
+                "attrs": {
+                  "x": 761,
+                  "y": 261,
+                  "width": 767,
+                  "height": 493,
+                  "rx": 24,
+                  "fill": "#5F5247",
+                  "opacity": 0.25
+                }
+              },
+              {
+                "id": "laptop-frame",
+                "type": "rect",
+                "attrs": {
+                  "x": 748,
+                  "y": 247,
+                  "width": 767,
+                  "height": 493,
+                  "rx": 24,
+                  "fill": "#282C35"
+                }
+              },
+              {
+                "id": "laptop-display",
+                "type": "rect",
+                "attrs": {
+                  "x": 766,
+                  "y": 267,
+                  "width": 731,
+                  "height": 449,
+                  "rx": 10,
+                  "fill": "#17263B"
+                }
+              },
+              {
+                "id": "screen-header",
+                "type": "rect",
+                "attrs": {
+                  "x": 766,
+                  "y": 267,
+                  "width": 731,
+                  "height": 62,
+                  "rx": 10,
+                  "fill": "#25354A"
+                }
+              },
+              {
+                "id": "screen-header-label",
+                "type": "text",
+                "text": "VIDEO",
+                "x": 797,
+                "y": 307,
+                "attrs": {
+                  "fontSize": 28,
+                  "fontWeight": 700,
+                  "fill": "#F4E9D5",
+                  "letterSpacing": 2
+                }
+              },
+              {
+                "id": "video-thumbnail",
+                "type": "rect",
+                "attrs": {
+                  "x": 796,
+                  "y": 354,
+                  "width": 286,
+                  "height": 183,
+                  "rx": 10,
+                  "fill": "#D2C3AC"
+                }
+              },
+              {
+                "id": "thumbnail-subject-head",
+                "type": "circle",
+                "attrs": {
+                  "cx": 939,
+                  "cy": 408,
+                  "r": 30,
+                  "fill": "#202329"
+                }
+              },
+              {
+                "id": "thumbnail-subject-body",
+                "type": "path",
+                "attrs": {
+                  "d": "M 939 438 L 939 483 M 939 451 L 905 476 M 939 451 L 973 476 M 939 483 L 917 514 M 939 483 L 961 514",
+                  "fill": "none",
+                  "stroke": "#202329",
+                  "strokeWidth": 8,
+                  "strokeLinecap": "round"
+                }
+              },
+              {
+                "id": "thumbnail-eye-left",
+                "type": "circle",
+                "attrs": {
+                  "cx": 930,
+                  "cy": 404,
+                  "r": 3.5,
+                  "fill": "#FFFFFF"
+                }
+              },
+              {
+                "id": "thumbnail-eye-right",
+                "type": "circle",
+                "attrs": {
+                  "cx": 948,
+                  "cy": 404,
+                  "r": 3.5,
+                  "fill": "#FFFFFF"
+                }
+              },
+              {
+                "id": "thumbnail-mouth",
+                "type": "path",
+                "attrs": {
+                  "d": "M 931 419 Q 939 425 947 419",
+                  "fill": "none",
+                  "stroke": "#FFFFFF",
+                  "strokeWidth": 2.5,
+                  "strokeLinecap": "round"
+                }
+              },
+              {
+                "id": "thumbnail-caption",
+                "type": "text",
+                "text": "VIDEO ĐƠN GIẢN",
+                "x": 939,
+                "y": 563,
+                "attrs": {
+                  "fontSize": 21,
+                  "fontWeight": 600,
+                  "textAnchor": "middle",
+                  "fill": "#F4E9D5"
+                }
+              },
+              {
+                "id": "publish-button",
+                "type": "rect",
+                "opacity": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 1,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.4004914004914005,
+                      "value": 1,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.44,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 1,
+                      "value": 0,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "attrs": {
+                  "x": 811,
+                  "y": 595,
+                  "width": 256,
+                  "height": 69,
+                  "rx": 12,
+                  "fill": "#CDA85D"
+                }
+              },
+              {
+                "id": "publish-button-label",
+                "type": "text",
+                "text": "ĐĂNG VIDEO",
+                "x": 939,
+                "y": 638,
+                "opacity": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 1,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.4004914004914005,
+                      "value": 1,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.44,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 1,
+                      "value": 0,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "attrs": {
+                  "fontSize": 27,
+                  "fontWeight": 700,
+                  "textAnchor": "middle",
+                  "fill": "#17263B"
+                }
+              },
+              {
+                "id": "published-button",
+                "type": "rect",
+                "opacity": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.4004914004914005,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.44,
+                      "value": 1,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 1,
+                      "value": 1,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "attrs": {
+                  "x": 811,
+                  "y": 595,
+                  "width": 256,
+                  "height": 69,
+                  "rx": 12,
+                  "fill": "#506F65"
+                }
+              },
+              {
+                "id": "published-label",
+                "type": "text",
+                "text": "ĐÃ ĐĂNG",
+                "x": 939,
+                "y": 638,
+                "opacity": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.4004914004914005,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.44,
+                      "value": 1,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 1,
+                      "value": 1,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "attrs": {
+                  "fontSize": 27,
+                  "fontWeight": 700,
+                  "textAnchor": "middle",
+                  "fill": "#FFFFFF"
+                }
+              },
+              {
+                "id": "views-panel",
+                "type": "rect",
+                "attrs": {
+                  "x": 1110,
+                  "y": 354,
+                  "width": 354,
+                  "height": 310,
+                  "rx": 14,
+                  "fill": "#24374E"
+                }
+              },
+              {
+                "id": "views-heading",
+                "type": "text",
+                "text": "LƯỢT XEM",
+                "x": 1287,
+                "y": 401,
+                "attrs": {
+                  "fontSize": 27,
+                  "fontWeight": 700,
+                  "textAnchor": "middle",
+                  "fill": "#E6D9C3",
+                  "letterSpacing": 1
+                }
+              },
+              {
+                "id": "view-count-zero",
+                "type": "text",
+                "text": "0",
+                "x": 1287,
+                "y": 491,
+                "opacity": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 1,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.44,
+                      "value": 1,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.49,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 1,
+                      "value": 0,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "attrs": {
+                  "fontSize": 65,
+                  "fontWeight": 700,
+                  "textAnchor": "middle",
+                  "fill": "#F4E9D5"
+                }
+              },
+              {
+                "id": "view-count-first",
+                "type": "text",
+                "text": "12.450",
+                "x": 1287,
+                "y": 491,
+                "enter": 0.49,
+                "exit": 0.54,
+                "attrs": {
+                  "fontSize": 62,
+                  "fontWeight": 700,
+                  "textAnchor": "middle",
+                  "fill": "#F4E9D5"
+                }
+              },
+              {
+                "id": "view-count-second",
+                "type": "text",
+                "text": "286.000",
+                "x": 1287,
+                "y": 491,
+                "enter": 0.54,
+                "exit": 0.59,
+                "attrs": {
+                  "fontSize": 58,
+                  "fontWeight": 700,
+                  "textAnchor": "middle",
+                  "fill": "#F4E9D5"
+                }
+              },
+              {
+                "id": "view-count-third",
+                "type": "text",
+                "text": "748.000",
+                "x": 1287,
+                "y": 491,
+                "enter": 0.59,
+                "exit": 0.6240786240786241,
+                "attrs": {
+                  "fontSize": 58,
+                  "fontWeight": 700,
+                  "textAnchor": "middle",
+                  "fill": "#F4E9D5"
+                }
+              },
+              {
+                "id": "view-count-final",
+                "type": "text",
+                "text": "1.000.000",
+                "x": 1287,
+                "y": 491,
+                "opacity": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.6240786240786241,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.65,
+                      "value": 1,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 1,
+                      "value": 1,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "attrs": {
+                  "fontSize": 56,
+                  "fontWeight": 700,
+                  "textAnchor": "middle",
+                  "fill": "#F1C66F"
+                }
+              },
+              {
+                "id": "three-second-badge",
+                "type": "rect",
+                "opacity": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.6240786240786241,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.67,
+                      "value": 1,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 1,
+                      "value": 1,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "attrs": {
+                  "x": 1177,
+                  "y": 530,
+                  "width": 220,
+                  "height": 68,
+                  "rx": 12,
+                  "fill": "#CDA85D"
+                }
+              },
+              {
+                "id": "three-second-label",
+                "type": "text",
+                "text": "3 GIÂY",
+                "x": 1287,
+                "y": 575,
+                "opacity": {
+                  "keys": [
+                    {
+                      "at": 0,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.6240786240786241,
+                      "value": 0,
+                      "ease": "hold"
+                    },
+                    {
+                      "at": 0.67,
+                      "value": 1,
+                      "ease": "smooth"
+                    },
+                    {
+                      "at": 1,
+                      "value": 1,
+                      "ease": "hold"
+                    }
+                  ]
+                },
+                "attrs": {
+                  "fontSize": 37,
+                  "fontWeight": 700,
+                  "textAnchor": "middle",
+                  "fill": "#17263B"
+                }
+              },
+              {
+                "id": "laptop-base",
+                "type": "path",
+                "attrs": {
+                  "d": "M 748 739 L 1515 739 L 1570 771 Q 1580 781 1555 784 L 706 784 Q 685 781 698 771 Z",
+                  "fill": "#444B54"
+                }
+              },
+              {
+                "id": "laptop-base-highlight",
+                "type": "line",
+                "attrs": {
+                  "x1": 720,
+                  "y1": 773,
+                  "x2": 1550,
+                  "y2": 773,
+                  "stroke": "#737D88",
+                  "strokeWidth": 4,
+                  "strokeLinecap": "round"
+                }
+              },
+              {
+                "id": "trackpad",
+                "type": "rect",
+                "attrs": {
+                  "x": 630,
+                  "y": 746,
+                  "width": 125,
+                  "height": 18,
+                  "rx": 7,
+                  "fill": "#B5B0A7"
+                }
+              },
+              {
+                "id": "desk-phone",
+                "type": "rect",
+                "attrs": {
+                  "x": 1575,
+                  "y": 743,
+                  "width": 42,
+                  "height": 23,
+                  "rx": 6,
+                  "fill": "#333840"
+                }
+              }
+            ],
+            "camera": {
+              "scale": 1,
+              "focusX": 960,
+              "focusY": 540
+            }
+          },
+          "duration_in_seconds": 6.8,
+          "duration_in_frames": 408,
+          "start_frame_offset": 0,
+          "image_version": 1792719409699
+        }
+      ],
+      "image_file": "remotion_a6567b45-69cc-4d6c-b5c3-8bc8837835b4.png"
+    }
+  ]
+}
