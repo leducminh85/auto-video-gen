@@ -12,7 +12,7 @@ async function planStory(text, title, density, ask = request, options = {}) {
   const result = await ask(`Plan a 2D narrated story. Return JSON only, no explanation.
 ${STYLE}
 Use at most ${maxScenes} scenes, each a continuous situation lasting about 5–9 seconds. Keep related narration together. Each scene uses ONE stable set and a sequential action chain (anticipation, contact, result, reaction). No shot lists, inserts, reaction cuts or word-by-word scene changes. Keep cast, proportions and prop ownership consistent; show data as a readable change within the same composition. Preserve source wording using indexed ranges, start inclusive/end exclusive. First startWord=0, final endWord=${tokens.length}.
-JSON: {"bible":{"premise":"...","cast":[{"id":"leo","hero":true,"role":"..."}],"locations":[{"id":"room","description":"..."}],"arc":"..."},"scenes":[{"title":"...","startWord":0,"endWord":${tokens.length},"direction":"location, cast, action, resulting state"}]}
+JSON: {"bible":{"premise":"...","cast":[{"id":"leo","hero":true,"role":"..."}],"locations":[{"id":"room","description":"..."}],"arc":"..."},"scenes":[{"title":"...","startWord":0,"endWord":${tokens.length},"direction":"location, cast, action, resulting state","actions":["prepare","contact","result","reaction"],"layout":{"setting":"studio","subject":"Leo","prop":"laptop","subjectX":305,"propX":514}}]}
 Title:${title}; pacing: few continuous scenes, regardless of image density
 WORDS:${tokens.map((word,index)=>`${index}:${word}`).join(' ')}`);
   if (!Array.isArray(result.scenes) || !result.scenes.length || result.scenes.length > 150) throw new Error('ChatGPT chưa trả về phân cảnh hợp lệ.');
@@ -28,7 +28,7 @@ WORDS:${tokens.map((word,index)=>`${index}:${word}`).join(' ')}`);
     if (scene.startWord !== cursor || !Number.isInteger(scene.endWord) || scene.endWord <= cursor || scene.endWord > tokens.length) throw new Error('Phân cảnh ChatGPT bị thiếu hoặc trùng lời thoại. Hãy thử lại.');
     const text = tokens.slice(cursor, scene.endWord).join(' ');
     cursor = scene.endWord;
-    return { title: String(scene.title || `Cảnh ${index + 1}`).slice(0, 160), text, direction: String(scene.direction || '').slice(0, 4000) };
+    return { actions: Array.isArray(scene.actions) ? scene.actions.slice(0,6).map(String) : [], layout: scene.layout || {}, title: String(scene.title || `Cảnh ${index + 1}`).slice(0, 160), text, direction: String(scene.direction || '').slice(0, 4000) };
   });
   if (cursor !== tokens.length) throw new Error('Phân cảnh chưa bao phủ toàn bộ lời thoại.');
   scenes.bible = result.bible || {};

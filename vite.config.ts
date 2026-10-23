@@ -121,6 +121,19 @@ function videoApiPlugin(): Plugin {
           }
           return;
         }
+        if (req.url?.startsWith('/api/storyboard/') && ['GET','PUT'].includes(req.method || '')) {
+          res.setHeader('Content-Type', 'application/json');
+          try {
+            const drafts = require('./scripts/storyboardDrafts.cjs');
+            const id = req.url.slice('/api/storyboard/'.length);
+            if (req.method === 'GET') res.end(JSON.stringify(drafts.publicDraft(drafts.read(id))));
+            else {
+              let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 1000000) throw new Error('Storyboard quá lớn.'); }
+              res.end(JSON.stringify(drafts.saveDraft(id, JSON.parse(body))));
+            }
+          } catch (error: any) { res.statusCode = 400; res.end(JSON.stringify({error:error.message})); }
+          return;
+        }
         if (req.url === '/api/generate-video' && req.method === 'POST') {
           let body = '';
           req.on('data', (chunk) => {
@@ -133,6 +146,7 @@ function videoApiPlugin(): Plugin {
             let remotionRequest = false;
             try {
               const data = JSON.parse(body);
+              delete data.approvedPlan;
               remotionRequest = data.videoMode === 'remotion';
               if (data.videoMode && !['images', 'remotion'].includes(data.videoMode)) throw new Error('Kiểu video không hợp lệ.');
               if (data.videoMode === 'remotion') for (const module of ['remotionGenerator', 'remotionPlanner', 'remotionSchema', 'remotionDirection', 'chatgptBrowser']) delete require.cache[require.resolve(`./scripts/${module}.cjs`)];
@@ -149,12 +163,21 @@ function videoApiPlugin(): Plugin {
 
               const result = await editor.exclusive(async () => {
                 store.migrate();
-                const generated = await generateVideo({ ...data, onProgress });
-                const saved = store.create({ metadata: generated.metadata, scenes: generated.scenes }, generated.finalVideoPath || path.join(publicRoot, 'final-video.mp4'));
+                const drafts = require('./scripts/storyboardDrafts.cjs');
+                let approved;
+                if (data.videoMode === 'remotion' && data.storyboardId) approved = drafts.begin(data.storyboardId, data.revision);
+                let generated;
+                try { generated = await generateVideo(approved ? {...approved.options, approvedPlan:approved, onProgress} : { ...data, onProgress }); }
+                catch (error) { if (approved) drafts.finish(approved.id,'failed'); throw error; }
+                if (generated.approvalRequired) return generated;
+                let saved;
+                try { saved = store.create({ metadata: generated.metadata, scenes: generated.scenes }, generated.finalVideoPath || path.join(publicRoot, 'final-video.mp4')); }
+                catch (error) { if (approved) drafts.finish(approved.id,'failed'); throw error; }
+                if (approved) drafts.finish(approved.id,'complete',saved.metadata.project_id);
                 return { ...generated, ...saved, finalVideoUrl: `/projects/${saved.metadata.project_id}/final-video.mp4` };
               });
 
-              res.write(JSON.stringify({ type: 'complete', percent: 100, result }) + '\n');
+              res.write(JSON.stringify({ type: result.approvalRequired ? 'storyboard' : 'complete', percent: 100, result }) + '\n');
               res.end();
             } catch (err: any) {
               console.error('API Error in /api/generate-video:', err);

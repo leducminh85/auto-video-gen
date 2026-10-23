@@ -1,3 +1,4 @@
+import { StoryboardReview, StoryboardDraft } from './StoryboardReview';
 import { StudioBrand } from './StudioBrand';
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -289,8 +290,13 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [storyboardDraft, setStoryboardDraft] = useState<StoryboardDraft | null>(null);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('storyboard') || localStorage.getItem('pending_storyboard_id');
+    if (id) fetch(`/api/storyboard/${id}`).then(r => r.ok ? r.json() : null).then(d => {if(d && ['draft','failed'].includes(d.status)) {setStoryboardDraft(d);localStorage.setItem('pending_storyboard_id',d.id);}}).catch(() => {});
+  }, []);
   const [isCreating, setIsCreating] = useState<boolean>(false);
-  const dialogRef = useDialog(onCancel, !isCreating && !audioUploading);
+  const dialogRef = useDialog(onCancel, !isCreating && !audioUploading && !storyboardDraft);
   useEffect(() => {
     setDraftSaved(saveCreatorDraft({ videoMode, voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries }));
   }, [videoMode, selectedVoice, speed, textContent, scriptTitle, scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries]);
@@ -551,14 +557,14 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     return parsed;
   };
 
-  const handleCreateVideo = async () => {
+  const handleCreateVideo = async (approved?: StoryboardDraft) => {
     setErrorMessage(null);
-    if (audioMode === 'tts' && !textContent.trim()) {
+    if (!approved && audioMode === 'tts' && !textContent.trim()) {
       setErrorMessage('Vui lòng nhập nội dung kịch bản trước khi bấm Tạo Video');
       return;
     }
-    if (videoMode === 'images' && !imageStylePrompt.trim()) { setErrorMessage('Hãy nhập phong cách hình ảnh hoặc khôi phục mặc định.'); return; }
-    if (audioMode === 'import' && !importedAudio) { setErrorMessage('Hãy nhập tệp audio trước khi tạo video.'); return; }
+    if (!approved && videoMode === 'images' && !imageStylePrompt.trim()) { setErrorMessage('Hãy nhập phong cách hình ảnh hoặc khôi phục mặc định.'); return; }
+    if (!approved && audioMode === 'import' && !importedAudio) { setErrorMessage('Hãy nhập tệp audio trước khi tạo video.'); return; }
     audioPreviewManager.stop();
     setPlayingVoiceId(null);
     setIsCreating(true);
@@ -573,7 +579,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
     ]);
 
     const rawParsedScenes = parseContentToScenes(textContent);
-    if (audioMode === 'tts' && rawParsedScenes.length === 0) {
+    if (!approved && audioMode === 'tts' && rawParsedScenes.length === 0) {
       setErrorMessage('Không nhận diện được phân cảnh nào từ kịch bản.');
       setIsCreating(false);
       return;
@@ -589,7 +595,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       const response = await fetch('/api/generate-video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify(approved ? {videoMode:'remotion',storyboardId:approved.id,revision:approved.revision} : {
           videoMode,
           title: effectiveTitle,
           subtitle: scriptSubtitle || (audioMode === 'import' ? 'Audio đã nhập' : `Giọng đọc ${speed}×`),
@@ -655,6 +661,11 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                   ...(event.details || {}),
                 }));
               }
+            } else if (event.type === 'storyboard') {
+              setStoryboardDraft(event.result.draft);
+              localStorage.setItem('pending_storyboard_id', event.result.draft.id);
+              setIsCreating(false);
+              return;
             } else if (event.type === 'complete') {
               finalResultData = event.result;
               setProgressPercent(100);
@@ -680,6 +691,8 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
         throw new Error('Không nhận được dữ liệu phân cảnh từ hệ thống.');
       }
 
+      setStoryboardDraft(null);
+      localStorage.removeItem('pending_storyboard_id');
       const multiBeatScenes = buildMultiBeatScenes(finalResultData.scenes);
       await new Promise((r) => setTimeout(r, 700));
       onGenerateNewVideo(multiBeatScenes, finalResultData.metadata);
@@ -704,6 +717,8 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const wordCount = textContent.trim().split(/\s+/).filter(Boolean).length;
   const estimatedSeconds = audioMode === 'import' ? (importedAudio?.duration || 0) : ((wordCount / 3.2) / speed);
   const selectedVoiceObj = VOICE_OPTIONS.find((v) => v.id === selectedVoice) || { ...VOICE_OPTIONS[0], id: selectedVoice, name: selectedVoice };
+
+  if (storyboardDraft && !isCreating) return <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Duyệt storyboard" tabIndex={-1} className="creator-panel"><StoryboardReview draft={storyboardDraft} error={errorMessage} onChange={setStoryboardDraft} onApprove={handleCreateVideo} onClose={onCancel} onBack={()=>{setStoryboardDraft(null);localStorage.removeItem('pending_storyboard_id');}} /></div>;
 
   return (
     <div
@@ -1168,7 +1183,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
             <button
               type="button"
               className="btn btn-primary btn-dock-create"
-              onClick={handleCreateVideo}
+              onClick={() => handleCreateVideo()}
               disabled={
                 isCreating ||
                 audioUploading ||
@@ -1185,7 +1200,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
               ) : (
                 <>
                   <Film size={16} />
-                  <span>Tạo video ngay</span>
+                  <span>{videoMode === 'remotion' ? 'Tạo storyboard để duyệt' : 'Tạo video ngay'}</span>
                 </>
               )}
             </button>

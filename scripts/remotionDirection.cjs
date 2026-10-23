@@ -40,6 +40,7 @@ async function directScene(input, ask = request, options = {}) {
   const words = input.text.trim().split(/\s+/u);
   let prompt = `Plan ONE continuous shot for this entire narrated scene. Return JSON only.
 ${STYLE}
+${input.userApproved ? 'The user approved the supplied direction, composition and action chain. Preserve their choices; only expand implementation details. Do not invent another concept or location.' : ''}
 Each shot: one focal subject, visual meaning, concrete action and consistent incoming/outgoing state. Keep one stable location and composition. Use 3–5 sequential action events within this shot: anticipation, contact, result, reaction. No internal cuts, inserts, replacement sets or isolated reaction shots. ${input.firstScene ? 'Opening: show a curious visual in the first 3 seconds.' : 'Continue the existing story; no new hook required.'}
 JSON:{"shots":[{"startWord":0,"role":"context","framing":"wide","focalSubject":"...","visualMeaning":"...","action":"prepare,contact,result,hold","incomingState":"...","outgoingState":"...","events":[{"word":0,"action":"..."}]}]}
 Roles:${roles.join(',')}. Only startWord is needed: first=0, later starts increase; server fills endings and fits audio. event.word uses scene-wide WORDS indices. Timing is approximate. Return exactly one shot spanning all words; no decorative motion or extra facts.

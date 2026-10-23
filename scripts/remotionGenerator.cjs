@@ -13,8 +13,8 @@ async function generateVideo(options) {
   const { title = 'Hoạt hình người que', subtitle = '', voice = 'vi-VN-Standard-B', speed = 1, importedAudio, audioBoundaries, imageDensity = 'balanced', onProgress = () => {} } = options;
   const notify = (stepKey, percent, message) => onProgress({ type: 'progress', stepKey, percent, message });
   const publicRoot = path.resolve('public');
-  const identity = { ...options }; delete identity.onProgress;
-  const run = createHash('sha256').update(JSON.stringify(identity) + 'continuous-scene-v2').digest('hex').slice(0, 24);
+  const identity = { ...options }; delete identity.onProgress; delete identity.approvedPlan;
+  const run = options.approvedPlan?.run || createHash('sha256').update(JSON.stringify(identity) + 'storyboard-approval-v1').digest('hex').slice(0, 24);
   const runRoot = path.resolve('data/remotion-runs', run);
   fs.mkdirSync(runRoot, { recursive: true });
   const diagnostic = entry => fs.appendFileSync(path.join(runRoot, 'diagnostics.ndjson'), JSON.stringify({ time: new Date().toISOString(), ...entry }) + '\n');
@@ -41,7 +41,9 @@ async function generateVideo(options) {
   let text = options.scenes?.length ? options.scenes.map(scene => scene.narration || scene.text).join('\n\n') : options.content || options.script || '';
   const referenceScript = text;
   let source, sourceDuration, transcript;
-  if (importedAudio) {
+  if (options.approvedPlan) {
+    ({ source, sourceDuration, transcript, text } = options.approvedPlan);
+  } else if (importedAudio) {
     if (!/^import_[\w-]+\.wav$/.test(importedAudio)) throw new Error('Hãy nhập audio qua chức năng tải tệp.');
     source = editor.asset(publicRoot, 'audio', importedAudio);
     sourceDuration = await retry('Đọc audio', () => editor.probe(source));
@@ -51,12 +53,13 @@ async function generateVideo(options) {
   }
   if (typeof text !== 'string' || !text.trim() || text.length > 80000) throw new Error('Cần kịch bản hoặc lời thoại hợp lệ, tối đa 80.000 ký tự.');
   notify('storyboard', 10, 'ChatGPT đang phân tích lời thoại và lên ý tưởng phân cảnh…');
-  const storyboard = source && audioBoundaries?.length
+  const storyboard = options.approvedPlan ? Object.assign(options.approvedPlan.storyboard, {bible: options.approvedPlan.bible, outline: options.approvedPlan.outline}) : source && audioBoundaries?.length
     ? transcriptScenes(transcript, audioBoundaries, sourceDuration)
     : await keep('story', { text, title, imageDensity }, async () => { const result = await planStory(text, title, imageDensity, undefined, { relaxed: true, seconds: sourceDuration }); return { scenes: [...result], bible: result.bible, outline: result.outline }; }).then(result => Object.assign(result.scenes, { bible: result.bible, outline: result.outline }));
   checkpoint({ stage: 'story', text, storyboard, bible: storyboard.bible, outline: storyboard.outline });
   let cuts;
-  if (source) {
+  if (options.approvedPlan) cuts = options.approvedPlan.cuts;
+  else if (source) {
     notify('tts', 17, 'Căn phân cảnh theo lời đọc trong audio…');
     if (audioBoundaries?.length) cuts = audioBoundaries;
     else {
@@ -67,6 +70,13 @@ async function generateVideo(options) {
     }
   }
   const lengths30 = source ? editor.allocateAudioFrames(storyboard, Math.round(sourceDuration * 30), cuts) : null;
+  if (!options.approvedPlan) {
+    const draft = require('./storyboardDrafts.cjs').createDraft({ run, title, storyboard, cuts, lengths30, source, sourceDuration, transcript, text,
+      bible: storyboard.bible, outline: storyboard.outline,
+      options: {title, subtitle, voice, speed, importedAudio, audioBoundaries, imageDensity, content: referenceScript} });
+    checkpoint({stage:'awaiting_storyboard_approval', draftId:draft.id});
+    return {approvalRequired:true,draft};
+  }
   let offset30 = 0, start = 0, previous = '';
   const scenes = [];
   for (const [i, planned] of storyboard.entries()) {
@@ -81,9 +91,11 @@ async function generateVideo(options) {
     } else seconds = await keep(`audio-${i}`, { text: planned.text, voice, speed }, () => require('./videoGenerator.cjs').generateTTSAudio(planned.text, target, voice, speed));
     const frames = Math.max(1, Math.round(seconds * 60));
     notify('beat_plan', 22 + i / storyboard.length * 55, `ChatGPT đang dựng bố cục và chuyển động cảnh ${i + 1}/${storyboard.length}…`);
-    const boardInput = { text: planned.text, seconds, direction: planned.direction, previous, firstScene: i === 0, bible: storyboard.bible, outline: storyboard.outline };
-    const revisionFile = path.join(runRoot, `storyboard-${i + 1}-latest.json`);
-    const board = await keep(`board-${i}`, boardInput, () => directScene({ text: planned.text, seconds, direction: planned.direction, previous, firstScene: i === 0, bible: storyboard.bible, outline: storyboard.outline }, undefined, {
+    planned.direction = [planned.direction, ...(planned.actions || []).map((action,index) => `${index+1}. ${action}`), planned.layout ? `User-approved composition (800x360 sketch; scale coordinates to 1920x1080): ${JSON.stringify(planned.layout)}` : ''].join('\n');
+    const boardInput = { text: planned.text, seconds, direction: planned.direction, userApproved:true, previous, firstScene: i === 0, bible: storyboard.bible, outline: storyboard.outline };
+    const boardKey = createHash('sha256').update(JSON.stringify(boardInput)).digest('hex').slice(0,20);
+    const revisionFile = path.join(runRoot, `storyboard-${i + 1}-${boardKey}-latest.json`);
+    const board = await keep(`board-${i}`, boardInput, () => directScene({ text: planned.text, seconds, direction: planned.direction, userApproved:true, previous, firstScene: i === 0, bible: storyboard.bible, outline: storyboard.outline }, undefined, {
       resumeRevision: fs.existsSync(revisionFile) ? JSON.parse(fs.readFileSync(revisionFile, 'utf8')) : undefined,
       onProgress: ({ attempt, maxAttempts, phase }) => notify('beat_plan', 22 + i / storyboard.length * 55, `${phase === 'review' ? 'Kiểm tra' : attempt > 1 ? 'Tự tối ưu' : 'Thiết kế'} storyboard cảnh ${i + 1}/${storyboard.length} · lượt ${attempt}/${maxAttempts}…`),
       onDiagnostic: diagnostic,

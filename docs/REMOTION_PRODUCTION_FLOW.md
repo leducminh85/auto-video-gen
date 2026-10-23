@@ -32,3 +32,11 @@ node --test scripts/remotionDirection.test.cjs scripts/remotion.test.cjs scripts
 node scripts/remotion-render-smoke.cjs
 node scripts/remotion-review-packet.cjs <project-json> <video-mp4> <review-directory>
 ```
+
+## Duyệt storyboard trước khi dựng
+
+Luồng Remotion mặc định trả về bản nháp sau khi chia cảnh và căn audio. Máy chủ chưa gọi thiết kế chuyển động hoặc render ở giai đoạn này.
+
+Trong màn hình duyệt: xem sơ đồ ý tưởng, timecode, lời đọc và audio; sửa tên cảnh, bối cảnh, chủ thể, đạo cụ, vị trí ngang, mô tả và chuỗi hành động. Sơ đồ là bản phác bố cục, không phải frame render. Thời lượng TTS được ghi là ước tính.
+
+Bản nháp lưu tại `data/storyboard-drafts/`; trình duyệt nhớ ID để mở lại. Lời đọc và phân đoạn audio giữ nguyên khi sửa hình. Lưu dùng revision để tránh ghi đè bản mới; duyệt khóa đúng revision rồi mới dựng. Các chỉ dẫn đã duyệt được truyền nguyên vẹn cho director. Không gửi file local cho ChatGPT.

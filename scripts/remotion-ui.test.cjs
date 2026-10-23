@@ -48,7 +48,7 @@ async function main() {
     await page.setViewportSize({ width: 390, height: 844 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: path.join(screenshots, 'creator-mobile.png'), fullPage: true });
-    await page.getByRole('button', { name: 'Tạo video ngay' }).click();
+    await page.getByRole('button', { name: 'Tạo storyboard để duyệt' }).click();
     await page.waitForURL('**/project/remotion-fixture');
     assert.equal(submitted.videoMode, 'remotion');
     await page.setViewportSize({ width: 1440, height: 1000 });

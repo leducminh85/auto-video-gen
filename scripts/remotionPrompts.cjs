@@ -12,7 +12,7 @@ function compactPrevious(value) {
     layers: shot.layers?.slice(0, 16).map(layer => ({ id:layer.id, type:layer.type, hero:layer.hero, scarf:layer.scarf, x:lastValue(layer.x), y:lastValue(layer.y), scale:lastValue(layer.scale), emotion:layer.emotion, text:clip(layer.text,100) })) };
 }
 function compactContext(input) {
-  return { seconds:input.seconds, firstScene:input.firstScene, direction:clip(input.direction,1600), previous:compactPrevious(input.previous),
+  return { seconds:input.seconds, firstScene:input.firstScene, direction:input.userApproved ? input.direction : clip(input.direction,1600), previous:compactPrevious(input.previous),
     bible: input.bible ? { premise:clip(input.bible.premise), cast:input.bible.cast?.slice(0,8).map(actor=>({id:actor.id,hero:actor.hero,scarf:actor.scarf,role:clip(actor.role,180)})), locations:input.bible.locations?.slice(0,6).map(place=>({id:place.id,description:clip(place.description,220)})), arc:clip(input.bible.arc) } : undefined,
     outline:input.outline?.slice(0,40).map(scene=>({title:clip(scene.title,120)})) };
 }
