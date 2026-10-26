@@ -26,6 +26,7 @@ export interface VectorLayer {
   rightHandX?: MotionValue;
   rightHandY?: MotionValue;
   headTilt?: MotionValue;
+  facing?: MotionValue;
   seated?: MotionValue;
   stride?: MotionValue;
   speech?: MotionValue;

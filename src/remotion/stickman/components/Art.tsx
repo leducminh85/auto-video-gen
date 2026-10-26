@@ -4,7 +4,7 @@ import styles from './Stage.module.css';
 
 export const C = {ink: '#111827', blue: '#2563EB', green: '#22C55E', red: '#EF4444', gold: '#FFD700'};
 
-export const Stage = ({children}: {children: ReactNode}) => <svg className={styles.stage} viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+export const Stage = ({children, vignette = true}: {children: ReactNode; vignette?: boolean}) => <svg className={styles.stage} viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="metal"><stop stopColor="#94A3B8"/><stop offset=".48" stopColor="#4A5568"/><stop offset="1" stopColor="#2D3748"/></linearGradient>
     <linearGradient id="silver"><stop stopColor="#475569"/><stop offset=".4" stopColor="#F1F5F9"/><stop offset=".6" stopColor="#94A3B8"/><stop offset="1" stopColor="#334155"/></linearGradient>
@@ -22,7 +22,7 @@ export const Stage = ({children}: {children: ReactNode}) => <svg className={styl
     <pattern id="hazard" width="64" height="64" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><rect width="64" height="64" fill="#E9B93E"/><rect width="32" height="64" fill="#111827"/></pattern>
   </defs>
   {children}
-  <rect width="1920" height="1080" fill="url(#vignette)" pointerEvents="none"/>
+  {vignette && <rect width="1920" height="1080" fill="url(#vignette)" pointerEvents="none"/>}
 </svg>;
 
 export const Label = ({x = 100, y = 100, children, fill = '#E2E8F0', size = 22, anchor = 'start'}:

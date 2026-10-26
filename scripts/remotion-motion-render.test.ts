@@ -12,3 +12,10 @@ test('holds, interpolation and seeking preserve choreography', () => {
  const render=(frame:number)=>renderToStaticMarkup(React.createElement(VectorShot,{shot,frame,duration:121}));
  const middle=render(60);render(100);assert.equal(render(60),middle); assert.match(middle,/translate\(120 200\)/);assert.notEqual(render(0),middle);
 });
+
+ test('held prop follows clamped hand rather than unreachable requested point', () => {
+  const shot: RemotionShot={version:1,styleId:'STICKMAN_500IQ_V1',direction:'reach',background:'#FFFFFF',layers:[{id:'actor',type:'character',rightHandX:5000,rightHandY:108,children:[{id:'prop',type:'g',attachment:'rightHand'}]}]};
+  const html=renderToStaticMarkup(React.createElement(VectorShot,{shot,frame:0,duration:60}));
+  assert.match(html,/translate\(250\.999 108\)/);
+  assert.doesNotMatch(html,/translate\(5000 108\)/);
+ });

@@ -4,6 +4,9 @@ import type { MotionValue, RemotionShot, VectorLayer } from '../../types/remotio
 import { Stage, Steam, Signal, Phone } from './components/Art';
 import { Kitchen, TeaMug } from './components/Kitchen';
 import { Stickman } from './components/Character';
+import {armPose} from './lib/rig';
+import {profilePose} from './lib/profileRig';
+import {ProfileCharacter} from './components/ProfileCharacter';
 
 export function motionValue(value: MotionValue | undefined, progress: number, fallback = 0): number {
   if (value === undefined) return fallback;
@@ -28,14 +31,29 @@ function Layer({ layer, progress, frame }: { layer: VectorLayer; progress: numbe
   const v = (value: MotionValue | undefined, fallback = 0) => motionValue(value, progress, fallback);
   let content: React.ReactNode;
   const stride = layer.stride === undefined ? layer.walking ? (v(layer.x) - motionValue(layer.x, 0)) / Math.max(.1, v(layer.scale, 1)) / 42 : 0 : v(layer.stride);
-  const swing = Math.sin(stride) * 25;
-  const left = { x: v(layer.leftHandX, -55 - swing), y: v(layer.leftHandY, 247 - v(layer.raised) * 300) };
-  const right = { x: v(layer.rightHandX, (layer.phone ? 105 : 55) + swing), y: v(layer.rightHandY, (layer.phone ? 150 : 247) - v(layer.raised) * 230) };
-  if (layer.type === 'character') content = <> <Stickman x={0} y={0} hero={layer.hero} scarf={layer.scarf} phone={layer.phone ?? false}
-    frame={frame} emotion={layer.emotion} talking={layer.speech === undefined ? layer.talking : v(layer.speech) > .5} walk={stride}
+  const swing = Math.sin(stride * 42 / 200 * Math.PI * 2) * 18;
+  let left = armPose(-1, { x: v(layer.leftHandX, -42 - swing), y: v(layer.leftHandY, 325 - v(layer.raised) * 300) }).end;
+  let right = armPose(1, { x: v(layer.rightHandX, (layer.phone ? 105 : 42) + swing), y: v(layer.rightHandY, (layer.phone ? 150 : 325) - v(layer.raised) * 230) }).end;
+  if (layer.type === 'character') {
+    const facing = Math.sign(v(layer.facing));
+    if (facing && !v(layer.seated)) {
+      const target = (x: MotionValue | undefined, y: MotionValue | undefined, fallbackX: number) => x === undefined && y === undefined ? undefined : {x: v(x, fallbackX * facing) * facing, y: v(y, 265)};
+      const pose = profilePose(stride * 42 * facing, !!layer.walking || layer.stride !== undefined,
+        target(layer.leftHandX, layer.leftHandY, -12), target(layer.rightHandX, layer.rightHandY, 15));
+      left = {x: pose.leftArm.end.x * facing, y: pose.leftArm.end.y};
+      right = {x: pose.rightArm.end.x * facing, y: pose.rightArm.end.y};
+      content = <>
+        <g transform={`scale(${facing} 1)`}><ProfileCharacter pose={pose} frame={frame} headTilt={v(layer.headTilt) * facing}/></g>
+        {layer.phone && <g transform={`translate(${right.x} ${right.y}) scale(.11)`}><Phone/></g>}
+        {layer.children?.map(child => { const hand = child.attachment === 'leftHand' ? left : child.attachment === 'rightHand' ? right : {x:0,y:0}; return <g key={child.id} transform={`translate(${hand.x} ${hand.y})`}><Layer layer={child} progress={progress} frame={frame}/></g>; })}
+      </>;
+    }
+    else content = <> <Stickman x={0} y={0} hero={layer.hero} scarf={layer.scarf} phone={layer.phone ?? false}
+    frame={frame} emotion={layer.emotion} talking={layer.speech === undefined ? layer.talking : v(layer.speech) > .5} walk={stride} walkAmplitude={layer.walking || layer.stride !== undefined ? 1 : 0}
     raised={v(layer.raised)} look={v(layer.look)} leftHand={left} rightHand={right} seated={v(layer.seated)} headTilt={v(layer.headTilt)} />
     {layer.children?.map(child => { const hand = child.attachment === 'leftHand' ? left : child.attachment === 'rightHand' ? right : { x: 0, y: 0 }; return <g key={child.id} transform={`translate(${hand.x} ${hand.y})`}><Layer layer={child} progress={progress} frame={frame} /></g>; })}
     </>;
+  }
   else if (layer.type === 'kitchen') content = <Kitchen frame={frame} leak={layer.leak} flow={v(layer.flow, 1)} />;
   else if (layer.type === 'mug') content = <TeaMug frame={frame} x={0} y={0} />;
   else if (layer.type === 'steam') content = <Steam frame={frame} x={0} y={0} />;
@@ -48,7 +66,7 @@ function Layer({ layer, progress, frame }: { layer: VectorLayer; progress: numbe
 export function VectorShot({ shot, frame, duration, fps = 60 }: { shot: RemotionShot; frame: number; duration: number; fps?: number }) {
   const progress = Math.max(0, Math.min(1, frame / Math.max(1, duration - 1)));
   const camera = shot.camera || {};
-  return <Stage>
+  return <Stage vignette={false}>
     <rect width={1920} height={1080} fill={shot.background} />
     <g transform={`translate(${960 + motionValue(camera.x, progress)} ${540 + motionValue(camera.y, progress)}) scale(${motionValue(camera.scale, progress, 1)}) translate(${-motionValue(camera.focusX, progress, 960)} ${-motionValue(camera.focusY, progress, 540)})`} fontFamily="Arial, Helvetica, sans-serif" strokeLinecap="round" strokeLinejoin="round">
       {shot.layers.map(layer => <Layer key={layer.id} layer={layer} progress={progress} frame={frame * 60 / fps} />)}

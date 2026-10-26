@@ -1,4 +1,5 @@
 import {easeOut} from '../lib/motion';
+import {armPose, gaitFoot, solveLimb} from '../lib/rig';
 
 export type Emotion = 'calm' | 'confident' | 'pleased' | 'annoyed' | 'surprised' | 'talking';
 const ink = '#080810';
@@ -27,29 +28,32 @@ export const Face = ({emotion = 'confident', frame = 0, gaze = 0, glasses = fals
 };
 
 // Same coordinates as the original rig, now with silhouette skin and sleeved arms.
-export const Stickman = ({x, y, scale = 1, hero = false, walk = 0, walkAmplitude = 1, raised = 0, smile = 0, look = 0, surprised = false, frame = 0, emotion, phone = true, scarf = false, talking = false, leftHand, rightHand, seated = 0, headTilt = 0}: {
+export const Stickman = ({x, y, scale = 1, hero = false, walk = 0, walkAmplitude = walk === 0 ? 0 : 1, raised = 0, smile = 0, look = 0, surprised = false, frame = 0, emotion, phone = true, scarf = false, talking = false, leftHand, rightHand, seated = 0, headTilt = 0}: {
   leftHand?: {x: number; y: number}; rightHand?: {x: number; y: number}; seated?: number; headTilt?: number;
   x: number; y: number; scale?: number; hero?: boolean; walk?: number; walkAmplitude?: number; raised?: number; smile?: number; look?: number; surprised?: boolean; frame?: number; emotion?: Emotion; phone?: boolean; scarf?: boolean; talking?: boolean;
 }) => {
   const stride = Math.sin(walk)*42*walkAmplitude;
-  const lh = leftHand || {x: -75 - stride * .6, y: 247-raised*300};
-  const rh = rightHand || {x: 105 + stride * .6, y: 150-raised*230};
-  const arm = (side: number, hand: {x: number; y: number}) => {
-    const sx = side * 31, sy = 108;
-    const dx = hand.x - sx, dy = hand.y - sy;
-    const distance = Math.max(1, Math.hypot(dx, dy));
-    const bend = Math.min(65, Math.sqrt(Math.max(0, 110 ** 2 - Math.min(220, distance) ** 2 / 4))) * Math.min(1, Math.abs(dx) / 100 + .15);
-    const ex = (sx + hand.x) / 2 + side * Math.abs(dy) / distance * bend;
-    const ey = (sy + hand.y) / 2 + Math.abs(dx) / distance * bend;
-    return `M${sx} ${sy}L${ex} ${ey}L${hand.x} ${hand.y}`;
-  };
-  const left = arm(-1, lh), right = arm(1, rh);
+  const requestedLeft = leftHand || {x: -42 - stride * .6, y: 325-raised*300};
+  const requestedRight = rightHand || {x: 105 + stride * .6, y: 150-raised*230};
+  const leftArm = armPose(-1, requestedLeft), rightArm = armPose(1, requestedRight);
+  const lh = leftArm.end, rh = rightArm.end;
+  const left = leftArm.path, right = rightArm.path;
+  const leftFoot = walkAmplitude ? gaitFoot(walk * 42, .5) : {x: -31, y: 440};
+  const rightFoot = walkAmplitude ? gaitFoot(walk * 42, 0) : {x: 37, y: 440};
+  const leftLeg = solveLimb({x: -19, y: 250}, leftFoot, 105, 105, -1);
+  const rightLeg = solveLimb({x: 20, y: 250}, rightFoot, 105, 105, -1);
+  const feet = [leftLeg.end, rightLeg.end];
   const faceEmotion = emotion ?? (surprised?'surprised':hero?(smile>.4?'pleased':'confident'):'annoyed');
   return <g transform={`translate(${x} ${y}) scale(${scale})`} strokeLinecap="round" strokeLinejoin="round">
     <ellipse cy={454} rx="78" ry="12" fill="#090A12" opacity=".18"/>
     <g stroke={hero || scarf ? ink:'#302B3C'}>
+      {seated > 0 ? <>
       <path d={`M-19 250Q${-25-stride+seated*105} ${340-seated*80} ${-31+stride+seated*125} 440M20 250Q${28+stride+seated*95} ${340-seated*80} ${37-stride+seated*105} 440`} fill="none" strokeWidth="20"/>
       <path d={`M${-31+stride+seated*125} 440h-13M${37-stride+seated*105} 440h14`} strokeWidth="22"/>
+      </> : <>
+        <path d={`${leftLeg.path}${rightLeg.path}`} fill="none" strokeWidth="20"/>
+        {feet.map((foot, i) => <path key={i} d={`M${foot.x - 7} ${foot.y}h20`} strokeWidth="22"/>)}
+      </>}
       {hero ? <>
         <path d="M-48 74Q-59 131-41 152H46Q57 116 46 74Q0 47-48 74Z" fill="#2761D4" strokeWidth="3"/>
         <path d="M-31 91Q0 77 31 91L42 255H-41Z" fill="url(#hoodie)" strokeWidth="3"/>
