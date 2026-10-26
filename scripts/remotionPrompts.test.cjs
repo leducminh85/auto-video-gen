@@ -1,3 +1,4 @@
+const {sceneList}=require('./fixtures/sceneList.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { shotPrompt, planStory } = require('./remotionPlanner.cjs');
@@ -10,7 +11,7 @@ function check(prompt, max) {
   assert.match(prompt, /JSON/);
 }
 test('story and shot prompts are self-contained and short', async () => {
-  await planStory('one two three', 'test', 'balanced', async prompt => { check(prompt,2000); return { scenes:[{startWord:0,endWord:3}] }; });
+  await planStory('one two three', 'test', 'balanced', async prompt => { if(prompt.startsWith('REVIEW VISUAL STORY'))return {passed:true,issues:[]};check(prompt,4500); assert.match(prompt,/2D Animation Director/); return sceneList(); });
   const prompt = shotPrompt({text:'one two three',seconds:3});
   check(prompt,4000);
   for (const required of ['STICKMAN_500IQ_V1','1920x1080','key','attachment','focusX','NARRATION']) assert.ok(prompt.includes(required));
@@ -31,11 +32,12 @@ test('continuity sends final poses instead of complete keyframe trajectories', (
   assert.equal(context.previous.layers[0].x,500);
   assert.equal(context.previous.state,'holding phone');
 });
-test('45 second audio limits story to eight continuous scenes even with dense images', async () => {
-  const text = Array.from({length:90},(_,i)=>`word${i}`).join(' ');
-  await assert.rejects(planStory(text,'test','dense',async prompt => {
-    assert.match(prompt,/at most 8 scenes/);
-    assert.doesNotMatch(prompt,/pacing:dense/);
-    return {scenes:Array.from({length:9},(_,i)=>({startWord:i*10,endWord:(i+1)*10}))};
-  },{seconds:45.33}), /Too many scenes/);
+test('45 second audio lets the director choose scene count by story turns', async () => {
+  const parts=Array.from({length:8},(_,i)=>`word${i} next`);
+  const scenes=await planStory(parts.join(' '),'test','dense',async prompt=>{
+    if(prompt.startsWith('REVIEW VISUAL STORY'))return {passed:true,issues:[]};
+    assert.match(prompt,/Choose 8–22 scenes by story turns/);assert.doesNotMatch(prompt,/5–9 seconds|pacing:dense/);
+    return sceneList(parts,45.33/8);
+  },{seconds:45.33});
+  assert.equal(scenes.length,8);assert.equal(scenes.sceneList.metadata.fps,30);
 });

@@ -1,4 +1,5 @@
 export interface CreatorDraft {
+  directorInputKind?: 'script' | 'idea';
   videoMode?: 'images' | 'remotion';
   voice: string;
   speed: number;
@@ -19,6 +20,7 @@ export function readCreatorDraft(fallback: CreatorDraft): CreatorDraft {
     const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
     if (!saved || typeof saved !== 'object') return fallback;
     return {
+      directorInputKind: saved.directorInputKind === 'idea' ? 'idea' : 'script',
       videoMode: saved.videoMode === 'remotion' ? 'remotion' : 'images',
       imageDensity: ['sparse', 'balanced', 'dense'].includes(saved.imageDensity) ? saved.imageDensity : (fallback.imageDensity || 'balanced'),
       audioMode: saved.audioMode === 'import' ? 'import' : 'tts',

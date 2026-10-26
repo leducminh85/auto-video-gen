@@ -121,11 +121,29 @@ function videoApiPlugin(): Plugin {
           }
           return;
         }
+        if (req.url?.match(/^\/api\/storyboard\/[\w-]+\/stop$/) && req.method === 'POST') {
+          res.setHeader('Content-Type','application/json');
+          try {
+            const drafts = require('./scripts/storyboardDrafts.cjs');
+            const id = req.url.split('/')[3];
+            const draft = drafts.requestStop(id);
+            if (draft.status === 'building') await require('./scripts/chatgptBrowser.cjs').ChatGPTBrowser.getInstance().cancelRequest();
+            res.end(JSON.stringify(draft));
+          } catch(error:any) {res.statusCode=400;res.end(JSON.stringify({error:error.message}));}
+          return;
+        }
         if (req.url?.startsWith('/api/storyboard/') && ['GET','PUT'].includes(req.method || '')) {
           res.setHeader('Content-Type', 'application/json');
           try {
+            delete require.cache[require.resolve('./scripts/storyboardDrafts.cjs')];
             const drafts = require('./scripts/storyboardDrafts.cjs');
-            const id = req.url.slice('/api/storyboard/'.length);
+            const exporting=req.url.endsWith('/export');
+            const id = req.url.slice('/api/storyboard/'.length).replace(/\/export$/, '');
+            if(exporting && req.method==='GET') {
+              const list=require('./scripts/remotionSceneList.cjs').exportDraft(drafts.read(id));
+              res.setHeader('Content-Disposition', 'attachment; filename="scene-list.json"');
+              res.end(JSON.stringify(list,null,2));return;
+            }
             if (req.method === 'GET') res.end(JSON.stringify(drafts.publicDraft(drafts.read(id))));
             else {
               let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 1000000) throw new Error('Storyboard quá lớn.'); }
@@ -154,6 +172,7 @@ function videoApiPlugin(): Plugin {
               const { generateVideo } = require(scriptPath);
 
               const onProgress = (prog: any) => {
+                if (data.storyboardId) require('./scripts/storyboardDrafts.cjs').progress(data.storyboardId,prog);
                 try {
                   res.write(JSON.stringify(prog) + '\n');
                 } catch (e) {
@@ -163,16 +182,17 @@ function videoApiPlugin(): Plugin {
 
               const result = await editor.exclusive(async () => {
                 store.migrate();
+                delete require.cache[require.resolve('./scripts/storyboardDrafts.cjs')];
                 const drafts = require('./scripts/storyboardDrafts.cjs');
                 let approved;
                 if (data.videoMode === 'remotion' && data.storyboardId) approved = drafts.begin(data.storyboardId, data.revision);
                 let generated;
                 try { generated = await generateVideo(approved ? {...approved.options, approvedPlan:approved, onProgress} : { ...data, onProgress }); }
-                catch (error) { if (approved) drafts.finish(approved.id,'failed'); throw error; }
+                catch (error) { if (approved) drafts.finish(approved.id,'failed',undefined,require('./scripts/remotionReliability.cjs').publicGenerationError(error)); throw error; }
                 if (generated.approvalRequired) return generated;
                 let saved;
                 try { saved = store.create({ metadata: generated.metadata, scenes: generated.scenes }, generated.finalVideoPath || path.join(publicRoot, 'final-video.mp4')); }
-                catch (error) { if (approved) drafts.finish(approved.id,'failed'); throw error; }
+                catch (error) { if (approved) drafts.finish(approved.id,'failed',undefined,require('./scripts/remotionReliability.cjs').publicGenerationError(error)); throw error; }
                 if (approved) drafts.finish(approved.id,'complete',saved.metadata.project_id);
                 return { ...generated, ...saved, finalVideoUrl: `/projects/${saved.metadata.project_id}/final-video.mp4` };
               });

@@ -15,3 +15,8 @@ All UI generation and edits must pass the anti-slop craftsmanship standard:
 - High contrast, intentional palette (deep studio darks + amber/gold accent)
 - Authentic layout driven by video studio workflow
 <!-- antislop:end -->
+
+## Remotion scene direction
+For Remotion ideation and storyboards, apply `.agents/skills/remotion-scene-director/SKILL.md`.
+Use its 2–6 second pacing and declared cast/locations. Keep the human storyboard approval gate.
+The runtime embeds the skill body into ChatGPT prompts; never ask ChatGPT web to read local files.

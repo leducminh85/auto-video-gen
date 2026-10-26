@@ -30,6 +30,13 @@ function spreadTiming(weights, total, candidates = [], minimum = 1) {
 
 function publicGenerationError(error) {
   const message = String(error?.message || error || '');
+  if (/^Đã dừng/.test(message)) return 'Đã dừng tác vụ. Bấm Tiếp tục dựng để làm phần còn thiếu; các cảnh đã đạt được giữ lại.';
+  if (/Ảnh kiểm duyệt chưa tải lên|ChatGPT chưa nhận được ảnh/.test(message)) return 'Chưa gửi được ảnh kiểm duyệt lên ChatGPT sau các lượt thử. Các cảnh đã đạt được giữ lại; bấm Tiếp tục dựng để gửi lại ảnh.';
+  if(error?.code==='VISUAL_QUALITY')return `Cảnh ${error.sceneNumber||''} chưa đạt kiểm duyệt hình ảnh sau các lượt sửa. Phản hồi đã được nhận; các cảnh đã đạt được giữ lại.`;
+  if (error?.issues?.length) {
+    const fields=[...new Set(error.issues.map(issue=>String(issue.path||'').split('/').filter(Boolean).at(-1)).filter(Boolean))].slice(0,3);
+    return `Đã nhận phản hồi ChatGPT nhưng cảnh chưa đạt kiểm tra${fields.length ? ` (${fields.join(', ')})` : ''}. Các cảnh đã đạt được giữ lại; bấm Tiếp tục dựng để thử tiếp.`;
+  }
   if (Number.isInteger(error?.sceneNumber) && Number.isInteger(error?.shotNumber)) return `Cảnh ${error.sceneNumber}, shot ${error.shotNumber} chưa hoàn tất sau các lượt sửa. Bấm tạo lại với cùng đầu vào để tiếp tục; các shot đã đạt được giữ nguyên.`;
   if (/đăng nhập|login|authenticated|cookie/i.test(message)) return 'Chưa kết nối được ChatGPT sau các lượt thử. Hãy kiểm tra đăng nhập rồi thử lại.';
   if (/retry|tự tối ưu|storyboard|thiết kế|JSON|validation/i.test(message)) return 'Chưa hoàn tất cảnh sau các lượt thử. Các phần đã dựng được giữ lại để tiếp tục.';

@@ -23,6 +23,14 @@ async function main() {
   assert.equal(animatic.streams.find(s => s.codec_type === 'video').width, 768);
   assert.ok(animatic.streams.some(s => s.codec_type === 'audio'));
   assert.deepEqual(fs.readFileSync(path.join(root, 'final-video.mp4')), finalBefore);
+  let stopRequested = false;
+  await assert.rejects(require('./remotionRender.cjs').renderRemotion(fixture(), root, root, () => {
+    stopRequested = true;
+  }, { assertRunning: () => {
+    if (stopRequested) throw Object.assign(new Error('Đã dừng tác vụ.'), {retryExhausted:true});
+  }}), /Đã dừng tác vụ/);
+  assert.deepEqual(fs.readFileSync(path.join(root, 'final-video.mp4')), finalBefore);
+  assert.equal(fs.readdirSync(root).some(file => /^render-.*\.mp4$/.test(file)), false);
   console.log('Rendered 120 frames at 1080p/60fps with audio and thumbnail:', root);
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

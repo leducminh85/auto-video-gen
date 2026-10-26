@@ -14,12 +14,11 @@ test('rejects executable attributes, external references and malformed motion', 
   assert.throws(() => validateShot({ ...shot, camera: { scale: { from: 1, to: 2, start: .5, end: .5 } } }));
   assert.throws(() => validateShot({ ...shot, layers: [shot.layers[0], shot.layers[0]] }));
 });
-test('storyboard preserves every narration word and rejects missing or overlapping ranges', async () => {
-  const scenes = await planStory('Một hai ba bốn', 'Test', 'balanced', async () => ({ scenes: [{ startWord: 0, endWord: 2 }, { startWord: 2, endWord: 4 }] }), {seconds:12});
-  assert.equal(scenes.map(scene => scene.text).join(' '), 'Một hai ba bốn');
-  for (const ranges of [[{ startWord: 1, endWord: 4 }], [{ startWord: 0, endWord: 3 }], [{ startWord: 0, endWord: 2 }, { startWord: 1, endWord: 4 }]]) {
-    await assert.rejects(planStory('Một hai ba bốn', '', 'balanced', async () => ({ scenes: ranges })));
-  }
+test('storyboard preserves source narration despite small AI omissions', async () => {
+  const {sceneList}=require('./fixtures/sceneList.cjs');
+  const scenes=await planStory('Một hai ba bốn','Test','balanced',async prompt=>prompt.startsWith('REVIEW VISUAL STORY')?{passed:true,issues:[]}:sceneList(['Một hai','bốn'],6),{seconds:12,sceneCount:2});
+  assert.equal(scenes.map(s=>s.text).join(' '),'Một hai ba bốn');
+  assert.equal(scenes.sceneList.scenes.map(s=>s.audio.narration_subtitle).join(' '),'Một hai ba bốn');
 });
 test('repairs invalid ChatGPT output once and keeps a validated scene', async () => {
   let attempts = 0;

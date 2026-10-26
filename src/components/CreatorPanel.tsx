@@ -255,6 +255,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   };
   const [speed, setSpeed] = useState<number>(draft.speed);
   const [contentMode, setContentMode] = useState<'text' | 'file'>('text');
+  const [directorInputKind,setDirectorInputKind]=useState<'script'|'idea'>(draft.directorInputKind||'script');
   const [textContent, setTextContent] = useState<string>(draft.text);
   const [scriptTitle, setScriptTitle] = useState<string>(draft.title);
   const [scriptSubtitle, setScriptSubtitle] = useState<string>(draft.subtitle);
@@ -291,15 +292,28 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [storyboardDraft, setStoryboardDraft] = useState<StoryboardDraft | null>(null);
+  const [editingApprovedBoard, setEditingApprovedBoard] = useState(false);
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('storyboard') || localStorage.getItem('pending_storyboard_id');
-    if (id) fetch(`/api/storyboard/${id}`).then(r => r.ok ? r.json() : null).then(d => {if(d && ['draft','failed'].includes(d.status)) {setStoryboardDraft(d);localStorage.setItem('pending_storyboard_id',d.id);}}).catch(() => {});
+    if (id) fetch(`/api/storyboard/${id}`).then(r => r.ok ? r.json() : null).then(d => {if(d && ['draft','failed','building','complete'].includes(d.status)) {setStoryboardDraft(d);localStorage.setItem('pending_storyboard_id',d.id);}}).catch(() => {});
   }, []);
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  useEffect(() => {
+    if (isCreating || !storyboardDraft || !['building','failed'].includes(storyboardDraft.status)) return;
+    let cancelled = false;
+    const timer = window.setInterval(async () => {
+      const latest = await fetch(`/api/storyboard/${storyboardDraft.id}`).then(r => r.ok ? r.json() : null).catch(() => null);
+      if (!cancelled && latest) {
+        setStoryboardDraft(latest);
+        if (latest.status === 'building' && storyboardDraft.status !== 'building') setErrorMessage(null);
+      }
+    }, 3000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [isCreating, storyboardDraft?.id, storyboardDraft?.status]);
   const dialogRef = useDialog(onCancel, !isCreating && !audioUploading && !storyboardDraft);
   useEffect(() => {
-    setDraftSaved(saveCreatorDraft({ videoMode, voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries }));
-  }, [videoMode, selectedVoice, speed, textContent, scriptTitle, scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries]);
+    setDraftSaved(saveCreatorDraft({ directorInputKind, videoMode, voice: selectedVoice, speed, text: textContent, title: scriptTitle, subtitle: scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries }));
+  }, [directorInputKind, videoMode, selectedVoice, speed, textContent, scriptTitle, scriptSubtitle, imageStylePrompt, imageDensity, audioMode, importedAudio, audioBoundaries]);
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [currentStepKey, setCurrentStepKey] = useState<string>('storyboard');
   const [currentMessage, setCurrentMessage] = useState<string>('');
@@ -559,6 +573,14 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
 
   const handleCreateVideo = async (approved?: StoryboardDraft) => {
     setErrorMessage(null);
+    if (approved) {
+      const latest = await fetch(`/api/storyboard/${approved.id}`).then(r => r.ok ? r.json() : null).catch(() => null);
+      if (latest && ['building','complete'].includes(latest.status)) {
+        setStoryboardDraft(latest);
+        setEditingApprovedBoard(false);
+        return;
+      }
+    }
     if (!approved && audioMode === 'tts' && !textContent.trim()) {
       setErrorMessage('Vui lòng nhập nội dung kịch bản trước khi bấm Tạo Video');
       return;
@@ -597,6 +619,7 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(approved ? {videoMode:'remotion',storyboardId:approved.id,revision:approved.revision} : {
           videoMode,
+          inputKind:videoMode==='remotion'&&audioMode==='tts'?directorInputKind:'script',
           title: effectiveTitle,
           subtitle: scriptSubtitle || (audioMode === 'import' ? 'Audio đã nhập' : `Giọng đọc ${speed}×`),
           voice: selectedVoice,
@@ -699,6 +722,11 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
       setIsCreating(false);
     } catch (err: any) {
       console.error('Error generating video:', err);
+      if (approved) {
+        const latest = await fetch(`/api/storyboard/${approved.id}`).then(r => r.ok ? r.json() : null).catch(() => null);
+        if (latest) setStoryboardDraft(latest);
+        setEditingApprovedBoard(false);
+      }
       setErrorMessage(err.message || 'Lỗi trong quá trình tạo video. Vui lòng thử lại.');
       setIsCreating(false);
     }
@@ -717,6 +745,19 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
   const wordCount = textContent.trim().split(/\s+/).filter(Boolean).length;
   const estimatedSeconds = audioMode === 'import' ? (importedAudio?.duration || 0) : ((wordCount / 3.2) / speed);
   const selectedVoiceObj = VOICE_OPTIONS.find((v) => v.id === selectedVoice) || { ...VOICE_OPTIONS[0], id: selectedVoice, name: selectedVoice };
+
+  if (storyboardDraft && !isCreating && !editingApprovedBoard && (storyboardDraft.approvedRevision === storyboardDraft.revision || ['building','complete'].includes(storyboardDraft.status))) return <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Tiếp tục dựng video" tabIndex={-1} className="creator-panel"><section className="board-review">
+    <header className="board-header"><div><h1>{storyboardDraft.title}</h1><p>Storyboard đã duyệt · Bản {storyboardDraft.revision}</p></div><button className="btn btn-secondary" onClick={onCancel}>Đóng</button></header>
+    <main className="board-detail"><h2>{storyboardDraft.status === 'complete' ? 'Video đã dựng xong' : storyboardDraft.status === 'building' ? (storyboardDraft.stopRequested ? 'Đang dừng tác vụ' : 'Tác vụ chưa hoàn tất') : 'Quá trình dựng bị gián đoạn'}</h2><p role="status">{storyboardDraft.status === 'building' ? (errorMessage || storyboardDraft.progress?.message || 'Chưa có thông tin tiến trình. Trạng thái này không xác nhận video đang được render.') : errorMessage || storyboardDraft.lastError || 'Storyboard đã được duyệt. Các cảnh đã dựng đạt yêu cầu vẫn được giữ lại.'}</p>{storyboardDraft.status === 'building' && <><p>{storyboardDraft.progress?.updatedAt ? `Cập nhật cuối: ${new Date(storyboardDraft.progress.updatedAt).toLocaleTimeString()}.` : 'Chưa ghi nhận cập nhật tiến trình.'} Nếu không có tiến triển, bạn có thể dừng tác vụ rồi tiếp tục.</p><button className="btn btn-secondary" disabled={storyboardDraft.stopRequested} onClick={async()=>{
+      try {
+        const response = await fetch(`/api/storyboard/${storyboardDraft.id}/stop`,{method:'POST'});
+        const result = await response.json();
+        if(!response.ok)throw new Error(result.error || 'Không dừng được tác vụ.');
+        setStoryboardDraft(result);
+      } catch(error:any) {setErrorMessage(error.message);}
+    }}>{storyboardDraft.stopRequested ? 'Đang dừng…' : 'Dừng tác vụ bị treo'}</button></>}<p>Tiếp tục dựng sẽ dùng bản đã duyệt và thực hiện phần còn thiếu.</p></main>
+    <footer className="board-footer"><button className="btn btn-secondary" disabled={['building','complete'].includes(storyboardDraft.status)} onClick={()=>setEditingApprovedBoard(true)}>Xem hoặc sửa storyboard</button>{storyboardDraft.status === 'complete' && storyboardDraft.projectId ? <a className="btn btn-primary" href={`/project/${storyboardDraft.projectId}`}>Mở video</a> : <button className="btn btn-primary" disabled={storyboardDraft.status === 'building'} onClick={()=>handleCreateVideo(storyboardDraft)}>{storyboardDraft.status === 'building' ? 'Chờ tác vụ kết thúc' : 'Tiếp tục dựng'}</button>}</footer>
+  </section></div>;
 
   if (storyboardDraft && !isCreating) return <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Duyệt storyboard" tabIndex={-1} className="creator-panel"><StoryboardReview draft={storyboardDraft} error={errorMessage} onChange={setStoryboardDraft} onApprove={handleCreateVideo} onClose={onCancel} onBack={()=>{setStoryboardDraft(null);localStorage.removeItem('pending_storyboard_id');}} /></div>;
 
@@ -913,9 +954,13 @@ export const CreatorPanel: React.FC<CreatorPanelProps> = ({
                 </label>
                 <label className={videoMode === 'remotion' ? 'selected' : ''}>
                   <input type="radio" name="video-mode" value="remotion" checked={videoMode === 'remotion'} onChange={() => setVideoMode('remotion')} />
-                  <span><strong>Hoạt hình người que · Remotion</strong><small>Nhân vật Leo, bối cảnh vector và chuyển động theo lời thoại. 1080p · 60 fps.</small></span>
+                  <span><strong>Hoạt hình người que · Remotion</strong><small>Đạo diễn hoạt hình 2D: hành động thị giác, cảnh 2–6 giây, duyệt storyboard trước khi dựng.</small></span>
                 </label>
               </div>
+              {videoMode === 'remotion' && <div className="director-input-settings">
+                {audioMode==='tts'&&<label>Đầu vào cho đạo diễn<select value={directorInputKind} onChange={e=>setDirectorInputKind(e.target.value as 'script'|'idea')}><option value="script">Kịch bản — giữ lời đọc</option><option value="idea">Ý tưởng — phát triển thành câu chuyện</option></select></label>}
+                <p>Hệ thống tự chọn số cảnh theo nội dung và thời lượng lời đọc, mỗi cảnh 2–6 giây. Bạn duyệt và chỉnh storyboard trước khi dựng.</p>
+              </div>}
               {videoMode === 'remotion' && <div className="chatgpt-connection">
                 <p>ChatGPT lên ý tưởng và thiết kế chuyển động theo phong cách người que của bạn. Lời thoại và hướng dẫn phong cách sẽ được gửi vào ChatGPT.</p>
                 <div className="toolbar-actions">
