@@ -48,3 +48,14 @@ test('optional empty motion uses defaults and simple motion wrappers are accepte
   assert.equal(result.layers[0].headTilt,undefined);
   assert.equal(result.layers[0].look,undefined);
 });
+
+test('moves misplaced SVG opacity keyframes into animation without losing timing',()=>{
+ const motion={keys:[{at:0,value:1,ease:'hold'},{at:.719,value:1,ease:'hold'},{at:.72,value:0,ease:'hold'},{at:1,value:0,ease:'hold'}]};
+ const input={version:1,styleId:'STICKMAN_500IQ_V1',direction:'Publish then change state',background:'#ffffff',layers:[{id:'button',type:'rect',attrs:{width:40,height:20,opacity:motion}}]};
+ const {prepareShot}=require('./remotionNormalize.cjs');
+ const result=prepareShot(input);
+ assert.deepEqual(result.layers[0].animate.opacity,motion);
+ assert.equal(result.layers[0].attrs.opacity,undefined);
+ assert.deepEqual(prepareShot(result),result);
+ assert.deepEqual(input.layers[0].attrs.opacity,motion);
+});

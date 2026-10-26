@@ -38,15 +38,27 @@ function applyRepairs(data, issues, response) {
   if(!Array.isArray(response?.repairs)) throw new Error('Expected repairs array.');
   const allowed = new Set(issues.map(issue=>issue.path));
   const result = structuredClone(data);
+  const removedArrays = new Set();
   for(const repair of response.repairs) {
-    if(!allowed.has(repair.path) || !repair.path) throw new Error('Repair may change only reported fields.');
+    if(typeof repair.path !== 'string' || !repair.path || ![...allowed].some(path=>path && (repair.path===path || repair.path.startsWith(`${path}/`)))) throw new Error(`Repair outside reported fields: ${repair.path}`);
     const keys=repair.path.split('/').slice(1);
     if(keys.some(key=>['__proto__','prototype','constructor'].includes(key))) throw new Error('Invalid repair path.');
     let target=result;
-    for(const key of keys.slice(0,-1)) { if(!target || typeof target !== 'object') throw new Error('Invalid repair target.'); target=target[key]; }
+    for(const key of keys.slice(0,-1)) {
+      if(!target || typeof target !== 'object') throw new Error('Invalid repair target.');
+      if(!Object.hasOwn(target,key) && ['animate','attrs'].includes(key) && !Array.isArray(target)) target[key]={};
+      if(!Object.hasOwn(target,key)) throw new Error('Invalid repair target.');
+      target=target[key];
+    }
     if(!target || typeof target !== 'object') throw new Error('Invalid repair target.');
-    if(repair.remove===true) delete target[keys.at(-1)];
+    if(repair.remove===true) {
+      delete target[keys.at(-1)];
+      if(Array.isArray(target)) removedArrays.add(target);
+    }
     else target[keys.at(-1)]=repair.value;
+  }
+  for (const array of removedArrays) {
+    for (let i = array.length - 1; i >= 0; i--) if (!Object.hasOwn(array, i)) array.splice(i, 1);
   }
   return result;
 }

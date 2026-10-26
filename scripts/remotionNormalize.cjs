@@ -30,12 +30,18 @@ function normalizeShot(input, onWarning = () => {}) {
     while (ids.has(id)) id += '-copy';
     ids.add(id);
     const result = {...item,id,attrs:{}};
+    const misplacedMotion = {};
     const attrs = { ...item.attrs };
     for (const key of ATTRS) if (!MOTION_FIELDS.includes(key) && item[key] !== undefined && attrs[key] === undefined) attrs[key] = item[key];
     for (const [raw,value] of Object.entries(attrs)) {
       const key = alias(raw);
       if (/^on/i.test(key) || /href|style|dangerouslySetInnerHTML/i.test(key)) throw new Error('Thiết kế chứa thuộc tính thực thi hoặc tham chiếu ngoài.');
       if (!ATTRS.includes(key)) { onWarning(`Bỏ thuộc tính SVG không hỗ trợ: ${raw}`); continue; }
+      if (ANIMATE_ATTRS.includes(key) && value && typeof value === 'object' && !Array.isArray(value) && (Array.isArray(value.keys) || ('from' in value && 'to' in value)) && item.animate?.[key] === undefined) {
+        misplacedMotion[key] = normalizeMotion(value);
+        onWarning(`Chuyển ${id}.attrs.${key} sang animate.${key}`);
+        continue;
+      }
       if (['fill','stroke','filter'].includes(key)) result.attrs[key] = paint(value);
       else if (ENUM_ATTRS[key]) {
         if (ENUM_ATTRS[key].includes(value)) result.attrs[key] = value;
@@ -54,6 +60,7 @@ function normalizeShot(input, onWarning = () => {}) {
       if (!ANIMATE_ATTRS.includes(key)) { onWarning(`Bỏ thuộc tính chuyển động không hỗ trợ: ${key}`); return false; }
       return true;
     }));
+    if (Object.keys(misplacedMotion).length) result.animate = {...misplacedMotion,...result.animate};
     if (Array.isArray(item.children)) result.children = item.children.map(child=>layer(child,depth+1));
     return result;
   }
